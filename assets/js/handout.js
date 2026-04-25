@@ -1,11 +1,11 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ── HANDOUT SYSTEM ───────────────────────────────────────────────────────────
-var handoutRef = ref(window.db, 'session/handout');
-var hoLastTs   = 0;   // ignore handouts already seen before this session
-var crtTyping  = false;
-var crtSkipped = false;
+var handoutRef  = ref(window.db, 'session/handout');
+var hoLastTs    = 0;   // ignore handouts already seen before this session
+var crtTyping   = false;
 var crtInterval = null;
+var crtFullText = '';
 
 // ── GM: open panel, populate player list ─────────────────────────────────────
 window.openHandoutPanel = function() {
@@ -95,26 +95,44 @@ window.startHandoutWatcher = function() {
 
 // ── CRT display ───────────────────────────────────────────────────────────────
 function crtShow(text) {
-  var overlay = document.getElementById('crtOverlay');
-  var body    = document.getElementById('crtBody');
-  var footer  = document.getElementById('crtFooter');
+  crtFullText = text;
+  var overlay  = document.getElementById('crtOverlay');
+  var body     = document.getElementById('crtBody');
+  var footer   = document.getElementById('crtFooter');
+  var skipBtn  = document.getElementById('crtSkipBtn');
+  var divider2 = document.getElementById('crtDivider2');
+  var led      = document.getElementById('crtLed');
+  var glass    = document.getElementById('crtGlass');
 
   body.innerHTML = '';
   footer.classList.remove('visible');
-  crtSkipped = false;
-  crtTyping  = true;
+  divider2.style.opacity = '0';
+  skipBtn.classList.remove('hidden');
+
+  var copyBtn = document.getElementById('crtCopyBtn');
+  copyBtn.textContent = 'COPY';
+  copyBtn.classList.remove('copied');
+
+  led.className = 'crt-led';
+
+  // Power-on animation (remove → reflow → add)
+  glass.classList.remove('power-on');
+  void glass.offsetWidth;
+  glass.classList.add('power-on');
+
+  crtTyping = true;
   if (crtInterval) clearInterval(crtInterval);
 
   overlay.classList.add('open');
 
-  // Add blinking cursor element
+  // Blinking block cursor
   var cursor = document.createElement('span');
   cursor.id = 'crtCursor';
   body.appendChild(cursor);
 
-  var chars  = text.split('');
-  var i      = 0;
-  var DELAY  = 28; // ms per character
+  var chars = text.split('');
+  var i     = 0;
+  var DELAY = 26;
 
   crtInterval = setInterval(function() {
     if (i >= chars.length) {
@@ -122,55 +140,102 @@ function crtShow(text) {
       crtInterval = null;
       crtTyping   = false;
       cursor.remove();
+      skipBtn.classList.add('hidden');
+      divider2.style.opacity = '0.45';
       footer.classList.add('visible');
+      led.className = 'crt-led steady';
       return;
     }
-    // Insert character before cursor
-    var ch = chars[i++];
-    var node = document.createTextNode(ch);
+    var node = document.createTextNode(chars[i++]);
     body.insertBefore(node, cursor);
-    // Auto-scroll
     body.scrollTop = body.scrollHeight;
   }, DELAY);
 }
 
 window.crtSkip = function() {
-  // Instantly show full text
   if (crtInterval) clearInterval(crtInterval);
   crtInterval = null;
   crtTyping   = false;
-  crtSkipped  = true;
-  var body   = document.getElementById('crtBody');
-  var footer = document.getElementById('crtFooter');
-  // Rebuild with full text (retrieve from last handout — reconstruct from body nodes)
-  var full = body.innerText || body.textContent;
-  // Remove cursor if present
+
+  var body     = document.getElementById('crtBody');
+  var footer   = document.getElementById('crtFooter');
+  var skipBtn  = document.getElementById('crtSkipBtn');
+  var divider2 = document.getElementById('crtDivider2');
+  var led      = document.getElementById('crtLed');
+
   var cur = document.getElementById('crtCursor');
   if (cur) cur.remove();
+
+  body.textContent = crtFullText;
+  body.scrollTop   = body.scrollHeight;
+
+  skipBtn.classList.add('hidden');
+  divider2.style.opacity = '0.45';
   footer.classList.add('visible');
+  led.className = 'crt-led steady';
 };
 
-function crtClose() {
+window.crtCopy = function() {
+  var btn = document.getElementById('crtCopyBtn');
+  var done = function() {
+    btn.textContent = 'COPIED';
+    btn.classList.add('copied');
+    setTimeout(function() {
+      btn.textContent = 'COPY';
+      btn.classList.remove('copied');
+    }, 1600);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(crtFullText).then(done).catch(function() {
+      var ta = document.createElement('textarea');
+      ta.value = crtFullText;
+      ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch(e) {}
+      document.body.removeChild(ta);
+      done();
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = crtFullText;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+};
+
+window.crtClose = function() {
   document.getElementById('crtOverlay').classList.remove('open');
   document.getElementById('crtBody').innerHTML = '';
   document.getElementById('crtFooter').classList.remove('visible');
+  document.getElementById('crtSkipBtn').classList.remove('hidden');
+  document.getElementById('crtDivider2').style.opacity = '0';
+  document.getElementById('crtLed').className = 'crt-led';
   if (crtInterval) { clearInterval(crtInterval); crtInterval = null; }
   crtTyping = false;
-}
+};
 
-// Dismiss on any key press (after typing done)
+// Keydown: Escape skips during typing; any key closes when done
 document.addEventListener('keydown', function(e) {
   var overlay = document.getElementById('crtOverlay');
   if (!overlay || !overlay.classList.contains('open')) return;
-  if (crtTyping) return;
-  crtClose();
+  if (crtTyping) {
+    if (e.key === 'Escape') window.crtSkip();
+    return;
+  }
+  window.crtClose();
 });
-// Dismiss on click — wired up once after DOM ready
+
+// Backdrop click dismisses (only when typing done)
 document.addEventListener('DOMContentLoaded', function() {
   var ov = document.getElementById('crtOverlay');
   if (ov) ov.addEventListener('click', function(e) {
-    if (e.target.classList.contains('crt-skip-btn')) return;
-    if (!crtTyping) crtClose();
+    if (e.target !== this) return;
+    if (!crtTyping) window.crtClose();
   });
 });
 

@@ -501,21 +501,42 @@
 <div id="crtOverlay">
   <div class="crt-monitor-wrap">
     <div class="crt-bezel">
-      <div class="crt-glass">
+      <div class="crt-bezel-header">
+        <div class="crt-bezel-label">MU/TH/UR 9000 // INCOMING TRANSMISSION</div>
+        <div class="crt-led-group">
+          <div class="crt-led-label">RX</div>
+          <div class="crt-led" id="crtLed"></div>
+        </div>
+      </div>
+      <div class="crt-glass" id="crtGlass">
+        <div class="crt-static"></div>
         <div class="crt-glass-reflection"></div>
         <div class="crt-screen">
-          <div class="crt-header-line">WEYLAND-YUTANI CORP // MU/TH/UR 6000 // SECURE CHANNEL</div>
+          <div class="crt-header-line">SECURE CHANNEL // PRIORITY MESSAGE</div>
           <hr class="crt-divider">
           <div id="crtBody"></div>
-          <hr class="crt-divider">
-          <div class="crt-footer-line" id="crtFooter">[ PRESS ANY KEY TO DISMISS ]</div>
+          <hr class="crt-divider" id="crtDivider2" style="opacity:0;transition:opacity 0.4s">
+          <div class="crt-footer" id="crtFooter">
+            <div class="crt-dismiss-hint">[ PRESS ANY KEY TO DISMISS ]</div>
+            <div class="crt-action-btns">
+              <button class="crt-action-btn" id="crtCopyBtn" onclick="crtCopy()">COPY</button>
+              <button class="crt-action-btn" onclick="crtClose()">CLOSE</button>
+            </div>
+          </div>
         </div>
-        <button class="crt-skip-btn" onclick="crtSkip()">SKIP ▶</button>
+        <button class="crt-skip-btn" id="crtSkipBtn" onclick="crtSkip()">SKIP ▶▶</button>
       </div>
       <div class="crt-bottom-strip">
-        <div class="crt-power-led"></div>
-        <div class="crt-brand-text">WEYLAND-YUTANI</div>
-        <div class="crt-knobs"><div class="crt-knob"></div><div class="crt-knob"></div></div>
+        <div class="crt-power-cluster">
+          <div class="crt-power-led"></div>
+          <div class="crt-power-label">PWR</div>
+        </div>
+        <div class="crt-brand-text">Weyland-Yutani</div>
+        <div class="crt-knobs">
+          <div class="crt-knob"></div>
+          <div class="crt-knob"></div>
+          <div class="crt-knob"></div>
+        </div>
       </div>
     </div>
     <div class="crt-neck"></div>

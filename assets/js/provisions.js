@@ -1,20 +1,57 @@
-import { ref, set, remove, get, push, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, set, remove, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// ── SUPPLY ROLL PANEL ─────────────────────────────────────────────────────────
-var spRef      = ref(window.db, 'session/playerSupplies');
-var spView     = null;   // callsign currently shown
-var spUnsub    = null;   // current firebase listener unsubscribe
-var spItems    = {};     // local cache: { itemId: {name,type,rating,maxRating} }
-var spNewRating = 3;     // selected rating in add-form
-var spRolling  = false;  // lock during animation
+// ── SUPPLY ROLL PANEL — MU/TH/UR 9000 redesign ───────────────────────────────
+var spView    = null;
+var spUnsub   = null;
+var spItems   = {};
+var spRolling = {};   // per-item: { itemId: true } while animating
+
+// ── Die helpers ───────────────────────────────────────────────────────────────
+var SP_FACES = {
+  1:['c'], 2:['tl','br'], 3:['tl','c','br'],
+  4:['tl','tr','bl','br'], 5:['tl','tr','c','bl','br'],
+  6:['tl','tr','ml','mr','bl','br'],
+};
+function spD6() { return 1 + Math.floor(Math.random() * 6); }
+function spDieHTML(face, cls) {
+  var dots = SP_FACES[face] || [];
+  return '<div class="sp-die ' + (face === 1 ? 'one ' : '') + (cls || '') + '">' +
+    dots.map(function(p) { return '<span class="sp-dot ' + p + '"></span>'; }).join('') + '</div>';
+}
+
+// ── Audio ─────────────────────────────────────────────────────────────────────
+var spACtx = null;
+function spBeep(freq, ms, vol) {
+  try {
+    if (!spACtx) spACtx = new (window.AudioContext || window.webkitAudioContext)();
+    var t = spACtx.currentTime;
+    var o = spACtx.createOscillator(), g = spACtx.createGain();
+    o.type = 'square'; o.frequency.value = freq || 820;
+    g.gain.setValueAtTime(vol || 0.04, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (ms || 40) / 1000);
+    o.connect(g).connect(spACtx.destination);
+    o.start(t); o.stop(t + (ms || 40) / 1000 + 0.01);
+  } catch(e) {}
+}
+
+// ── Normalize item (backwards compat: rating/maxRating → pts/max) ─────────────
+function spNorm(raw) {
+  return {
+    name: raw.name || '?',
+    pts:  +(raw.pts  != null ? raw.pts  : (raw.rating    != null ? raw.rating    : 3)),
+    max:  +(raw.max  != null ? raw.max  : (raw.maxRating != null ? raw.maxRating : 6)),
+  };
+}
 
 // ── Open / Close ──────────────────────────────────────────────────────────────
 window.openSupplyPanel = function() {
   document.getElementById('supplyPanel').classList.add('open');
   spView = window.myName;
-  spBuildRatingPicker();
   spRenderTabs();
   spWatch(spView);
+  setTimeout(function() {
+    var el = document.getElementById('spNewName'); if (el) el.focus();
+  }, 60);
 };
 window.closeSupplyPanel = function() {
   document.getElementById('supplyPanel').classList.remove('open');
@@ -27,7 +64,6 @@ function spRenderTabs() {
   if (!tabs) return;
   tabs.innerHTML = '';
   if (!window.isGM) return;
-  // My own tab first
   var all = [window.myName];
   if (window._onlinePlayers) window._onlinePlayers.forEach(function(n) {
     if (n !== window.myName) all.push(n);
@@ -40,14 +76,14 @@ function spRenderTabs() {
       spView = name;
       spRenderTabs();
       spWatch(name);
-      // Show/hide add form: only for own items
-      document.getElementById('spAddSection').style.display = (name === window.myName) ? '' : 'none';
+      var sec = document.getElementById('spAddSection');
+      if (sec) sec.style.display = (name === window.myName) ? '' : 'none';
     };
     tabs.appendChild(btn);
   });
 }
 
-// ── Firebase watcher for one player ──────────────────────────────────────────
+// ── Firebase watcher ──────────────────────────────────────────────────────────
 function spWatch(callsign) {
   if (spUnsub) { spUnsub(); spUnsub = null; }
   spUnsub = onValue(ref(window.db, 'session/playerSupplies/' + callsign), function(snap) {
@@ -56,197 +92,174 @@ function spWatch(callsign) {
   });
 }
 
-// ── Render item list ──────────────────────────────────────────────────────────
+// ── Render ────────────────────────────────────────────────────────────────────
 function spRenderItems(callsign) {
-  var list = document.getElementById('spItemList');
+  var list    = document.getElementById('spItemList');
+  var countEl = document.getElementById('spListCount');
   if (!list) return;
-  list.innerHTML = '';
   var keys = Object.keys(spItems);
+  if (countEl) countEl.textContent = keys.length + ' ITEM' + (keys.length === 1 ? '' : 'S');
+
   if (keys.length === 0) {
-    var empty = document.createElement('div');
-    empty.className = 'sp-empty';
-    empty.textContent = 'NO SUPPLY ITEMS — ADD ONE BELOW';
-    list.appendChild(empty);
+    list.innerHTML = '<div class="sp-empty">NO SUPPLIES REGISTERED<br>' +
+      '<span style="font-size:9px;color:var(--sp-amber-d)">ADD AN ITEM ABOVE TO BEGIN SUPPLY-ROLL TRACKING</span></div>';
     return;
   }
+
+  list.innerHTML = '';
   keys.forEach(function(id) {
-    var item = spItems[id];
-    var type = item.type || 'air';
-    var rating = item.rating != null ? item.rating : item.maxRating;
-    var maxRating = item.maxRating || 6;
+    var item    = spNorm(spItems[id]);
+    var dep     = item.pts <= 0;
+    var rolling = !!spRolling[id];
     var canEdit = (callsign === window.myName || window.isGM);
 
+    var pips = '';
+    for (var i = 0; i < item.max; i++)
+      pips += '<span class="sp-pip' + (i < item.pts ? ' on' : '') + '"></span>';
+
     var card = document.createElement('div');
-    card.className = 'sp-item';
-    card.id = 'spItem_' + id;
-
-    // Dots row
-    var dotsHtml = '';
-    for (var d = 1; d <= 6; d++) {
-      dotsHtml += '<div class="sp-dot ' + (d <= rating ? 'filled ' + type : 'empty') + '"></div>';
-    }
-
+    card.className = 'sp-item' + (dep ? ' sp-dep' : '');
+    card.id = 'spCard_' + id;
     card.innerHTML =
-      '<span class="sp-item-name">' + item.name + '</span>' +
-      '<span class="sp-type-badge ' + type + '">' + type.toUpperCase() + '</span>' +
-      '<div class="sp-dots">' + dotsHtml + '</div>' +
-      '<button class="sp-roll-btn" id="spRollBtn_' + id + '" onclick="spRoll(\'' + callsign + '\',\'' + id + '\')"' + (rating === 0 ? ' disabled' : '') + '>🎲 ROLL</button>' +
-      (canEdit ? '<button class="sp-del-btn" onclick="spDelete(\'' + callsign + '\',\'' + id + '\')">✕</button>' : '') +
-      '<div class="sp-roll-area" id="spRollArea_' + id + '"></div>';
-
+      '<div class="sp-item-top">' +
+        '<div class="sp-item-name">' + spEsc(item.name) + '</div>' +
+        (canEdit ? '<button class="sp-del-btn" onclick="spDelete(\'' + callsign + '\',\'' + id + '\')">×</button>' : '') +
+      '</div>' +
+      '<div class="sp-item-body">' +
+        '<div class="sp-pts-block">' +
+          '<span class="sp-pts-label">SUPPLY LVL</span>' +
+          '<div class="sp-pts-row">' +
+            '<button class="sp-sbtn" onclick="spChangePts(\'' + callsign + '\',\'' + id + '\',-1)"' +
+              (!canEdit || dep || rolling ? ' disabled' : '') + '>−</button>' +
+            '<span class="sp-pts-val">' + item.pts + '</span>' +
+            '<span class="sp-pts-slash">/</span>' +
+            '<span class="sp-pts-max">' + item.max + '</span>' +
+            '<button class="sp-sbtn" onclick="spChangePts(\'' + callsign + '\',\'' + id + '\',1)"' +
+              (!canEdit || item.pts >= item.max || rolling ? ' disabled' : '') + '>+</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="sp-pips" id="spPips_' + id + '">' + pips + '</div>' +
+        '<button class="sp-roll-btn" id="spRollBtn_' + id + '" ' +
+          'onclick="spRoll(\'' + callsign + '\',\'' + id + '\')"' +
+          (dep || rolling || !canEdit ? ' disabled' : '') + '>' +
+          (dep ? '[ DEPLETED ]' : '[ ROLL ' + item.pts + 'D6 ]') +
+        '</button>' +
+      '</div>' +
+      '<div class="sp-dice-tray" id="spTray_' + id + '"></div>';
     list.appendChild(card);
   });
 }
 
-// ── Supply Roll ───────────────────────────────────────────────────────────────
-window.spRoll = function(callsign, itemId) {
-  if (spRolling) return;
-  var item = spItems[itemId];
-  if (!item) return;
-  var n = item.rating != null ? item.rating : item.maxRating;
-  if (n <= 0) return;
-  n = Math.min(n, 6);
-  spRolling = true;
-
-  var btn = document.getElementById('spRollBtn_' + itemId);
-  if (btn) btn.disabled = true;
-
-  // Roll N d6
-  var results = [];
-  for (var i = 0; i < n; i++) results.push(Math.floor(Math.random() * 6) + 1);
-  var aliens = results.filter(function(r) { return r === 1; }).length;
-  var newRating = Math.max(0, n - aliens);
-
-  spAnimateRoll(itemId, item.type || 'air', results, function() {
-    // Write to Firebase (3s after result shown — Firebase update clears the dice area)
-    set(ref(window.db, 'session/playerSupplies/' + callsign + '/' + itemId + '/rating'), newRating);
-    spRolling = false;
-    // Re-enable button immediately (in case Firebase doesn't re-fire for unchanged value)
-    setTimeout(function() {
-      var b = document.getElementById('spRollBtn_' + itemId);
-      if (b && newRating > 0) b.disabled = false;
-    }, 80);
+function spEsc(s) {
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
-};
-
-// ── Dice animation ────────────────────────────────────────────────────────────
-function spAnimateRoll(itemId, type, results, cb) {
-  var area = document.getElementById('spRollArea_' + itemId);
-  if (!area) { cb(); return; }
-  area.innerHTML = '';
-
-  // Create dice elements
-  var diceRow = document.createElement('div');
-  diceRow.className = 'sp-dice-row';
-  var dies = results.map(function() {
-    var d = document.createElement('div');
-    d.className = 'sp-die rolling';
-    d.textContent = '?';
-    diceRow.appendChild(d);
-    return d;
-  });
-  area.appendChild(diceRow);
-
-  // Spin phase (~500ms)
-  var spins = 0;
-  var spinInterval = setInterval(function() {
-    dies.forEach(function(d) { d.textContent = Math.floor(Math.random() * 6) + 1; });
-    spins++;
-    if (spins >= 8) {
-      clearInterval(spinInterval);
-      // Reveal final values one by one
-      results.forEach(function(val, i) {
-        setTimeout(function() {
-          var isAlien = val === 1;
-          dies[i].className = 'sp-die ' + (isAlien ? 'alien popped' : 'normal popped');
-          if (isAlien) {
-            dies[i].textContent = '';
-            dies[i].innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 27" width="22" height="30" style="display:block"><path d="M10 1C5.5 1 2 5.8 2 11.5c0 5.5 3 10.2 5.5 12.2V27h2v-2.5h1V27h2v-3.3C15 21.7 18 17 18 11.5 18 5.8 14.5 1 10 1z" fill="#1a0500" stroke="#ff6600" stroke-width="1.3"/><path d="M5 9.5q5-3.5 10 0" fill="none" stroke="#ff8833" stroke-width="0.9"/><path d="M4 13.5q6-4.5 12 0" fill="none" stroke="#ff8833" stroke-width="0.9"/><ellipse cx="7.5" cy="16" rx="2" ry="2.6" fill="#ff4400"/><ellipse cx="12.5" cy="16" rx="2" ry="2.6" fill="#ff4400"/></svg>';
-          } else {
-            dies[i].textContent = val;
-          }
-        }, i * 80);
-      });
-      // Show result text after all dice revealed, then wait 3s before Firebase write
-      setTimeout(function() {
-        var aliens = results.filter(function(r) { return r === 1; }).length;
-        var newRating = Math.max(0, results.length - aliens);
-        var resDiv = document.createElement('div');
-        if (aliens === 0) {
-          resDiv.className = 'sp-result-text good';
-          resDiv.textContent = 'NO ALIEN SYMBOLS — SUPPLY HOLDS';
-        } else if (newRating === 0) {
-          resDiv.className = 'sp-result-text dead';
-          resDiv.textContent = aliens + ' ALIEN SYMBOL' + (aliens > 1 ? 'S' : '') + ' — SUPPLY EXHAUSTED!';
-        } else {
-          resDiv.className = 'sp-result-text bad';
-          resDiv.textContent = aliens + ' ALIEN SYMBOL' + (aliens > 1 ? 'S' : '') + ' — RATING: ' + results.length + ' → ' + newRating;
-        }
-        area.appendChild(resDiv);
-        // Wait 3 seconds so player can read the result before Firebase re-renders the list
-        setTimeout(cb, 3000);
-      }, results.length * 80 + 150);
-    }
-  }, 60);
 }
 
 // ── Add item ──────────────────────────────────────────────────────────────────
 window.spAddItem = function() {
-  var name = (document.getElementById('spNewName').value || '').trim();
+  var el = document.getElementById('spNewName');
+  var name = ((el ? el.value : '') || '').trim().toUpperCase();
   if (!name) return;
-  var type = document.getElementById('spNewType').value;
-  push(ref(window.db, 'session/playerSupplies/' + window.myName), {
-    name: name, type: type, rating: spNewRating, maxRating: spNewRating
-  });
-  document.getElementById('spNewName').value = '';
-  spNewRating = 3;
-  spBuildRatingPicker();
+  push(ref(window.db, 'session/playerSupplies/' + window.myName), { name:name, pts:3, max:6 });
+  if (el) { el.value = ''; el.focus(); }
+  spBeep(900, 30);
 };
 
-// ── Delete item ───────────────────────────────────────────────────────────────
+// ── Delete ────────────────────────────────────────────────────────────────────
 window.spDelete = function(callsign, itemId) {
   remove(ref(window.db, 'session/playerSupplies/' + callsign + '/' + itemId));
+  spBeep(400, 40);
 };
 
-// ── Rating picker for add-form ────────────────────────────────────────────────
-function spBuildRatingPicker() {
-  var picker = document.getElementById('spRatingPicker');
-  if (!picker) return;
-  picker.innerHTML = '';
-  for (var i = 1; i <= 6; i++) {
-    (function(val) {
-      var dot = document.createElement('div');
-      dot.className = 'sp-pick-dot ' + (val <= spNewRating ? 'sel-air' : 'unsel');
-      dot.title = 'Rating ' + val;
-      dot.onclick = function() {
-        spNewRating = val;
-        // Update color based on current type selection
-        var type = document.getElementById('spNewType').value;
-        spUpdatePickerColor(type);
-      };
-      picker.appendChild(dot);
-    })(i);
+// ── Stepper ───────────────────────────────────────────────────────────────────
+window.spChangePts = function(callsign, itemId, dir) {
+  var raw = spItems[itemId]; if (!raw) return;
+  var item = spNorm(raw);
+  var next = Math.max(0, Math.min(item.max, item.pts + dir));
+  if (next === item.pts) return;
+  set(ref(window.db, 'session/playerSupplies/' + callsign + '/' + itemId + '/pts'), next);
+  spBeep(820, 30);
+};
+
+// ── Roll ──────────────────────────────────────────────────────────────────────
+window.spRoll = function(callsign, itemId) {
+  if (spRolling[itemId]) return;
+  var raw = spItems[itemId]; if (!raw) return;
+  var item = spNorm(raw);
+  if (item.pts <= 0) return;
+
+  spRolling[itemId] = true;
+  spBeep(820, 40);
+
+  var N = item.pts, finals = [];
+  for (var i = 0; i < N; i++) finals.push(spD6());
+
+  var tray = document.getElementById('spTray_' + itemId);
+  if (!tray) { spRolling[itemId] = false; return; }
+  tray.classList.add('active');
+
+  var shuffleCount = 0;
+  function shuffle() {
+    tray.innerHTML = finals.map(function() { return spDieHTML(spD6(), 'rolling'); }).join('');
+    if (++shuffleCount < 10) { setTimeout(shuffle, 80); return; }
+    // Lock one by one
+    var idx = 0;
+    function lockNext() {
+      if (idx >= N) {
+        // All locked — apply verdict
+        tray.innerHTML = finals.map(function(v) { return spDieHTML(v, v===1?'locked':''); }).join('');
+        var ones   = finals.filter(function(v) { return v===1; }).length;
+        var newPts = Math.max(0, item.pts - ones);
+        var verdict, vclass;
+        if      (ones === 0)  { verdict = 'HOLDING // LVL ' + item.pts; vclass = 'hold'; }
+        else if (newPts === 0){ verdict = 'DEPLETED'; vclass = 'dep'; spBeep(180, 400, 0.05); }
+        else                  { verdict = 'DRAIN −' + ones + ' // LVL ' + newPts; vclass = 'drain'; spBeep(320, 120, 0.05); }
+        tray.insertAdjacentHTML('beforeend',
+          '<div class="sp-roll-verdict ' + vclass + '">› ' + verdict + '</div>');
+
+        // Flash drained pips before Firebase re-renders
+        if (ones > 0) {
+          var ph = document.getElementById('spPips_' + itemId);
+          if (ph) {
+            var onPips = Array.prototype.slice.call(ph.querySelectorAll('.sp-pip.on'));
+            for (var k = onPips.length - 1; k >= onPips.length - ones && k >= 0; k--)
+              onPips[k].classList.add('justDrained');
+          }
+        }
+
+        // After display delay: write to Firebase (triggers re-render) or re-render locally
+        setTimeout(function() {
+          spRolling[itemId] = false;
+          if (ones > 0) {
+            set(ref(window.db, 'session/playerSupplies/' + callsign + '/' + itemId + '/pts'), newPts);
+          } else {
+            spRenderItems(callsign);
+          }
+        }, ones === 0 ? 1400 : 2000);
+        return;
+      }
+      tray.innerHTML = finals.map(function(v, i) {
+        return i <= idx ? spDieHTML(v, v===1?'locked':'') : spDieHTML(spD6(), 'rolling');
+      }).join('');
+      spBeep(finals[idx] === 1 ? 220 : 500 + finals[idx] * 60, 25, 0.03);
+      idx++;
+      setTimeout(lockNext, 90);
+    }
+    lockNext();
   }
-}
+  shuffle();
+};
 
-function spUpdatePickerColor(type) {
-  var dots = document.querySelectorAll('#spRatingPicker .sp-pick-dot');
-  dots.forEach(function(d, i) {
-    d.className = 'sp-pick-dot ' + ((i + 1) <= spNewRating ? 'sel-' + type : 'unsel');
-  });
-}
-
-// Re-color picker when type changes
+// Enter key for prompt input
 document.addEventListener('DOMContentLoaded', function() {
-  var typeSelect = document.getElementById('spNewType');
-  if (typeSelect) typeSelect.addEventListener('change', function() {
-    spUpdatePickerColor(this.value);
+  var inp = document.getElementById('spNewName');
+  if (inp) inp.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); window.spAddItem(); }
   });
 });
 
-window.startSupplyPanel = function() {
-  // Nothing to pre-load; panel opens on demand
-};
+window.startSupplyPanel = function() {};
 // ── END SUPPLY ROLL PANEL ─────────────────────────────────────────────────────
 
 // ══════════════════════════════════════════════════════════════════════════════

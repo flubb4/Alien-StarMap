@@ -266,24 +266,38 @@
 <!-- SUPPLY ROLL PANEL -->
 <div id="supplyPanel">
   <div class="sp-header">
-    <span class="sp-title">// SUPPLY ROLLS</span>
-    <div class="sp-tabs" id="spTabs"></div>
-    <button class="sp-close-btn" onclick="closeSupplyPanel()">✕ CLOSE</button>
+    <div class="sp-header-left">
+      <div class="sp-tabs" id="spTabs"></div>
+    </div>
+    <div class="sp-header-center">
+      <div class="sp-muthur-mark">MU/TH/UR 6000</div>
+      <div class="sp-muthur-sub">SUPPLY ROLL TERMINAL</div>
+    </div>
+    <div class="sp-header-right">
+      <button class="sp-close-btn" onclick="closeSupplyPanel()">✕ CLOSE</button>
+    </div>
   </div>
   <div class="sp-body">
-    <div id="spItemList"></div>
-    <div class="sp-add-section" id="spAddSection">
-      <div class="sp-add-title">// ADD SUPPLY ITEM</div>
-      <div class="sp-add-row">
-        <input class="sp-add-name" id="spNewName" placeholder="Item name (z.B. IRC Mk.50, M41A, M314)">
-        <select class="sp-add-type" id="spNewType">
-          <option value="air">🌬 AIR</option>
-          <option value="ammo">🔫 AMMO</option>
-          <option value="power">⚡ POWER</option>
-        </select>
-        <div class="sp-rating-picker" id="spRatingPicker"></div>
-        <button class="sp-add-btn" onclick="spAddItem()">+ ADD</button>
+    <div class="sp-inner">
+      <span class="sp-corner tl"></span>
+      <span class="sp-corner tr"></span>
+      <span class="sp-corner bl"></span>
+      <span class="sp-corner br"></span>
+      <div id="spAddSection">
+        <div class="sp-prompt">
+          <div class="sp-prompt-chevron">&gt;_</div>
+          <input id="spNewName" class="sp-prompt-input" type="text" maxlength="40"
+                 placeholder="SUPPLY NAME — E.G. RATIONS, 10MM CASELESS, FUEL…" autocomplete="off">
+          <button id="spItemOk" class="sp-prompt-ok" type="button" onclick="spAddItem()">[ OK ]</button>
+        </div>
+        <div class="sp-prompt-hint">AUTH: CREW // ENTER OR [ OK ] TO REGISTER NEW SUPPLY ITEM</div>
       </div>
+      <div class="sp-list-head">
+        <div class="sp-list-title">◆ TRACKED SUPPLIES</div>
+        <div class="sp-list-count" id="spListCount">0 ITEMS</div>
+      </div>
+      <div class="sp-items" id="spItemList"></div>
+      <div class="sp-footer-mark">BUILDING BETTER WORLDS</div>
     </div>
   </div>
 </div>

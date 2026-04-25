@@ -230,7 +230,7 @@
       0 0 0 5px #080706,
       0 0 0 6px rgba(0,20,0,0.3);
     animation:crtFlicker 8s infinite;
-    transform:translateZ(0);
+    will-change:opacity;
   }
 
   /* Scanlines */

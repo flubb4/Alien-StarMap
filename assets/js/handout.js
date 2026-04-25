@@ -149,7 +149,7 @@ function crtShow(text) {
       // Append the chunk we're behind on as ONE nodeValue update
       textNode.nodeValue += text.slice(i, target);
       i = target;
-      body.scrollTop = body.scrollHeight; // single forced layout per frame
+      body.scrollTop = 999999; // single forced layout per frame
     }
     if (i >= len) {
       crtRAF    = null;

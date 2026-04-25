@@ -127,6 +127,7 @@
   .crt-monitor-wrap {
     display:flex; flex-direction:column; align-items:center;
     max-height:96vh;
+    will-change:transform;
   }
 
   /* ── Plastic bezel — aged 1979 cream-olive industrial plastic ── */

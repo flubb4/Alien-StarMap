@@ -320,7 +320,7 @@ window.checkPassword = async function() {
   window.isGM = isGM;
 
   // Non-GM trying to log in while session is closed
-  if (!isGM && sessionIsOpen === false) {
+  if (!isGM && window.sessionIsOpen === false) {
     err.textContent = 'SESSION OFFLINE — AWAIT GM';
     pwInput.classList.add('error');
     pwInput.value = '';
@@ -373,8 +373,8 @@ function _doLogin(nameUpper) {
   if (isGM) {
     _authReadyPromise.then(() => remove(ref(db, 'wuerfelduerfel')));
   }
-  if (isGM && !sessionIsOpen) {
-    set(sessionRef, true);
+  if (isGM && !window.sessionIsOpen) {
+    set(window.sessionRef, true);
     set(ref(db, 'session/openedAt'), Date.now());
   }
 
@@ -398,7 +398,7 @@ function _doLogin(nameUpper) {
   screen.style.transition = 'opacity 0.6s ease';
   screen.style.opacity = '0';
   _authReadyPromise.then(() => {
-    setTimeout(() => { screen.remove(); scans.remove(); _loggedIn = true; heartbeat(); renderDate(); applySessionGateAfterLogin(); updateSessionBtn(); bvInit(); startGlobalIbWatcher(); startHandoutWatcher(); startSupplyPanel(); startRationsPanel(); startXPChestWatcher(); }, 300);
+    setTimeout(() => { screen.remove(); scans.remove(); _loggedIn = true; heartbeat(); window.renderDate?.(); window.applySessionGateAfterLogin?.(); window.updateSessionBtn?.(); window.bvInit?.(); startGlobalIbWatcher(); startHandoutWatcher(); startSupplyPanel(); startRationsPanel(); startXPChestWatcher(); }, 300);
   });
 }
 
@@ -464,6 +464,7 @@ onAuthStateChanged(auth, user => {
 const MAP_W = 3200, MAP_H = 2067;
 
 let markers = {};   // keyed by id
+window.markers = markers;
 let selectedType  = 'colony';
 let selectedColor = '#00e5ff';
 let pendingClick  = null;
@@ -476,6 +477,8 @@ let panStart = null;
 
 const typeIcons  = {colony:'🏭',hazard:'☢',ship:'🚀',ruin:'💀',resource:'⚡',enemy:'👾',note:'📡',mission:'🎯'};
 const typeLabels = {colony:'COLONY',hazard:'HAZARD',ship:'VESSEL',ruin:'RUINS',resource:'RESOURCE',enemy:'HOSTILE',note:'SIGNAL',mission:'MISSION'};
+window.typeIcons  = typeIcons;
+window.typeLabels = typeLabels;
 
 document.getElementById('myName').textContent = myName;
 
@@ -483,6 +486,7 @@ document.getElementById('myName').textContent = myName;
 const canvas = document.getElementById('mapCanvas');
 const ctx    = canvas.getContext('2d');
 const wrap   = document.getElementById('mapWrap');
+window.getMapState = function() { return { ctx, viewScale }; };
 
 const mapImg = new Image();
 mapImg.src = 'assets/images/starmap.jpg';
@@ -493,6 +497,7 @@ function resize() {
   canvas.height = wrap.clientHeight;
   draw();
 }
+window.resize = resize;
 window.addEventListener('resize', resize);
 
 function fitMap() {
@@ -507,6 +512,7 @@ function fitMap() {
 // ---- Firebase live listener ----
 onValue(markersRef, snapshot => {
   markers = snapshot.val() || {};
+  window.markers = markers;
   draw();
   updateSidebar();
   flashSync();
@@ -536,7 +542,7 @@ onValue(usersRef, snapshot => {
       ${isMe ? '<div class="player-you">YOU</div>' : ''}
     </div>`;
   }).join('');
-  updateCaptainUI();
+  if (window.updateCaptainUI) window.updateCaptainUI();
 });
 
 function flashSync() {
@@ -556,12 +562,13 @@ function draw() {
   ctx.scale(viewScale, viewScale);
   if (mapImg.complete) ctx.drawImage(mapImg, 0, 0, MAP_W, MAP_H);
   Object.values(markers).forEach(drawMarker);
-  drawRouteLine();
-  drawDistanceLine();
-  drawShipPosition();
-  drawTravelingShip();
+  if (window.drawRouteLine)    window.drawRouteLine();
+  if (window.drawDistanceLine) window.drawDistanceLine();
+  if (window.drawShipPosition) window.drawShipPosition();
+  if (window.drawTravelingShip) window.drawTravelingShip();
   ctx.restore();
 }
+window.draw = draw;
 
 function drawMarker(m) {
   const x = m.x, y = m.y;
@@ -695,7 +702,7 @@ function confirmMarker() {
 }
 window.confirmMarker = confirmMarker;
 
-document.getElementById('travelTo')?.addEventListener('change', updateTravelBtn);
+document.getElementById('travelTo')?.addEventListener('change', () => window.updateTravelBtn?.());
 document.getElementById('modal').addEventListener('keydown', e=>{
   if (e.key==='Enter'&&!e.shiftKey) confirmMarker();
   if (e.key==='Escape') cancelMarker();
@@ -714,9 +721,9 @@ window.selectColor = function(sw) {
 
 // ---- Sidebar ----
 function updateSidebar() {
-  updateDistanceDropdowns();
-  updateTravelDropdowns();
-  updateTravelBtn();
+  if (window.updateDistanceDropdowns) window.updateDistanceDropdowns();
+  if (window.updateTravelDropdowns)   window.updateTravelDropdowns();
+  if (window.updateTravelBtn)         window.updateTravelBtn();
   const list=document.getElementById('markersList');
   const arr=Object.values(markers);
   document.getElementById('markerCount').textContent=arr.length;

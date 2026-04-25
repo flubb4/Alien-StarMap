@@ -188,3 +188,4 @@ function bvInit() {
   bvInitFirebase();
   bvGetUnlocked(bvUpdateBtnState);
 }
+window.bvInit = bvInit;

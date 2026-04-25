@@ -908,6 +908,7 @@ function renderPickTable(area, data, now) {
 // SESSION OPEN/CLOSE SYSTEM
 // ============================================================
 const sessionRef    = ref(window.db, 'session/isOpen');
+window.sessionRef = sessionRef;
 const sessionOpenRef = ref(window.db, 'session/openedAt');
 let   sessionOpenedAt = 0;
 
@@ -915,11 +916,13 @@ onValue(sessionOpenRef, snap => {
   sessionOpenedAt = snap.val() || 0;
 });
 let sessionIsOpen = null; // null = unknown (loading)
+window.sessionIsOpen = null;
 let myLoginData   = null; // store login data until session confirmed open
 
 onValue(sessionRef, snap => {
   const wasOpen = sessionIsOpen;
   sessionIsOpen = snap.val(); // true = open, false/null = closed
+  window.sessionIsOpen = sessionIsOpen;
 
   if (sessionIsOpen === false) {
     // Session closed — show closed screen for non-GM
@@ -977,6 +980,8 @@ function applySessionGateAfterLogin() {
     document.getElementById('mapWrap').style.opacity = '0.4';
   }
 }
+window.applySessionGateAfterLogin = applySessionGateAfterLogin;
+window.updateSessionBtn = updateSessionBtn;
 
 // ============================================================
 // INTERCEPTION SYSTEM — USCSS CLUNKKYNOOST
@@ -1124,7 +1129,7 @@ function showInterceptAlert(data) {
   // Place a hazard marker at intercept point (visible on map)
   if (data.x && data.y) {
     const iid = 'intercept_' + data.ts;
-    if (!markers[iid]) {
+    if (!window.markers[iid]) {
       set(ref(window.db, 'markers/' + iid), {
         id: iid,
         x: data.x, y: data.y,
@@ -1228,6 +1233,7 @@ function renderDate() {
   const initBtn = document.getElementById('initViewBtn');
   if (initBtn) initBtn.style.display = '';
 }
+window.renderDate = renderDate;
 
 window.openDateModal = function() {
   if (!window.isGM) return;
@@ -1290,7 +1296,7 @@ onValue(captainRef, snap => {
   const listEl = document.getElementById('playersList');
   if (listEl) {
     // trigger re-render by re-running last users snapshot — just redraw
-    draw();
+    window.draw();
   }
 });
 
@@ -1301,13 +1307,13 @@ onValue(positionRef, snap => {
   updateTravelDropdowns();
   updateDistanceDropdowns();
   updateTravelBtn();
-  draw();
+  window.draw();
 });
 
 onValue(routeRef, snap => {
   currentRoute = snap.val() || null;
   updateTravelDropdownsFromRoute();
-  draw();
+  window.draw();
 });
 
 onValue(travelRef, snap => {
@@ -1323,6 +1329,7 @@ function updateCaptainUI() {
   if (panel) panel.style.display = isCaptain ? '' : 'none';
   updateTravelBtn();
 }
+window.updateCaptainUI = updateCaptainUI;
 
 window.setCaptain = function(name) {
   if (!window.isGM) return; // only GM can assign captain
@@ -1367,6 +1374,7 @@ window.openModal = function(x, y) {
 
 function drawShipPosition() {
   if (!shipPosition) return;
+  const { ctx, viewScale } = window.getMapState();
   const x = shipPosition.x, y = shipPosition.y;
   const r = 16/viewScale;
 
@@ -1418,6 +1426,7 @@ function drawShipPosition() {
 // ============================================================
 function drawRouteLine() {
   if (!currentRoute) return;
+  const { ctx, viewScale } = window.getMapState();
   let a, b;
   if (currentRoute.shipFrom) {
     // Route from ship's current position (or travel destination)
@@ -1425,9 +1434,9 @@ function drawRouteLine() {
     if (!pos) return;
     a = pos;
   } else {
-    a = markers[currentRoute.fromId];
+    a = window.markers[currentRoute.fromId];
   }
-  b = markers[currentRoute.toId];
+  b = window.markers[currentRoute.toId];
   if (!a || !b) return;
 
   ctx.save();
@@ -1475,7 +1484,7 @@ function animateShip() {
   _animShipX = travelState.fromX + (travelState.toX - travelState.fromX) * t;
   _animShipY = travelState.fromY + (travelState.toY - travelState.fromY) * t;
 
-  draw();
+  window.draw();
 
   if (elapsed < travelState.durationMs) {
     animFrame = requestAnimationFrame(animateShip);
@@ -1490,12 +1499,13 @@ function animateShip() {
     }
     travelState = null;
     updateTravelStatus();
-    draw();
+    window.draw();
   }
 }
 
 function drawTravelingShip() {
   if (_animShipX === null) return;
+  const { ctx, viewScale } = window.getMapState();
   const x = _animShipX, y = _animShipY;
   const r = 14/viewScale;
 
@@ -1564,7 +1574,7 @@ window.startTravel = function() {
     document.getElementById('travelStatus').textContent='SELECT DESTINATION';
     return;
   }
-  const b = markers[toId];
+  const b = window.markers[toId];
   if (!b) return;
   const a = shipPosition; // always start from ship's current position
 
@@ -1618,6 +1628,7 @@ function updateTravelBtn() {
   const ready = isCap && shipPosition && toV;
   btn.className = 'travel-btn' + (ready?' enabled':'');
 }
+window.updateTravelBtn = updateTravelBtn;
 
 function updateTravelDropdownsFromRoute() {
   if (!currentRoute) return;
@@ -1639,7 +1650,7 @@ let distFromId = null;
 let distToId   = null;
 
 function updateTravelDropdowns() {
-  const arr = Object.values(markers).sort((a,b)=>a.name.localeCompare(b.name));
+  const arr = Object.values(window.markers).sort((a,b)=>a.name.localeCompare(b.name));
   const opts = '<option value="">— Destination —</option>' +
     arr.map(m=>`<option value="${m.id}">${m.name.toUpperCase()}</option>`).join('');
   const t=document.getElementById('travelTo');
@@ -1660,7 +1671,7 @@ function updateTravelDropdowns() {
 }
 
 function updateDistanceDropdowns() {
-  const arr = Object.values(markers).sort((a,b) => a.name.localeCompare(b.name));
+  const arr = Object.values(window.markers).sort((a,b) => a.name.localeCompare(b.name));
   const fromSel = document.getElementById('distFrom');
   const toSel   = document.getElementById('distTo');
   const prevFrom = fromSel.value;
@@ -1669,7 +1680,7 @@ function updateDistanceDropdowns() {
   const shipOpt = shipPosition
     ? '<option value="__ship__">🚀 CM-90S CORVUS (SHIP)</option>'
     : '';
-  const markerOpts = arr.map(m => `<option value="${m.id}">${m.name.toUpperCase()} (${typeLabels[m.type]})</option>`).join('');
+  const markerOpts = arr.map(m => `<option value="${m.id}">${m.name.toUpperCase()} (${window.typeLabels[m.type]})</option>`).join('');
   const opts = '<option value="">— Select —</option>' + shipOpt + markerOpts;
 
   fromSel.innerHTML = opts;
@@ -1678,6 +1689,8 @@ function updateDistanceDropdowns() {
   if (prevFrom) fromSel.value = prevFrom;
   if (prevTo)   toSel.value   = prevTo;
 }
+window.updateTravelDropdowns = updateTravelDropdowns;
+window.updateDistanceDropdowns = updateDistanceDropdowns;
 
 window.calculateDistance = function() {
   const fromId = document.getElementById('distFrom').value;
@@ -1688,8 +1701,8 @@ window.calculateDistance = function() {
   }
   distFromId = fromId;
   distToId   = toId;
-  const a = (fromId === '__ship__') ? shipPosition : markers[fromId];
-  const b = (toId   === '__ship__') ? shipPosition : markers[toId];
+  const a = (fromId === '__ship__') ? shipPosition : window.markers[fromId];
+  const b = (toId   === '__ship__') ? shipPosition : window.markers[toId];
   if (!a || !b) return;
 
   const dx = b.x - a.x;
@@ -1713,7 +1726,7 @@ window.calculateDistance = function() {
   document.getElementById('distExtra').textContent = 'CM-90S CORVUS (FTL 20): ≈ ' + timeStr;
 
   document.getElementById('distResult').classList.add('visible');
-  draw(); // redraw to show/update line
+  window.draw(); // redraw to show/update line
 };
 
 window.toggleDistLine = function() {
@@ -1721,14 +1734,15 @@ window.toggleDistLine = function() {
   const btn = document.getElementById('distLineBtn');
   btn.textContent = 'Show Line: ' + (distLineActive ? 'ON' : 'OFF');
   btn.classList.toggle('active', distLineActive);
-  draw();
+  window.draw();
 };
 
 // Draw distance line on canvas (called inside draw())
 function drawDistanceLine() {
   if (!distLineActive || !distFromId || !distToId) return;
-  const a = (distFromId === '__ship__') ? shipPosition : markers[distFromId];
-  const b = (distToId   === '__ship__') ? shipPosition : markers[distToId];
+  const { ctx, viewScale } = window.getMapState();
+  const a = (distFromId === '__ship__') ? shipPosition : window.markers[distFromId];
+  const b = (distToId   === '__ship__') ? shipPosition : window.markers[distToId];
   if (!a || !b) return;
 
   const ax = a.x, ay = a.y;
@@ -1768,8 +1782,13 @@ function drawDistanceLine() {
   ctx.restore();
 }
 
+window.drawShipPosition  = drawShipPosition;
+window.drawRouteLine     = drawRouteLine;
+window.drawTravelingShip = drawTravelingShip;
+window.drawDistanceLine  = drawDistanceLine;
+
 // ---- Init ----
-resize();
+window.resize();
 
 // ═══════════════════════════════════════════════════════════════
 //  CLUNKKYNOOST TRADE TERMINAL — v2.0

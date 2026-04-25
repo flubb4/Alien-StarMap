@@ -1,0 +1,379 @@
+import { ref, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ════════════════════════════════════════════════════════════════
+// CHARACTER SHEET SYSTEM
+// Firebase path: characters/{playerName}/
+// ════════════════════════════════════════════════════════════════
+
+let _csViewingPlayer = null;
+let _csDebounce      = {};
+let _csAllSheets     = {};
+const _CS_MS         = 300;
+
+// ── Open / close ──────────────────────────────────────────────────
+window.openCharSheet = function() {
+  _csViewingPlayer = window.myName;
+  document.getElementById('charSheetOverlay').classList.add('open');
+  const tabs = document.getElementById('csPlayerTabs');
+  if (window.isGM) { tabs.style.display = 'flex'; _csRebuildTabs(); }
+  else       { tabs.style.display = 'none'; }
+  _csSubscribe(window.myName);
+};
+
+window.closeCharSheet = function() {
+  document.getElementById('charSheetOverlay').classList.remove('open');
+};
+
+// ── GM player tabs ────────────────────────────────────────────────
+window.csViewPlayer = function(name) {
+  _csViewingPlayer = name;
+  document.querySelectorAll('.cs-player-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.player === name));
+  _csSubscribe(name);
+};
+
+function _csRebuildTabs() {
+  const tabs = document.getElementById('csPlayerTabs');
+  if (!tabs) return;
+  const names = new Set([window.myName]);
+  if (window._onlinePlayers) window._onlinePlayers.forEach(n => names.add(n));
+  Object.keys(_csAllSheets).forEach(n => names.add(n));
+  tabs.innerHTML = [...names].sort().map(n =>
+    `<button class="cs-player-tab ${n===_csViewingPlayer?'active':''}"
+      data-player="${n}" onclick="csViewPlayer('${n}')">${n}</button>`
+  ).join('');
+}
+
+// ── Subscribe to a player's sheet in Firebase ─────────────────────
+const _csSubs = {};
+function _csSubscribe(playerName) {
+  // Always render immediately with whatever we have (empty sheet on first open)
+  _csRender(playerName, _csAllSheets[playerName] || {});
+
+  if (_csSubs[playerName]) return; // already listening
+  _csSubs[playerName] = true;
+
+  // Sync with Firebase
+  onValue(ref(window.db, 'characters/' + playerName), snap => {
+    const data = snap.val() || {};
+    _csAllSheets[playerName] = data;
+    if (_csViewingPlayer === playerName) {
+      const body = document.getElementById('csBody');
+      const overlay = document.getElementById('charSheetOverlay');
+      const sheetOpen = overlay && overlay.classList.contains('open');
+      if (!sheetOpen) return; // don't touch DOM if sheet isn't visible
+
+      const active = document.activeElement;
+      const userFocused = body && body.contains(active);
+      if (userFocused) {
+        // User is active — do a light targeted patch (skip focused field)
+        _csPatchFields(playerName, data, active);
+      } else {
+        // No focus — safe to do a full re-render
+        _csRender(playerName, data);
+      }
+    }
+    if (window.isGM) _csRebuildTabs();
+  }, err => {
+    console.warn('Character sheet Firebase error:', err.message);
+  });
+}
+
+// ── Save helpers (on window so event delegation can reach them) ───
+window._csSave = function(playerName, path, value) {
+  // Optimistic local update — navigate by dots so _csGet can read it back
+  if (!_csAllSheets[playerName]) _csAllSheets[playerName] = {};
+  const parts = path.split('.');
+  let obj = _csAllSheets[playerName];
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (!obj[parts[i]]) obj[parts[i]] = {};
+    obj = obj[parts[i]];
+  }
+  obj[parts[parts.length - 1]] = value;
+  // Firebase path uses / as separator so snap.val() returns nested objects
+  // that match the dot-navigation in _csGet
+  set(ref(window.db, 'characters/' + playerName + '/' + path.split('.').join('/')), value);
+};
+window._csDB = function(playerName, path, value) {
+  const key = playerName + '\x01' + path;
+  clearTimeout(_csDebounce[key]);
+  _csDebounce[key] = setTimeout(() => window._csSave(playerName, path, value), _CS_MS);
+};
+
+
+// ── Helper: nested path getter ────────────────────────────────────
+function _csGet(obj, path) {
+  return path.split('.').reduce((o, k) => (o && o[k] !== undefined ? o[k] : ''), obj) || '';
+}
+function _esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Render ────────────────────────────────────────────────────────
+function _csRender(pn, data) {
+  const body = document.getElementById('csBody');
+  if (!body) return;
+  const ro = window.isGM && pn !== window.myName;
+
+  // Text input
+  const fi = (path, ph='') =>
+    `<input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
+      value="${_esc(_csGet(data,path))}" placeholder="${ph}">`;
+
+  // Textarea
+  const ta = (path, ph='', rows=2) =>
+    `<textarea class="cs-inp" rows="${rows}" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
+      placeholder="${ph}">${_esc(_csGet(data,path))}</textarea>`;
+
+  // Number/small input
+  const ni = (path, w=36) =>
+    `<input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
+      value="${_esc(_csGet(data,path))}" style="width:${w}px;text-align:center">`;
+
+  // Attribute score box
+  const as = (path) =>
+    `<input class="cs-attr-score cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
+      value="${_esc(_csGet(data,path))}">`;
+
+  // Skill score
+  const ss = (path) =>
+    `<input class="cs-skill-score cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
+      value="${_esc(_csGet(data,path))}">`;
+
+  // Stress boxes
+  const stressLvl = parseInt(_csGet(data,'stressLevel')) || 0;
+  const stressBoxes = Array.from({length:10}, (_,i) =>
+    `<div class="cs-stress-box ${i<stressLvl?'filled':''} ${ro?'readonly':''}"
+      ${ro?'':` data-stress="${i+1}" data-pn="${pn}"`}>●</div>`
+  ).join('');
+
+  // Panic checkboxes
+  const PANICS = ['Aggravated','Catatonic','Deflated','Flee','Frantic','Freeze','Frenzy','Hesitant','Lose Item','Loud Noise','Paranoid','Scream','Seek Cover','Shakes'];
+  const panicBoxes = PANICS.map(p => {
+    const key = 'panic.' + p.replace(/\s/g,'_');
+    const chk = !!_csGet(data, key);
+    return `<label class="cs-panic-item">
+      <input type="checkbox" ${chk?'checked':''} ${ro?'disabled':''} class="cs-chk" data-pn="${pn}" data-path="${key}"> ${p}
+    </label>`;
+  }).join('');
+
+  // Death roll boxes
+  const dr = (path) => {
+    const filled = !!_csGet(data, path);
+    return `<div class="cs-dr-box ${filled?'filled':''} ${ro?'readonly':''}"
+      ${ro?'':` data-dr="${path}" data-pn="${pn}"`}>●</div>`;
+  };
+
+  // Weapon rows
+  const wrow = (i) => `<tr>
+    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.name"
+        value="${_esc(_csGet(data,'weapons.'+i+'.name'))}" placeholder="—"></td>
+    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.mod"
+        value="${_esc(_csGet(data,'weapons.'+i+'.mod'))}" style="width:34px"></td>
+    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.dmg"
+        value="${_esc(_csGet(data,'weapons.'+i+'.dmg'))}" style="width:34px"></td>
+    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.range"
+        value="${_esc(_csGet(data,'weapons.'+i+'.range'))}" style="width:46px"></td>
+    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.ammo"
+        value="${_esc(_csGet(data,'weapons.'+i+'.ammo'))}" style="width:34px"></td>
+    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.wt"
+        value="${_esc(_csGet(data,'weapons.'+i+'.wt'))}" style="width:34px"></td>
+  </tr>`;
+
+  // Gear rows
+  const grow = (i) => `<tr>
+    <td style="width:20px;text-align:center;color:#334433;font-size:9px">${i+1}</td>
+    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="gear.${i}.name"
+        value="${_esc(_csGet(data,'gear.'+i+'.name'))}" placeholder="—"></td>
+    <td style="width:60px"><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="gear.${i}.air"
+        value="${_esc(_csGet(data,'gear.'+i+'.air'))}" style="width:54px"></td>
+    <td style="width:50px"><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="gear.${i}.wt"
+        value="${_esc(_csGet(data,'gear.'+i+'.wt'))}" style="width:44px"></td>
+  </tr>`;
+
+  const fatChk = `<input type="checkbox" ${_csGet(data,'fatigued')?'checked':''} ${ro?'disabled':''} class="cs-chk"
+    data-pn="${pn}" data-path="fatigued" style="width:22px;height:22px;accent-color:#88cc44">`;
+
+  body.innerHTML = `
+    <div class="cs-section-title">// OPERATIVE PROFILE</div>
+    <div class="cs-field-row">
+      <div class="cs-field" style="flex:2"><label>NAME</label>${fi('name','Operative designation...')}</div>
+      <div class="cs-field" style="flex:2"><label>CAREER</label>${fi('career','Colonial Marine, Roughneck...')}</div>
+      <div class="cs-field" style="flex:1"><label>XP</label>${ni('xp',40)}</div>
+      <div class="cs-field" style="flex:1"><label>STORY PTS</label>${ni('storyPoints',40)}</div>
+    </div>
+    <div class="cs-field-row">
+      <div class="cs-field"><label>APPEARANCE</label>${ta('appearance','Physical description...',2)}</div>
+      <div class="cs-field"><label>PERSONAL AGENDA</label>${ta('agenda','What do you want...',2)}</div>
+    </div>
+    <div class="cs-field-row">
+      <div class="cs-field"><label>TALENTS</label>${ta('talents','Special abilities...',3)}</div>
+    </div>
+    <div class="cs-field-row">
+      <div class="cs-field"><label>BUDDY</label>${fi('buddy','Who do you trust?')}</div>
+      <div class="cs-field"><label>RIVAL</label>${fi('rival','Who do you hate?')}</div>
+    </div>
+    <div class="cs-field-row">
+      <div class="cs-field"><label>SIGNATURE ITEM</label>${fi('sigItem','Your most prized possession...')}</div>
+    </div>
+
+    <div class="cs-section-title">// ATTRIBUTES & SKILLS</div>
+    <div class="cs-attrs">
+      <div class="cs-attr-block">
+        <div class="cs-attr-name">STRENGTH ${as('attr.str')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">CLOSE COMBAT</span>${ss('skill.closeCombat')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">HEAVY MACHINERY</span>${ss('skill.heavyMachinery')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">STAMINA</span>${ss('skill.stamina')}</div>
+      </div>
+      <div class="cs-attr-block">
+        <div class="cs-attr-name">AGILITY ${as('attr.agi')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">MOBILITY</span>${ss('skill.mobility')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">PILOTING</span>${ss('skill.piloting')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">RANGED COMBAT</span>${ss('skill.rangedCombat')}</div>
+      </div>
+      <div class="cs-attr-block">
+        <div class="cs-attr-name">WITS ${as('attr.wit')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">COMTECH</span>${ss('skill.comtech')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">OBSERVATION</span>${ss('skill.observation')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">SURVIVAL</span>${ss('skill.survival')}</div>
+      </div>
+      <div class="cs-attr-block">
+        <div class="cs-attr-name">EMPATHY ${as('attr.emp')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">COMMAND</span>${ss('skill.command')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">MANIPULATION</span>${ss('skill.manipulation')}</div>
+        <div class="cs-skill-row"><span class="cs-skill-name">MEDICAL AID</span>${ss('skill.medicalAid')}</div>
+      </div>
+    </div>
+
+    <div class="cs-section-title">// CONDITION</div>
+    <div class="cs-stats" style="margin-bottom:12px">
+      <div class="cs-stat-box">
+        <div class="cs-stat-label">HEALTH</div>
+        <div class="cs-stat-val">${ni('health.cur',30)} <span class="cs-stat-sep">/</span> ${ni('health.max',30)}</div>
+      </div>
+      <div class="cs-stat-box">
+        <div class="cs-stat-label">RESOLVE</div>
+        <div class="cs-stat-val">${ni('resolve.cur',30)} <span class="cs-stat-sep">/</span> ${ni('resolve.max',30)}</div>
+      </div>
+      <div class="cs-stat-box"><div class="cs-stat-label">RADIATION</div><div class="cs-stat-val">${ni('radiation',36)}</div></div>
+      <div class="cs-stat-box">
+        <div class="cs-stat-label">ENCUMBRANCE</div>
+        <div class="cs-stat-val">${ni('encumb.cur',30)} <span class="cs-stat-sep">/</span> ${ni('encumb.max',30)}</div>
+      </div>
+      <div class="cs-stat-box"><div class="cs-stat-label">CASH ($)</div><div class="cs-stat-val">${ni('cash',60)}</div></div>
+      <div class="cs-stat-box"><div class="cs-stat-label">FATIGUED</div><div class="cs-stat-val">${fatChk}</div></div>
+    </div>
+
+    <div class="cs-section-title">// STRESS LEVEL <span class="cs-stress-label" style="color:#446633;font-size:9px;font-weight:normal">${stressLvl}/10</span></div>
+    <div class="cs-stress-row">${stressBoxes}</div>
+
+    <div class="cs-section-title">// STRESS &amp; PANIC RESPONSE</div>
+    <div class="cs-panic-grid">${panicBoxes}</div>
+
+    <div class="cs-section-title">// DEATH ROLLS</div>
+    <div class="cs-deathroll">
+      <div class="cs-dr-group"><div class="cs-dr-label">SUCCESSES</div>
+        <div class="cs-dr-boxes">${dr('dr.s1')}${dr('dr.s2')}${dr('dr.s3')}</div></div>
+      <div class="cs-dr-group"><div class="cs-dr-label">FAILURES</div>
+        <div class="cs-dr-boxes">${dr('dr.f1')}${dr('dr.f2')}${dr('dr.f3')}</div></div>
+    </div>
+
+    <div class="cs-section-title">// SERIOUS INJURIES &amp; MENTAL TRAUMA</div>
+    <textarea class="cs-injuries cs-inp" rows="3" ${ro?'readonly':''} data-pn="${pn}" data-path="injuries"
+      placeholder="List injuries and trauma...">${_esc(_csGet(data,'injuries'))}</textarea>
+
+    <div class="cs-section-title">// ARMOR</div>
+    <div class="cs-field-row">
+      <div class="cs-field" style="flex:3"><label>ARMOR NAME</label>${fi('armor.name','M3 Personnel Armor...')}</div>
+      <div class="cs-field" style="flex:1"><label>LEVEL</label>${ni('armor.level',40)}</div>
+      <div class="cs-field" style="flex:1"><label>WEIGHT</label>${ni('armor.weight',40)}</div>
+    </div>
+
+    <div class="cs-section-title">// WEAPONS</div>
+    <table class="cs-weapons">
+      <thead><tr><th>WEAPON</th><th>MOD</th><th>DMG</th><th>RANGE</th><th>AMMO</th><th>WT</th></tr></thead>
+      <tbody>${[0,1,2,3].map(wrow).join('')}</tbody>
+    </table>
+
+    <div class="cs-section-title">// GEAR</div>
+    <table class="cs-gear">
+      <thead><tr><th>#</th><th>ITEM</th><th>AIR/PWR</th><th>WT</th></tr></thead>
+      <tbody>${Array.from({length:10},(_,i)=>grow(i)).join('')}</tbody>
+    </table>
+
+    <div class="cs-section-title">// TINY ITEMS</div>
+    ${ta('tinyItems','Cigarettes, data tapes, drugs, cash...',2)}
+  `;
+
+}  // end _csRender
+
+// ── ONE-TIME event delegation on the overlay (never re-added) ───
+(function _csInitEvents() {
+  const overlay = document.getElementById('charSheetOverlay');
+  if (!overlay) { setTimeout(_csInitEvents, 200); return; }
+
+  // Text / textarea → debounced save (skip if readonly attr present)
+  overlay.addEventListener('input', e => {
+    const el = e.target;
+    if (el.hasAttribute('readonly')) return;
+    const pn = el.dataset.pn, path = el.dataset.path;
+    if (!pn || !path) return;
+    window._csDB(pn, path, el.value);
+  });
+
+  // Checkbox → immediate save
+  overlay.addEventListener('change', e => {
+    const el = e.target;
+    if (!el.classList.contains('cs-chk') || el.disabled) return;
+    const pn = el.dataset.pn, path = el.dataset.path;
+    if (!pn || !path) return;
+    window._csSave(pn, path, el.checked);
+  });
+
+  // Stress box OR death roll click — instant DOM update then Firebase save
+  overlay.addEventListener('click', e => {
+    // ── Stress ──
+    const sb = e.target.closest('.cs-stress-box:not(.readonly)');
+    if (sb) {
+      const pn = sb.dataset.pn, lvl = parseInt(sb.dataset.stress);
+      if (!pn) return;
+      const cur = parseInt(_csGet(_csAllSheets[pn]||{}, 'stressLevel')) || 0;
+      const next = (cur === lvl) ? lvl - 1 : lvl;
+      // Instant visual update — don't wait for Firebase
+      const row = sb.closest('.cs-stress-row') || sb.parentElement;
+      row.querySelectorAll('.cs-stress-box').forEach(box => {
+        const bi = parseInt(box.dataset.stress);
+        box.classList.toggle('filled', bi <= next);
+      });
+      // Update label if present
+      const lbl = sb.closest('.cs-body, #csBody')?.querySelector('.cs-stress-label');
+      if (lbl) lbl.textContent = next + '/10';
+      window._csSave(pn, 'stressLevel', next);
+      return;
+    }
+    // ── Death roll ──
+    const db2 = e.target.closest('.cs-dr-box:not(.readonly)');
+    if (db2) {
+      const pn = db2.dataset.pn, path = db2.dataset.dr;
+      if (!pn || !path) return;
+      const cur = !!_csGet(_csAllSheets[pn]||{}, path);
+      // Instant visual update
+      db2.classList.toggle('filled', !cur);
+      window._csSave(pn, path, !cur);
+    }
+  });
+})();
+
+// ── Track online players for GM tabs ─────────────────────────────
+onValue(ref(window.db, 'users'), snap => {
+  const data = snap.val() || {};
+  window._onlinePlayers = new Set(
+    Object.values(data)
+      .filter(u => u.name && !u.name.startsWith('OPERATIVE-'))
+      .map(u => u.name)
+  );
+  if (window.isGM && document.getElementById('csPlayerTabs') &&
+      document.getElementById('csPlayerTabs').style.display !== 'none') {
+    _csRebuildTabs();
+  }
+});

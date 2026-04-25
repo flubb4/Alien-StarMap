@@ -1,0 +1,289 @@
+/* ═══════════════════════════════════════════════════
+   WÜRFEL DÜRFEL — dice gambling minigame
+   ═══════════════════════════════════════════════════ */
+#wdOverlay {
+  position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:900;
+  display:none;align-items:center;justify-content:center;
+  font-family:"Share Tech Mono",monospace;
+}
+#wdOverlay.open { display:flex; }
+#wdContent {
+  width:min(1100px,98vw);max-height:96vh;overflow-y:auto;
+  background:#080400;border:2px solid #cc6633;
+  box-shadow:0 0 60px rgba(204,102,51,0.35);
+  padding:24px;position:relative;
+}
+#wdContent::-webkit-scrollbar{width:4px}
+#wdContent::-webkit-scrollbar-thumb{background:#cc6633}
+.wd-close-btn {
+  position:absolute;top:12px;right:14px;background:transparent;
+  border:1px solid #cc6633;color:#cc6633;font-family:inherit;
+  font-size:10px;padding:5px 12px;cursor:pointer;letter-spacing:2px;
+}
+.wd-close-btn:hover{background:rgba(204,102,51,0.15)}
+.wd-title {
+  text-align:center;font-size:22px;letter-spacing:8px;color:#ff9944;
+  text-shadow:0 0 20px rgba(255,153,68,0.6);text-transform:uppercase;
+  margin-bottom:4px;
+}
+.wd-subtitle {
+  text-align:center;font-size:9px;letter-spacing:4px;color:#885522;
+  margin-bottom:20px;text-transform:uppercase;
+}
+/* LOBBY */
+.wd-lobby { display:flex;flex-direction:column;gap:18px; }
+.wd-lobby-fighters { display:flex;gap:14px;justify-content:center;flex-wrap:wrap; }
+.wd-fighter-slot {
+  flex:1;min-width:180px;max-width:260px;border:1px solid #441100;
+  padding:14px;background:#0d0500;text-align:center;
+}
+.wd-fighter-slot.filled { border-color:#ff9944;box-shadow:0 0 10px rgba(255,153,68,0.2); }
+.wd-fighter-slot-label { font-size:8px;letter-spacing:3px;color:#885522;margin-bottom:8px; }
+.wd-fighter-name { font-size:16px;color:#ff9944;letter-spacing:2px;min-height:22px; }
+.wd-lobby-users { display:flex;flex-wrap:wrap;gap:8px;justify-content:center; }
+.wd-user-chip {
+  padding:7px 14px;border:1px solid #441100;background:#0d0500;
+  color:#cc8844;font-size:11px;letter-spacing:2px;cursor:pointer;
+  transition:all 0.15s;
+}
+.wd-user-chip:hover { border-color:#ff9944;color:#ff9944; }
+.wd-user-chip.p1 { border-color:#ff9944;background:rgba(255,153,68,0.12);color:#ff9944; }
+.wd-user-chip.p2 { border-color:#ff6622;background:rgba(255,102,34,0.12);color:#ff6622; }
+/* MODE CARDS */
+.wd-mode-row { display:flex;gap:14px;justify-content:center;flex-wrap:wrap; }
+.wd-mode-card {
+  flex:1;min-width:200px;max-width:320px;border:1px solid #441100;
+  padding:16px;background:#0d0500;cursor:pointer;transition:all 0.15s;
+}
+.wd-mode-card:hover,.wd-mode-card.active {
+  border-color:#ff9944;box-shadow:0 0 12px rgba(255,153,68,0.25);
+}
+.wd-mode-card.active { background:rgba(255,153,68,0.07); }
+.wd-mode-card h3 { font-size:13px;letter-spacing:3px;color:#ff9944;margin-bottom:6px; }
+.wd-mode-card p { font-size:9px;color:#885522;line-height:1.6;letter-spacing:1px; }
+.wd-start-btn {
+  width:100%;padding:14px;background:transparent;border:2px solid #ff9944;
+  color:#ff9944;font-family:inherit;font-size:14px;letter-spacing:6px;
+  cursor:pointer;text-transform:uppercase;transition:all 0.2s;
+}
+.wd-start-btn:hover:not(:disabled) { background:rgba(255,153,68,0.12);box-shadow:0 0 20px rgba(255,153,68,0.3); }
+.wd-start-btn:disabled { border-color:#441100;color:#441100;cursor:not-allowed; }
+/* WAITING screen */
+.wd-waiting {
+  text-align:center;padding:60px 20px;color:#885522;
+  font-size:14px;letter-spacing:4px;
+}
+/* BETTING LAYOUT */
+.wd-bet-layout {
+  display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start;
+}
+.wd-board {
+  border:1px solid #441100;padding:16px;background:#0d0500;
+}
+.wd-board.my-board { border-color:#cc6633; }
+.wd-board.locked { border-color:#44aa44;box-shadow:0 0 8px rgba(68,170,68,0.2); }
+.wd-board-name { font-size:13px;letter-spacing:3px;color:#ff9944;margin-bottom:6px; }
+.wd-board-dice {
+  font-size:28px;color:#ff9944;text-align:center;
+  text-shadow:0 0 12px rgba(255,153,68,0.5);margin:8px 0;
+}
+.wd-board-dice-label { font-size:8px;letter-spacing:2px;color:#885522;text-align:center; }
+.wd-bet-input { margin-top:12px; }
+.wd-bet-label { font-size:8px;letter-spacing:2px;color:#885522;margin-bottom:6px; }
+.wd-stepper { display:flex;align-items:center;gap:0; }
+.wd-step-btn {
+  width:36px;height:36px;background:#1a0800;border:1px solid #441100;
+  color:#ff9944;font-size:18px;cursor:pointer;font-family:inherit;
+  transition:all 0.1s;
+}
+.wd-step-btn:hover { background:#2a1000;border-color:#ff9944; }
+.wd-step-val {
+  flex:1;text-align:center;font-size:22px;color:#ff9944;
+  background:#0d0500;border:1px solid #441100;border-left:none;border-right:none;
+  padding:4px;letter-spacing:2px;
+}
+.wd-lock-btn {
+  width:100%;margin-top:10px;padding:10px;background:transparent;
+  border:1px solid #cc6633;color:#cc6633;font-family:inherit;
+  font-size:11px;letter-spacing:3px;cursor:pointer;text-transform:uppercase;
+  transition:all 0.2s;
+}
+.wd-lock-btn:hover:not(:disabled) { background:rgba(204,102,51,0.15);box-shadow:0 0 10px rgba(204,102,51,0.3); }
+.wd-lock-btn:disabled { border-color:#441100;color:#441100;cursor:not-allowed; }
+/* VS column */
+.wd-vs-col {
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:14px 10px;
+}
+.wd-vs-text { font-size:24px;color:#cc6633;letter-spacing:4px;text-shadow:0 0 10px rgba(204,102,51,0.5); }
+.wd-round-label { font-size:9px;letter-spacing:3px;color:#885522; }
+.wd-round-num { font-size:20px;color:#ff9944;letter-spacing:2px; }
+.wd-lock-status { font-size:9px;letter-spacing:2px;text-align:center; }
+.wd-lock-status .locked { color:#44aa44; }
+.wd-lock-status .waiting { color:#885522; }
+/* Depletion bet grid */
+.wd-dep-grid { display:flex;flex-wrap:wrap;gap:5px;margin-top:6px; }
+.wd-dep-btn {
+  width:38px;height:38px;border:1px solid #441100;background:#0d0500;
+  color:#cc8844;font-size:13px;cursor:pointer;font-family:inherit;
+  transition:all 0.15s;display:flex;align-items:center;justify-content:center;
+}
+.wd-dep-btn:hover:not(.used):not(.hidden-slot) { border-color:#ff9944;color:#ff9944; }
+.wd-dep-btn.selected { border-color:#ff9944;background:rgba(255,153,68,0.2);color:#ff9944;box-shadow:0 0 8px rgba(255,153,68,0.3); }
+.wd-dep-btn.used { color:#441100;border-color:#2a0800;text-decoration:line-through;cursor:not-allowed; }
+.wd-dep-btn.hidden-slot { color:#2a1000;border-color:#1a0500;cursor:not-allowed;font-size:9px; }
+.wd-dep-btn.out-of-range { color:#2a1000;border-color:#1a0500;cursor:not-allowed; }
+/* Bluff field */
+.wd-bluff-row { display:flex;align-items:center;gap:10px;margin-top:10px; }
+.wd-bluff-label { font-size:8px;letter-spacing:2px;color:#885522;flex:1; }
+.wd-bluff-val { font-size:14px;color:#ff9944;letter-spacing:2px; }
+/* Score history */
+.wd-score-row { display:flex;gap:8px;margin-top:6px; }
+.wd-score-pip {
+  width:10px;height:10px;border-radius:50%;border:1px solid #441100;background:#0d0500;
+}
+.wd-score-pip.win { background:#ff9944;border-color:#ff9944;box-shadow:0 0 4px rgba(255,153,68,0.5); }
+/* ROLLING */
+.wd-rolling-wrap { text-align:center;padding:40px 20px; }
+.wd-slam-text {
+  font-size:48px;color:#ff9944;letter-spacing:10px;
+  text-shadow:0 0 30px rgba(255,153,68,0.8);
+  animation:wdCallSlam 0.4s ease-out both;
+  text-transform:uppercase;
+}
+.wd-rolling-dice-row { display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px; }
+.wd-die-anim {
+  width:44px;height:44px;border:2px solid #ff9944;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:#ff9944;animation:wdRoll 0.4s ease-in-out infinite alternate;
+}
+/* REVEAL */
+.wd-reveal-layout { display:grid;grid-template-columns:1fr 1fr;gap:20px; }
+.wd-reveal-board { border:1px solid #441100;padding:16px;background:#0d0500; }
+.wd-reveal-board.winner { border-color:#ff9944;box-shadow:0 0 20px rgba(255,153,68,0.3);animation:wdPulse 1.5s ease-in-out 3; }
+.wd-reveal-board.loser { opacity:0.5; }
+.wd-reveal-name { font-size:12px;letter-spacing:3px;color:#ff9944;margin-bottom:10px; }
+.wd-dice-row { display:flex;flex-wrap:wrap;gap:6px;min-height:50px; }
+.wd-die {
+  width:56px;height:56px;border:2px solid #441100;background:#1a0800;
+  display:flex;align-items:center;justify-content:center;font-size:28px;
+  color:#885522;opacity:0;
+}
+.wd-die.dropped { opacity:1;animation:wdDropIn 0.4s ease-out both; }
+.wd-die.flipped { animation:wdFlip 0.5s ease-in-out both; }
+.wd-die.six { color:#ff9944;border-color:#ff9944;background:#2a1000;animation:wdSuccessFlare 0.6s ease-out both; }
+.wd-sixes-count { font-size:10px;letter-spacing:2px;margin-top:8px;color:#885522;min-height:16px; }
+.wd-transfer-label { font-size:12px;letter-spacing:2px;margin-top:6px;min-height:18px;animation:wdFadeUp 0.5s ease-out both; }
+.wd-transfer-label.gain { color:#44ff88; }
+.wd-transfer-label.lose { color:#ff4444; }
+.wd-result-banner {
+  text-align:center;margin-top:18px;font-size:32px;letter-spacing:8px;
+}
+.wd-result-banner.animate { animation:wdCallSlam 0.5s ease-out both; }
+.wd-result-banner.win { color:#ff9944;text-shadow:0 0 24px rgba(255,153,68,0.8); }
+.wd-result-banner.lose { color:#ff4444;text-shadow:0 0 16px rgba(255,68,68,0.5); }
+.wd-result-banner.tie { color:#cc6633;text-shadow:0 0 16px rgba(204,102,51,0.5); }
+.wd-next-btn {
+  display:block;margin:18px auto 0;padding:12px 30px;background:transparent;
+  border:2px solid #ff9944;color:#ff9944;font-family:inherit;
+  font-size:12px;letter-spacing:4px;cursor:pointer;text-transform:uppercase;
+  transition:all 0.2s;
+}
+.wd-next-btn:hover { background:rgba(255,153,68,0.12);box-shadow:0 0 16px rgba(255,153,68,0.3); }
+/* GM math breakdown */
+.wd-gm-math {
+  margin-top:14px;padding:12px;border:1px solid #441100;background:#0d0500;
+  font-size:10px;color:#885522;letter-spacing:1px;line-height:1.8;
+}
+.wd-gm-math .hi { color:#ff9944; }
+/* GAMEOVER */
+.wd-gameover { text-align:center;padding:40px 20px; }
+.wd-champion-name {
+  font-size:36px;letter-spacing:8px;color:#ff9944;
+  text-shadow:0 0 30px rgba(255,153,68,0.8);
+  animation:wdPulse 2s ease-in-out infinite;margin-bottom:12px;
+}
+.wd-champion-sub { font-size:11px;letter-spacing:3px;color:#cc6633;margin-bottom:20px; }
+.wd-again-btn {
+  display:inline-block;padding:12px 28px;background:transparent;
+  border:1px solid #cc6633;color:#cc6633;font-family:inherit;
+  font-size:11px;letter-spacing:4px;cursor:pointer;text-transform:uppercase;
+  transition:all 0.2s;
+}
+.wd-again-btn:hover { background:rgba(204,102,51,0.12);box-shadow:0 0 12px rgba(204,102,51,0.3); }
+.wd-lb-btn {
+  display:inline-block;padding:10px 22px;background:transparent;
+  border:1px solid #554433;color:#885522;font-family:inherit;
+  font-size:10px;letter-spacing:2px;cursor:pointer;margin-left:8px;
+  transition:all 0.2s;
+}
+.wd-lb-btn:hover { border-color:#cc6633;color:#cc6633; }
+.wd-lb-header-btn {
+  position:absolute;top:12px;left:14px;background:transparent;
+  border:1px solid #554433;color:#885522;font-family:inherit;
+  font-size:10px;padding:5px 12px;cursor:pointer;letter-spacing:2px;
+  transition:all 0.2s;
+}
+.wd-lb-header-btn:hover { border-color:#cc6633;color:#cc6633; }
+.wd-leaderboard { padding:10px 0 20px; }
+.wd-lb-table {
+  width:100%;border-collapse:collapse;font-size:12px;letter-spacing:1px;
+}
+.wd-lb-table th {
+  color:#554422;font-size:9px;letter-spacing:3px;padding:8px 10px;
+  border-bottom:1px solid #221100;text-align:center;
+}
+.wd-lb-table td { padding:9px 10px;border-bottom:1px solid #110800;text-align:center; }
+/* HISTORY */
+.wd-history { margin-top:18px;border-top:1px solid #1a0800;padding-top:12px; }
+.wd-history-title { font-size:8px;letter-spacing:3px;color:#885522;margin-bottom:8px; }
+.wd-history-list { max-height:120px;overflow-y:auto; }
+.wd-history-list::-webkit-scrollbar{width:3px}
+.wd-history-list::-webkit-scrollbar-thumb{background:#441100}
+.wd-history-item { font-size:9px;color:#663311;letter-spacing:1px;padding:3px 0;border-bottom:1px solid #1a0800; }
+.wd-history-item .hi { color:#cc6633; }
+/* Rounds remaining warning */
+.wd-rounds-warn { color:#ff4444 !important; }
+/* GM sidebar button */
+.gm-wd-btn {
+  width:100%;background:transparent;border:1px solid #885522;
+  color:#cc6633;font-family:"Share Tech Mono",monospace;font-size:9px;
+  padding:7px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;
+  transition:all 0.15s;margin-top:5px;
+}
+.gm-wd-btn:hover { border-color:#ff9944;color:#ff9944;background:rgba(255,153,68,0.06); }
+/* ANIMATIONS */
+@keyframes wdDropIn {
+  0%   { transform:translateY(-20px) scale(0.6); opacity:0; }
+  70%  { transform:translateY(4px) scale(1.05); opacity:1; }
+  100% { transform:translateY(0) scale(1); opacity:1; }
+}
+@keyframes wdFlip {
+  0%   { transform:scaleX(1); }
+  49%  { transform:scaleX(0); }
+  50%  { transform:scaleX(0); }
+  100% { transform:scaleX(1); }
+}
+@keyframes wdSuccessFlare {
+  0%   { transform:scale(1); box-shadow:0 0 0 rgba(255,153,68,0); }
+  50%  { transform:scale(1.15); box-shadow:0 0 16px rgba(255,153,68,0.8); }
+  100% { transform:scale(1); box-shadow:0 0 8px rgba(255,153,68,0.4); }
+}
+@keyframes wdRoll {
+  0%   { transform:rotate(-15deg) scale(0.95); }
+  100% { transform:rotate(15deg) scale(1.05); }
+}
+@keyframes wdCallSlam {
+  0%   { transform:scale(2.5); opacity:0; }
+  60%  { transform:scale(0.95); opacity:1; }
+  100% { transform:scale(1); opacity:1; }
+}
+@keyframes wdFadeUp {
+  0%   { transform:translateY(8px); opacity:0; }
+  100% { transform:translateY(0); opacity:1; }
+}
+@keyframes wdPulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:0.75; transform:scale(1.03); }
+}
+

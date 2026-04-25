@@ -1,0 +1,21 @@
+# ==== Secrets / local config ====
+config.js
+
+# ==== Staticrypt intermediate output ====
+encrypted/
+build/
+
+# ==== Local backups ====
+*_backup_*.html
+index_backup_*.html
+*.bak
+*~
+
+# ==== OS / editors ====
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ==== Claude Code tool settings ====
+.claude/

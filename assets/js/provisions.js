@@ -4,7 +4,8 @@ import { ref, set, remove, push, onValue } from "https://www.gstatic.com/firebas
 var spView    = null;
 var spUnsub   = null;
 var spItems   = {};
-var spRolling = {};   // per-item: { itemId: true } while animating
+var spRolling  = {};   // per-item: { itemId: true } while animating
+var spLastTray = {};   // per-item: last dice tray HTML to persist after roll
 
 // ── Die helpers ───────────────────────────────────────────────────────────────
 var SP_FACES = {
@@ -56,6 +57,7 @@ window.openSupplyPanel = function() {
 window.closeSupplyPanel = function() {
   document.getElementById('supplyPanel').classList.remove('open');
   if (spUnsub) { spUnsub(); spUnsub = null; }
+  spLastTray = {};
 };
 
 // ── GM Tabs ───────────────────────────────────────────────────────────────────
@@ -156,7 +158,8 @@ function spRenderItems(callsign) {
           (dep ? '[ DEPLETED ]' : '[ ROLL ' + item.pts + 'D6 ]') +
         '</button>' +
       '</div>' +
-      '<div class="sp-dice-tray" id="spTray_' + id + '"></div>';
+      '<div class="sp-dice-tray' + (spLastTray[id] ? ' active' : '') + '" id="spTray_' + id + '">' +
+        (spLastTray[id] || '') + '</div>';
     list.appendChild(card);
   });
 }
@@ -201,6 +204,7 @@ window.spRoll = function(callsign, itemId) {
   if (item.pts <= 0) return;
 
   spRolling[itemId] = true;
+  delete spLastTray[itemId];   // clear previous result when a new roll starts
   spBeep(820, 40);
 
   var N = item.pts, finals = [];
@@ -238,6 +242,9 @@ window.spRoll = function(callsign, itemId) {
               onPips[k].classList.add('justDrained');
           }
         }
+
+        // Save tray HTML so it survives the next spRenderItems call
+        spLastTray[itemId] = tray.innerHTML;
 
         // After display delay: write to Firebase (triggers re-render) or re-render locally
         setTimeout(function() {

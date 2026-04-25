@@ -349,6 +349,10 @@
     flex:1; min-height:0;
     animation:rgbShift 5s ease-in-out infinite;
     scrollbar-width:none;
+    /* Perf: GPU-composite the text-shadow layer + isolate layout */
+    will-change:text-shadow,contents;
+    contain:layout style;
+    transform:translateZ(0);
   }
   #crtBody::-webkit-scrollbar { display:none; }
   #crtCursor {

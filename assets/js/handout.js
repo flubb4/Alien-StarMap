@@ -4,7 +4,7 @@ import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/fi
 var handoutRef  = ref(window.db, 'session/handout');
 var hoLastTs    = 0;   // ignore handouts already seen before this session
 var crtTyping   = false;
-var crtInterval = null;
+var crtRAF      = null;
 var crtFullText = '';
 
 // ── GM: open panel, populate player list ─────────────────────────────────────
@@ -94,6 +94,8 @@ window.startHandoutWatcher = function() {
 };
 
 // ── CRT display ───────────────────────────────────────────────────────────────
+// Performance: one Text node grown via nodeValue (not N text nodes), and
+// rAF-driven typing so updates land on vsync. Scroll forced once per frame.
 function crtShow(text) {
   crtFullText = text;
   var overlay  = document.getElementById('crtOverlay');
@@ -121,24 +123,37 @@ function crtShow(text) {
   glass.classList.add('power-on');
 
   crtTyping = true;
-  if (crtInterval) clearInterval(crtInterval);
+  if (crtRAF) cancelAnimationFrame(crtRAF);
 
   overlay.classList.add('open');
 
-  // Blinking block cursor
+  // Single text node grown in place — much cheaper than insertBefore-per-char
+  var textNode = document.createTextNode('');
+  body.appendChild(textNode);
+
+  // Blinking block cursor follows the text node
   var cursor = document.createElement('span');
   cursor.id = 'crtCursor';
   body.appendChild(cursor);
 
-  var chars = text.split('');
-  var i     = 0;
-  var DELAY = 26;
+  var i      = 0;
+  var len    = text.length;
+  var CPS    = 38; // chars per second (~26ms/char) — multi-char per frame at 60fps
+  var t0     = null;
 
-  crtInterval = setInterval(function() {
-    if (i >= chars.length) {
-      clearInterval(crtInterval);
-      crtInterval = null;
-      crtTyping   = false;
+  function step(ts) {
+    if (t0 === null) t0 = ts;
+    var elapsed = (ts - t0) / 1000;
+    var target  = Math.min(len, Math.floor(elapsed * CPS));
+    if (target > i) {
+      // Append the chunk we're behind on as ONE nodeValue update
+      textNode.nodeValue += text.slice(i, target);
+      i = target;
+      body.scrollTop = body.scrollHeight; // single forced layout per frame
+    }
+    if (i >= len) {
+      crtRAF    = null;
+      crtTyping = false;
       cursor.remove();
       skipBtn.classList.add('hidden');
       divider2.style.opacity = '0.45';
@@ -146,16 +161,15 @@ function crtShow(text) {
       led.className = 'crt-led steady';
       return;
     }
-    var node = document.createTextNode(chars[i++]);
-    body.insertBefore(node, cursor);
-    body.scrollTop = body.scrollHeight;
-  }, DELAY);
+    crtRAF = requestAnimationFrame(step);
+  }
+  crtRAF = requestAnimationFrame(step);
 }
 
 window.crtSkip = function() {
-  if (crtInterval) clearInterval(crtInterval);
-  crtInterval = null;
-  crtTyping   = false;
+  if (crtRAF) cancelAnimationFrame(crtRAF);
+  crtRAF    = null;
+  crtTyping = false;
 
   var body     = document.getElementById('crtBody');
   var footer   = document.getElementById('crtFooter');
@@ -215,7 +229,7 @@ window.crtClose = function() {
   document.getElementById('crtSkipBtn').classList.remove('hidden');
   document.getElementById('crtDivider2').style.opacity = '0';
   document.getElementById('crtLed').className = 'crt-led';
-  if (crtInterval) { clearInterval(crtInterval); crtInterval = null; }
+  if (crtRAF) { cancelAnimationFrame(crtRAF); crtRAF = null; }
   crtTyping = false;
 };
 

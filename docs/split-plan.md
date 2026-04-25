@@ -2,12 +2,11 @@
 
 ## Kontext
 
-Die Datei `C:\Users\Daniel\Desktop\Alien\Claude Code\index.html` ist **9.962 Zeilen / ~470 KB** groß
-und enthält 12 klar abgrenzbare Systeme in einer einzigen HTML-Datei. Ziel ist es, diese in
-separate CSS- und JS-Dateien aufzuteilen — für bessere Performance und massive Token-Ersparnis
-bei zukünftigen Claude-Sessions.
+Die Datei `index.html` war ursprünglich **9.962 Zeilen / ~470 KB** groß und enthielt 12 klar
+abgrenzbare Systeme. Ziel ist es, CSS und JS in separate Dateien aufzuteilen — für bessere
+Performance und massive Token-Ersparnis bei zukünftigen Claude-Sessions.
 
-Das Projekt läuft in einem Git-Repo unter `C:\Users\Daniel\Desktop\Alien\Claude Code\`.
+Das Projekt läuft jetzt in `C:\Users\Daniel\Desktop\Alien\Alien StarMap\` (eigenes Git-Repo).
 Die `index.html` ist die Live-Spieler-Karte mit Firebase-Multiplayer (Alien RPG Starmap-Tool).
 
 ---
@@ -220,7 +219,7 @@ Erkennungsmerkmale der CSS-Blöcke in index.html:
 
 ## Status
 
-- [ ] Phase 1 — CSS auslagern
+- [x] Phase 1 — CSS auslagern
 - [ ] Phase 2a — handout.js
 - [ ] Phase 2b — wuerfel-duerfel.js
 - [ ] Phase 2c — black-veil.js

@@ -106,11 +106,22 @@ function spRenderItems(callsign) {
     return;
   }
 
+  // Save rolling cards BEFORE clearing — innerHTML='' detaches but doesn't destroy nodes
+  var saved = {};
+  keys.forEach(function(id) {
+    if (spRolling[id]) {
+      var el = document.getElementById('spCard_' + id);
+      if (el) saved[id] = el;
+    }
+  });
+
   list.innerHTML = '';
   keys.forEach(function(id) {
+    // Re-attach the saved card as-is so the running animation is not interrupted
+    if (saved[id]) { list.appendChild(saved[id]); return; }
+
     var item    = spNorm(spItems[id]);
     var dep     = item.pts <= 0;
-    var rolling = !!spRolling[id];
     var canEdit = (callsign === window.myName || window.isGM);
 
     var pips = '';
@@ -130,18 +141,18 @@ function spRenderItems(callsign) {
           '<span class="sp-pts-label">SUPPLY LVL</span>' +
           '<div class="sp-pts-row">' +
             '<button class="sp-sbtn" onclick="spChangePts(\'' + callsign + '\',\'' + id + '\',-1)"' +
-              (!canEdit || dep || rolling ? ' disabled' : '') + '>−</button>' +
+              (!canEdit || dep ? ' disabled' : '') + '>−</button>' +
             '<span class="sp-pts-val">' + item.pts + '</span>' +
             '<span class="sp-pts-slash">/</span>' +
             '<span class="sp-pts-max">' + item.max + '</span>' +
             '<button class="sp-sbtn" onclick="spChangePts(\'' + callsign + '\',\'' + id + '\',1)"' +
-              (!canEdit || item.pts >= item.max || rolling ? ' disabled' : '') + '>+</button>' +
+              (!canEdit || item.pts >= item.max ? ' disabled' : '') + '>+</button>' +
           '</div>' +
         '</div>' +
         '<div class="sp-pips" id="spPips_' + id + '">' + pips + '</div>' +
         '<button class="sp-roll-btn" id="spRollBtn_' + id + '" ' +
           'onclick="spRoll(\'' + callsign + '\',\'' + id + '\')"' +
-          (dep || rolling || !canEdit ? ' disabled' : '') + '>' +
+          (dep || !canEdit ? ' disabled' : '') + '>' +
           (dep ? '[ DEPLETED ]' : '[ ROLL ' + item.pts + 'D6 ]') +
         '</button>' +
       '</div>' +

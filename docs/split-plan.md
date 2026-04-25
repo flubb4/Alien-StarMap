@@ -220,14 +220,18 @@ Erkennungsmerkmale der CSS-Blöcke in index.html:
 ## Status
 
 - [x] Phase 1 — CSS auslagern
-- [ ] Phase 2a — handout.js
-- [ ] Phase 2b — wuerfel-duerfel.js
-- [ ] Phase 2c — black-veil.js
-- [ ] Phase 2d — image-board.js
-- [ ] Phase 2e — xp.js
-- [ ] Phase 3a — initiative.js
-- [ ] Phase 3b — provisions.js
-- [ ] Phase 3c — character-sheet.js
-- [ ] Phase 4a — firebase-init.js
-- [ ] Phase 4b — auth.js
-- [ ] Phase 4c — map-core.js
+- [x] Phase 2a — handout.js
+- [x] Phase 2b — wuerfel-duerfel.js
+- [x] Phase 2c — black-veil.js
+- [x] Phase 2d — image-board.js
+- [x] Phase 2e — xp.js
+- [x] Phase 3a — initiative.js
+- [x] Phase 3b — provisions.js
+- [x] Phase 3c — character-sheet.js
+- [ ] Phase 4a — firebase-init.js ← DEPRIORITIZED (main module ~600 Zeilen, genug)
+- [ ] Phase 4b — auth.js          ← DEPRIORITIZED
+- [ ] Phase 4c — map-core.js      ← DEPRIORITIZED
+
+**Stand 2026-04-25:** Phasen 1–3c abgeschlossen. index.html von 9.962 auf ~1.430 Zeilen
+reduziert (−86%). Phase 4 zurückgestellt — cross-dependencies zwischen firebase-init/auth/
+map-core sind zu dicht für risikofreie Extraktion. Restlicher Monolith ist handhabbar.

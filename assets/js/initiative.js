@@ -1369,7 +1369,7 @@ window.openModal = function(x, y) {
     if (btn) { btn.classList.remove('active'); btn.textContent = '📍 Set Ship Position'; }
     return;
   }
-  openModal(x, y);
+  _origOpenModal(x, y);
 };
 
 function drawShipPosition() {

@@ -395,13 +395,25 @@ function _csPatchDerived(pn, data) {
   if (!body) return;
   const ro = window.isGM && pn !== window.myName;
 
+  // Source of truth for stress response state: read directly from the
+  // checkbox DOM. During rapid toggles, the Firebase echo can carry a
+  // briefly stale snapshot that would otherwise revive a debuff the
+  // user just cleared. The checkboxes themselves are always correct
+  // because the browser's default action toggles them synchronously.
+  const respState = (key) => {
+    const cb = body.querySelector(
+      'input.cs-chk[data-path="stressResp.' + key + '"]'
+    );
+    return cb ? !!cb.checked : !!_csGet(data, 'stressResp.' + key);
+  };
+
   // 1) Roll-state banner (Jumpy / Deflated / Mess Up)
   const ROLL_STATES = [
     { k:'Jumpy',    label:'JUMPY',    eff:'PUSH GIVES +2 STRESS' },
     { k:'Deflated', label:'DEFLATED', eff:'CANNOT PUSH ANY ROLL'  },
     { k:'Mess_Up',  label:'MESS UP',  eff:'ACTIONS FAIL · +1 STRESS' },
   ];
-  const active = ROLL_STATES.filter(s => !!_csGet(data, 'stressResp.' + s.k));
+  const active = ROLL_STATES.filter(s => respState(s.k));
   const html = active.map(s => `<div class="cs-active-state">
       <span class="cs-active-icon">⚠</span>
       <span class="cs-active-name">${s.label}</span>
@@ -448,7 +460,7 @@ function _csPatchDerived(pn, data) {
     const base    = _csGet(data, 'attr.' + d.attr);
     const baseN   = parseInt(base, 10);
     const numeric = !isNaN(baseN);
-    const want    = !!_csGet(data, 'stressResp.' + d.resp);
+    const want    = respState(d.resp);
     const isDeb   = want && numeric;
     const eff     = isDeb ? Math.max(0, baseN - 2) : base;
     if (document.activeElement !== inp) inp.value = eff;

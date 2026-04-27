@@ -1,4 +1,4 @@
-import { ref, set, remove, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, set, remove, push, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ── SUPPLY ROLL PANEL — MU/TH/UR 9000 redesign ───────────────────────────────
 var spView    = null;

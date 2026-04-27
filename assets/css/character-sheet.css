@@ -116,6 +116,19 @@
 }
 .cs-attr-score:focus { border-color: #bbee66; background: #111f09; }
 .cs-attr-score:read-only { color: #6a8855; border-color: #2a4820; }
+.cs-attr-score.cs-attr-debuffed,
+.cs-attr-score.cs-attr-debuffed:read-only {
+  color: #ff5544;
+  border-color: #aa2200;
+  background: rgba(170,34,0,0.18);
+  text-shadow: 0 0 6px rgba(255,85,68,0.55);
+  cursor: help;
+  animation: csAttrDebuffPulse 1.6s ease-in-out infinite;
+}
+@keyframes csAttrDebuffPulse {
+  0%,100% { box-shadow: inset 0 0 0 rgba(255,85,68,0); }
+  50%     { box-shadow: inset 0 0 8px rgba(255,85,68,0.4); }
+}
 .cs-skill-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .cs-skill-name { font-size: 11px; letter-spacing: 1px; color: #88aa66; }
 .cs-skill-score {
@@ -169,6 +182,27 @@
 .cs-resp-note {
   color: #446633; font-size: 9px; font-weight: normal;
   margin-left: 8px; letter-spacing: 1px;
+}
+
+/* Roll-mechanic state banners (Jumpy / Deflated / Mess Up) */
+.cs-active-states {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin: 4px 0 14px;
+}
+.cs-active-state {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  background: rgba(170,34,0,0.18);
+  border: 1px solid #aa2200;
+  font-family: inherit;
+  animation: csActiveStatePulse 1.5s ease-in-out infinite;
+}
+.cs-active-icon  { font-size: 14px; color: #ff5544; }
+.cs-active-name  { font-size: 12px; font-weight: 700; letter-spacing: 3px; color: #ff5544; text-shadow: 0 0 8px rgba(255,85,68,0.6); }
+.cs-active-effect{ font-size: 10px; letter-spacing: 1px; color: #cc7766; }
+@keyframes csActiveStatePulse {
+  0%,100% { box-shadow: 0 0 0 rgba(255,85,68,0); }
+  50%     { box-shadow: 0 0 12px rgba(255,85,68,0.4); }
 }
 
 /* Auto stat-debuff badge driven by checked stress responses */

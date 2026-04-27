@@ -135,6 +135,21 @@ function _csRender(pn, data) {
     `<input class="cs-attr-score cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
       value="${_esc(_csGet(data,path))}">`;
 
+  // Attribute score with auto stress-response debuff applied (−2 if active).
+  // The stored base value is never modified — we just display base − 2 and
+  // lock the input while the debuff is active so the original isn't lost.
+  const asD = (path, deb, name) => {
+    const base = _csGet(data, path);
+    const baseN = parseInt(base, 10);
+    const numeric = !isNaN(baseN);
+    const active = deb && numeric;
+    const eff = active ? Math.max(0, baseN - 2) : base;
+    const cls = 'cs-attr-score cs-inp' + (active ? ' cs-attr-debuffed' : '');
+    const tip = active ? `BASE ${baseN} − 2 (${name}) = ${eff}` : '';
+    return `<input class="${cls}" type="text" ${(ro||active)?'readonly':''} data-pn="${pn}" data-path="${path}"
+      value="${_esc(eff)}"${tip?` title="${_esc(tip)}"`:''}>`;
+  };
+
   // Skill score
   const ss = (path) =>
     `<input class="cs-skill-score cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
@@ -182,6 +197,24 @@ function _csRender(pn, data) {
   }).join('');
   const stressRespBoxes = renderResp(STRESS_RESPONSES, 'stressResp');
   const panicRespBoxes  = renderResp(PANIC_RESPONSES,  'panicResp');
+
+  // Roll-mechanic states (Jumpy / Deflated / Mess Up) — they don't modify a
+  // stat, they change how pushing/resolving rolls behaves. Surfaced as a
+  // prominent banner so the player can't forget mid-session.
+  const ROLL_STATES = [
+    { k:'Jumpy',    label:'JUMPY',    eff:'PUSH GIVES +2 STRESS' },
+    { k:'Deflated', label:'DEFLATED', eff:'CANNOT PUSH ANY ROLL'  },
+    { k:'Mess_Up',  label:'MESS UP',  eff:'ACTIONS FAIL · +1 STRESS' },
+  ];
+  const rollStateBadges = ROLL_STATES
+    .filter(s => !!_csGet(data, 'stressResp.' + s.k))
+    .map(s => `<div class="cs-active-state">
+      <span class="cs-active-icon">⚠</span>
+      <span class="cs-active-name">${s.label}</span>
+      <span class="cs-active-effect">${s.eff}</span>
+    </div>`).join('');
+  const rollStatesBlock = rollStateBadges
+    ? `<div class="cs-active-states">${rollStateBadges}</div>` : '';
 
   // Auto-debuff badges on attributes (Stress Response Table p.44)
   const debuff = (path, label) =>
@@ -254,25 +287,25 @@ function _csRender(pn, data) {
     <div class="cs-section-title">// ATTRIBUTES & SKILLS</div>
     <div class="cs-attrs">
       <div class="cs-attr-block">
-        <div class="cs-attr-name">STRENGTH ${as('attr.str')}${strDebuff}</div>
+        <div class="cs-attr-name">STRENGTH ${asD('attr.str', !!_csGet(data,'stressResp.Frantic'),       'Frantic')}${strDebuff}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">CLOSE COMBAT</span>${ss('skill.closeCombat')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">HEAVY MACHINERY</span>${ss('skill.heavyMachinery')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">STAMINA</span>${ss('skill.stamina')}</div>
       </div>
       <div class="cs-attr-block">
-        <div class="cs-attr-name">AGILITY ${as('attr.agi')}${agiDebuff}</div>
+        <div class="cs-attr-name">AGILITY ${asD('attr.agi', !!_csGet(data,'stressResp.Shakes'),        'Shakes')}${agiDebuff}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">MOBILITY</span>${ss('skill.mobility')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">PILOTING</span>${ss('skill.piloting')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">RANGED COMBAT</span>${ss('skill.rangedCombat')}</div>
       </div>
       <div class="cs-attr-block">
-        <div class="cs-attr-name">WITS ${as('attr.wit')}${witDebuff}</div>
+        <div class="cs-attr-name">WITS ${asD('attr.wit', !!_csGet(data,'stressResp.Tunnel_Vision'), 'Tunnel Vision')}${witDebuff}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">COMTECH</span>${ss('skill.comtech')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">OBSERVATION</span>${ss('skill.observation')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">SURVIVAL</span>${ss('skill.survival')}</div>
       </div>
       <div class="cs-attr-block">
-        <div class="cs-attr-name">EMPATHY ${as('attr.emp')}${empDebuff}</div>
+        <div class="cs-attr-name">EMPATHY ${asD('attr.emp', !!_csGet(data,'stressResp.Aggravated'),    'Aggravated')}${empDebuff}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">COMMAND</span>${ss('skill.command')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">MANIPULATION</span>${ss('skill.manipulation')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">MEDICAL AID</span>${ss('skill.medicalAid')}</div>
@@ -297,6 +330,8 @@ function _csRender(pn, data) {
       <div class="cs-stat-box"><div class="cs-stat-label">CASH ($)</div><div class="cs-stat-val">${ni('cash',60)}</div></div>
       <div class="cs-stat-box"><div class="cs-stat-label">FATIGUED</div><div class="cs-stat-val">${fatChk}</div></div>
     </div>
+
+    ${rollStatesBlock}
 
     <div class="cs-section-title">// STRESS LEVEL <span class="cs-stress-label" style="color:#446633;font-size:9px;font-weight:normal">${stressLvl}/10</span></div>
     <div class="cs-stress-row">${stressBoxes}</div>
@@ -343,6 +378,27 @@ function _csRender(pn, data) {
   `;
 
 }  // end _csRender
+
+// ── Live patch on incoming Firebase data while the sheet is open ───
+// A full re-render is the simplest way to refresh derived UI (debuff
+// badges, computed attribute scores). When a *text* field is being
+// edited, we preserve the user's in-flight value and caret position so
+// typing isn't clobbered by their own debounced save echoing back.
+function _csPatchFields(playerName, data, focused) {
+  const isText = focused && (focused.tagName === 'TEXTAREA' ||
+    (focused.tagName === 'INPUT' && (focused.type === 'text' || focused.type === '')));
+  if (!isText) { _csRender(playerName, data); return; }
+  const fp    = focused.dataset.path;
+  const start = focused.selectionStart;
+  const end   = focused.selectionEnd;
+  const live  = focused.value;
+  _csRender(playerName, data);
+  if (!fp) return;
+  const sel = document.querySelector('#csBody [data-path="' + fp + '"]');
+  if (!sel) return;
+  sel.value = live;                    // keep unsaved keystrokes
+  try { sel.focus(); sel.setSelectionRange(start, end); } catch (e) {}
+}
 
 // ── ONE-TIME event delegation on the overlay (never re-added) ───
 (function _csInitEvents() {

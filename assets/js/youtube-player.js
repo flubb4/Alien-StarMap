@@ -5,9 +5,10 @@
 // Sync via Firebase node session/audio/.
 // ============================================================
 
-import { ref, set, onValue, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, set, onValue, get, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const audioRef = ref(window.db, 'session/audio');
+const audioRef  = ref(window.db, 'session/audio');
+const offsetRef = ref(window.db, '.info/serverTimeOffset');
 
 let ytPlayer       = null;     // YT.Player instance (set on API ready)
 let ytReady        = false;    // YT player is ready for commands
@@ -17,6 +18,22 @@ let driftTimer     = null;
 let myVolume       = 50;
 let preMuteVolume  = 50;
 let widgetOpen     = false;
+let serverOffset   = 0;        // ms; server clock - local clock (per Firebase)
+
+// Server-anchored "now" — same reference on every client, immune to local
+// clock skew between Windows machines (which routinely differs by 1–2s).
+function serverNow() { return Date.now() + serverOffset; }
+
+// Tracks Firebase's clock offset live. .info/serverTimeOffset doesn't need
+// auth — it's a built-in metadata path.
+onValue(offsetRef, snap => {
+  const v = snap.val();
+  if (typeof v === 'number') serverOffset = v;
+});
+
+// How far apart local playback can drift before we re-seek. Tighter = more
+// in-sync but more frequent micro-seeks if the network jitters.
+const DRIFT_THRESHOLD_S = 0.4;
 
 // ── Restore per-client volume ────────────────────────────────────────
 try {
@@ -182,8 +199,8 @@ window.audioLoadAndPlay = function() {
     videoId,
     isPlaying:  true,
     position:   0,
-    serverTime: Date.now(),
-    cmd:        Date.now()
+    serverTime: serverTimestamp(),  // Firebase resolves this to authoritative server time
+    cmd:        Date.now()          // local-only echo dedupe key
   });
 };
 
@@ -197,7 +214,7 @@ window.audioPause = function() {
       videoId:    d.videoId,
       isPlaying:  false,
       position:   pos,
-      serverTime: Date.now(),
+      serverTime: serverTimestamp(),
       cmd:        Date.now()
     });
   });
@@ -212,7 +229,7 @@ window.audioResume = function() {
       videoId:    d.videoId,
       isPlaying:  true,
       position:   d.position || 0,
-      serverTime: Date.now(),
+      serverTime: serverTimestamp(),
       cmd:        Date.now()
     });
   });
@@ -238,8 +255,11 @@ function applyState(d) {
 
   const vd          = ytPlayer.getVideoData && ytPlayer.getVideoData();
   const currentVid  = (vd && vd.video_id) || null;
+  // serverTime is a Firebase server timestamp; while a write is in flight
+  // it can briefly be a sentinel object — fall back to serverNow() then.
+  const sTime       = (typeof d.serverTime === 'number') ? d.serverTime : serverNow();
   const targetPos   = d.isPlaying
-    ? (d.position || 0) + (Date.now() - (d.serverTime || Date.now())) / 1000
+    ? (d.position || 0) + (serverNow() - sTime) / 1000
     : (d.position || 0);
 
   if (currentVid !== d.videoId) {
@@ -260,7 +280,7 @@ function applyState(d) {
   // Same video — sync play/pause + drift
   if (d.isPlaying) {
     const cur = (ytPlayer.getCurrentTime && ytPlayer.getCurrentTime()) || 0;
-    if (Math.abs(cur - targetPos) > 1.5) {
+    if (Math.abs(cur - targetPos) > DRIFT_THRESHOLD_S) {
       try { ytPlayer.seekTo(targetPos, true); } catch(e) {}
     }
     if (ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== 1) {
@@ -285,13 +305,14 @@ function startDriftTimer() {
     get(audioRef).then(snap => {
       const d = snap.val();
       if (!d || !d.isPlaying) return;
-      const tPos = (d.position || 0) + (Date.now() - (d.serverTime || Date.now())) / 1000;
-      const cur  = (ytPlayer.getCurrentTime && ytPlayer.getCurrentTime()) || 0;
-      if (Math.abs(cur - tPos) > 1.5) {
+      const sTime = (typeof d.serverTime === 'number') ? d.serverTime : serverNow();
+      const tPos  = (d.position || 0) + (serverNow() - sTime) / 1000;
+      const cur   = (ytPlayer.getCurrentTime && ytPlayer.getCurrentTime()) || 0;
+      if (Math.abs(cur - tPos) > DRIFT_THRESHOLD_S) {
         try { ytPlayer.seekTo(tPos, true); } catch(e) {}
       }
     });
-  }, 12000);
+  }, 8000);
 }
 function stopDriftTimer() {
   if (driftTimer) { clearInterval(driftTimer); driftTimer = null; }

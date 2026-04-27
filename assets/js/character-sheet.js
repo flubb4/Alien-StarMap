@@ -379,23 +379,103 @@ function _csRender(pn, data) {
 
 }  // end _csRender
 
+// ── Targeted patch: derived UI that depends on stressResp.* ──────
+// Updates the active-states banner and attribute debuff badges in place,
+// without rebuilding the rest of the sheet. This is the only safe way
+// to refresh after a checkbox toggle: a full innerHTML swap mid-click
+// races with the browser's default action and visually undoes the toggle.
+function _csPatchDerived(pn, data) {
+  const body = document.getElementById('csBody');
+  if (!body) return;
+  const ro = window.isGM && pn !== window.myName;
+
+  // 1) Roll-state banner (Jumpy / Deflated / Mess Up)
+  const ROLL_STATES = [
+    { k:'Jumpy',    label:'JUMPY',    eff:'PUSH GIVES +2 STRESS' },
+    { k:'Deflated', label:'DEFLATED', eff:'CANNOT PUSH ANY ROLL'  },
+    { k:'Mess_Up',  label:'MESS UP',  eff:'ACTIONS FAIL · +1 STRESS' },
+  ];
+  const active = ROLL_STATES.filter(s => !!_csGet(data, 'stressResp.' + s.k));
+  const html = active.map(s => `<div class="cs-active-state">
+      <span class="cs-active-icon">⚠</span>
+      <span class="cs-active-name">${s.label}</span>
+      <span class="cs-active-effect">${s.eff}</span>
+    </div>`).join('');
+  let banner = body.querySelector('.cs-active-states');
+  if (active.length) {
+    if (banner) {
+      banner.innerHTML = html;
+    } else {
+      // Insert banner just before the STRESS LEVEL section title
+      const titles = body.querySelectorAll('.cs-section-title');
+      let stressTitle = null;
+      titles.forEach(t => { if (!stressTitle && t.textContent.includes('STRESS LEVEL')) stressTitle = t; });
+      if (stressTitle) {
+        const div = document.createElement('div');
+        div.className = 'cs-active-states';
+        div.innerHTML = html;
+        stressTitle.parentNode.insertBefore(div, stressTitle);
+      }
+    }
+  } else if (banner) {
+    banner.remove();
+  }
+
+  // 2) Attribute debuffs and effective scores (STR/AGI/WIT/EMP)
+  const debuffMap = [
+    { resp:'Frantic',       attr:'str', name:'Frantic',       skill:'Strength'  },
+    { resp:'Shakes',        attr:'agi', name:'Shakes',        skill:'Agility'   },
+    { resp:'Tunnel_Vision', attr:'wit', name:'Tunnel Vision', skill:'Wits'      },
+    { resp:'Aggravated',    attr:'emp', name:'Aggravated',    skill:'Empathy'   },
+  ];
+  for (const d of debuffMap) {
+    const inp = body.querySelector(
+      'input.cs-attr-score[data-path="attr.' + d.attr + '"][data-pn="' + pn + '"]'
+    );
+    if (!inp) continue;
+    const base    = _csGet(data, 'attr.' + d.attr);
+    const baseN   = parseInt(base, 10);
+    const numeric = !isNaN(baseN);
+    const isDeb   = !!_csGet(data, 'stressResp.' + d.resp) && numeric;
+    const eff     = isDeb ? Math.max(0, baseN - 2) : base;
+    if (document.activeElement !== inp) inp.value = eff;
+    inp.classList.toggle('cs-attr-debuffed', isDeb);
+    if (ro || isDeb) inp.setAttribute('readonly', '');
+    else             inp.removeAttribute('readonly');
+
+    // Update −2 badge in the .cs-attr-name header
+    const nameEl = inp.closest('.cs-attr-block')?.querySelector('.cs-attr-name');
+    if (!nameEl) continue;
+    let badge = nameEl.querySelector('.cs-stat-debuff');
+    const want = !!_csGet(data, 'stressResp.' + d.resp);
+    if (want && !badge) {
+      const span = document.createElement('span');
+      span.className = 'cs-stat-debuff';
+      span.title = d.name + ': −2 dice on ' + d.skill + ' skills';
+      span.textContent = '−2';
+      nameEl.appendChild(span);
+    } else if (!want && badge) {
+      badge.remove();
+    }
+  }
+}
+
 // ── Live patch on incoming Firebase data while the sheet is open ───
-// A full re-render is the simplest way to refresh derived UI (debuff
-// badges, computed attribute scores). When a *text* field is being
-// edited, we preserve the user's in-flight value and caret position so
-// typing isn't clobbered by their own debounced save echoing back.
+// Strategy depends on what the user is currently focused on:
+//  - Checkbox (.cs-chk): NEVER re-render. The change handler already saved
+//    locally and the browser's default action put the DOM in the right state.
+//    A re-render here would race with the click and snap the box back.
+//    We only patch the derived UI (banner, attribute debuffs).
+//  - Text/textarea: preserve in-flight value + caret, then re-render.
+//  - Anything else: full re-render.
 function _csPatchFields(playerName, data, focused) {
-  const isText = focused && (focused.tagName === 'TEXTAREA' ||
-    (focused.tagName === 'INPUT' && (focused.type === 'text' || focused.type === '')));
-  if (!isText) {
-    // Defer the re-render past the current event loop tick. Firing a
-    // synchronous innerHTML swap from inside a checkbox change handler
-    // can race with the browser's click default action — the new <input>
-    // gets toggled back, making it look like the click did nothing.
-    // setTimeout(0) lets the click flow fully unwind before we rebuild.
-    setTimeout(() => _csRender(playerName, _csAllSheets[playerName] || data || {}), 0);
+  if (focused && focused.classList && focused.classList.contains('cs-chk')) {
+    _csPatchDerived(playerName, data);
     return;
   }
+  const isText = focused && (focused.tagName === 'TEXTAREA' ||
+    (focused.tagName === 'INPUT' && (focused.type === 'text' || focused.type === '')));
+  if (!isText) { _csRender(playerName, data); return; }
   const fp    = focused.dataset.path;
   const start = focused.selectionStart;
   const end   = focused.selectionEnd;
@@ -422,13 +502,17 @@ function _csPatchFields(playerName, data, focused) {
     window._csDB(pn, path, el.value);
   });
 
-  // Checkbox → immediate save
+  // Checkbox → immediate save + targeted UI refresh (no full re-render,
+  // see _csPatchFields for why)
   overlay.addEventListener('change', e => {
     const el = e.target;
     if (!el.classList.contains('cs-chk') || el.disabled) return;
     const pn = el.dataset.pn, path = el.dataset.path;
     if (!pn || !path) return;
     window._csSave(pn, path, el.checked);
+    if (path.indexOf('stressResp.') === 0) {
+      _csPatchDerived(pn, _csAllSheets[pn] || {});
+    }
   });
 
   // Stress box OR death roll click — instant DOM update then Firebase save

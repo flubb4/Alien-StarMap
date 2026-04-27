@@ -56,6 +56,12 @@ function _csSubscribe(playerName) {
   // Sync with Firebase
   onValue(ref(window.db, 'characters/' + playerName), snap => {
     const data = snap.val() || {};
+    // Skip self-echo: when our own _csSave write comes back, the snapshot
+    // equals the local optimistic state we already applied. Re-rendering
+    // here would race with any in-progress UI interaction (e.g. a
+    // checkbox just toggled by the same user).
+    const prev = _csAllSheets[playerName];
+    if (prev && JSON.stringify(prev) === JSON.stringify(data)) return;
     _csAllSheets[playerName] = data;
     if (_csViewingPlayer === playerName) {
       const body = document.getElementById('csBody');
@@ -428,15 +434,22 @@ function _csPatchDerived(pn, data) {
     { resp:'Tunnel_Vision', attr:'wit', name:'Tunnel Vision', skill:'Wits'      },
     { resp:'Aggravated',    attr:'emp', name:'Aggravated',    skill:'Empathy'   },
   ];
+  // Map every cs-attr-score input by its data-path (csBody only ever
+  // shows one player, so no need to filter by pn — and avoids CSS
+  // attribute-selector escaping issues with special chars in names)
+  const scoreByPath = {};
+  body.querySelectorAll('input.cs-attr-score').forEach(el => {
+    if (el.dataset.path) scoreByPath[el.dataset.path] = el;
+  });
+
   for (const d of debuffMap) {
-    const inp = body.querySelector(
-      'input.cs-attr-score[data-path="attr.' + d.attr + '"][data-pn="' + pn + '"]'
-    );
+    const inp = scoreByPath['attr.' + d.attr];
     if (!inp) continue;
     const base    = _csGet(data, 'attr.' + d.attr);
     const baseN   = parseInt(base, 10);
     const numeric = !isNaN(baseN);
-    const isDeb   = !!_csGet(data, 'stressResp.' + d.resp) && numeric;
+    const want    = !!_csGet(data, 'stressResp.' + d.resp);
+    const isDeb   = want && numeric;
     const eff     = isDeb ? Math.max(0, baseN - 2) : base;
     if (document.activeElement !== inp) inp.value = eff;
     inp.classList.toggle('cs-attr-debuffed', isDeb);
@@ -447,7 +460,6 @@ function _csPatchDerived(pn, data) {
     const nameEl = inp.closest('.cs-attr-block')?.querySelector('.cs-attr-name');
     if (!nameEl) continue;
     let badge = nameEl.querySelector('.cs-stat-debuff');
-    const want = !!_csGet(data, 'stressResp.' + d.resp);
     if (want && !badge) {
       const span = document.createElement('span');
       span.className = 'cs-stat-debuff';

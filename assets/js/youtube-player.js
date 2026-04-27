@@ -45,6 +45,15 @@ try {
 let loopEnabled = false;
 try { loopEnabled = localStorage.getItem('alien-map-yt-loop') === '1'; } catch(e) {}
 
+// ── GM quick-launch presets ──────────────────────────────────────────
+// Edit this list to change/add/remove buttons. First three render in the
+// GM panel's QUICK LAUNCH row.
+const PRESETS = [
+  { id: '7osHWW_b3ng', label: '🛰 STATION I',  title: 'Space Station Atmosphäre' },
+  { id: 'Yk52hcToFHY', label: '🛰 STATION II', title: 'Space Station Atmosphäre 2' },
+  { id: 'JeDMvqt9OwA', label: '🚨 ACTION',     title: 'Action' }
+];
+
 // ── Inject all DOM (panel, widget, hidden player host, GM button) ────
 // Module scripts run after DOM parsing, so document.body is ready.
 (function injectDOM() {
@@ -57,11 +66,17 @@ try { loopEnabled = localStorage.getItem('alien-map-yt-loop') === '1'; } catch(e
   // GM panel
   const panel = document.createElement('div');
   panel.id = 'audioPanel';
+  const presetHTML = PRESETS.map(p =>
+    `<button class="aud-preset-btn" title="${p.title}" onclick="audioPlayPreset('${p.id}')">${p.label}</button>`
+  ).join('');
   panel.innerHTML = `
     <div class="aud-box">
       <button class="aud-close" onclick="closeAudioPanel()">✕ CLOSE</button>
       <div class="aud-box-title">// AUDIO TRANSMISSION CONTROL</div>
       <div class="aud-state" id="audState">— NO TRACK —</div>
+      <div class="aud-section-label">// QUICK LAUNCH</div>
+      <div class="aud-presets">${presetHTML}</div>
+      <div class="aud-section-label">// CUSTOM TRACK</div>
       <input id="audUrl" type="text" placeholder="https://youtu.be/... or 11-char ID"
         onkeydown="if(event.key==='Enter') audioLoadAndPlay()" autocomplete="off" spellcheck="false"/>
       <div class="aud-err" id="audErr"></div>
@@ -222,6 +237,16 @@ function _gmStateLabel(d) {
   lab.textContent = (d.isPlaying ? '▶ PLAYING' : '⏸ PAUSED') + ' — ' + d.videoId;
 }
 
+function _playVideoId(videoId) {
+  set(audioRef, {
+    videoId,
+    isPlaying:  true,
+    position:   0,
+    serverTime: serverTimestamp(),  // Firebase resolves this to authoritative server time
+    cmd:        Date.now()          // local-only echo dedupe key
+  });
+}
+
 window.audioLoadAndPlay = function() {
   if (!window.isGM) return;
   const url     = document.getElementById('audUrl').value;
@@ -233,13 +258,16 @@ window.audioLoadAndPlay = function() {
     return;
   }
   errLab.textContent = '';
-  set(audioRef, {
-    videoId,
-    isPlaying:  true,
-    position:   0,
-    serverTime: serverTimestamp(),  // Firebase resolves this to authoritative server time
-    cmd:        Date.now()          // local-only echo dedupe key
-  });
+  _playVideoId(videoId);
+};
+
+window.audioPlayPreset = function(videoId) {
+  if (!window.isGM) return;
+  const urlIn  = document.getElementById('audUrl');
+  const errLab = document.getElementById('audErr');
+  if (urlIn)  urlIn.value = 'https://youtu.be/' + videoId;
+  if (errLab) errLab.textContent = '';
+  _playVideoId(videoId);
 };
 
 window.audioPause = function() {

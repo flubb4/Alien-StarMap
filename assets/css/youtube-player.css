@@ -40,6 +40,28 @@
   background:#040810; border:1px solid #1a3344; padding:8px 10px;
   word-break:break-all;
 }
+.aud-section-label {
+  color:#557788; font-size:9px; letter-spacing:2.5px;
+  margin-top:-4px;
+}
+.aud-presets {
+  display:flex; gap:8px;
+}
+.aud-preset-btn {
+  flex:1; padding:14px 6px;
+  background:transparent; border:1px solid #6644aa;
+  color:#aa88dd; font-family:"Share Tech Mono",monospace;
+  font-size:11px; letter-spacing:2px; cursor:pointer;
+  transition:all 0.18s; line-height:1.4;
+}
+.aud-preset-btn:hover {
+  background:rgba(170,136,221,0.10);
+  box-shadow:0 0 14px rgba(170,136,221,0.35);
+  border-color:#cc99ee; color:#dd99ff;
+}
+.aud-preset-btn:active {
+  background:rgba(170,136,221,0.20);
+}
 #audUrl {
   width:100%; box-sizing:border-box;
   background:#040810; border:1px solid #1a3344;

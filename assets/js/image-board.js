@@ -278,12 +278,18 @@ function ibRenderStress(data) {
 window.startGlobalIbWatcher = function() {
   onValue(ref(window.db, 'session/imageBoard/open'), function(snap) {
     var ts = snap.val();
-    if (ts && typeof ts === 'number' && ts > ibLastOpenTs) {
+    var active = !!(ts && typeof ts === 'number' && ts > 0);
+    var btn = document.getElementById('imageBoardBtn');
+    if (btn) btn.style.display = (active && !window.isGM) ? '' : 'none';
+    if (active && ts > ibLastOpenTs) {
       ibLastOpenTs = ts;
       ibDoOpen();
     }
   });
 };
+
+// Player-side re-open: rejoin the active board without re-broadcasting.
+window.reopenImageBoard = function() { ibDoOpen(); };
 
 window.openImageBoard = function() {
   var ts = Date.now();

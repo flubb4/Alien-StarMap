@@ -1,3 +1,18 @@
+  /* ── HEADER REOPEN BUTTON (player-side) ── */
+  #imageBoardBtn {
+    background: transparent;
+    border: 1px solid #553388;
+    color: #aa66dd;
+    font-family: "Share Tech Mono", monospace;
+    font-size: 9px;
+    padding: 4px 12px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    margin-right: 6px;
+  }
+  #imageBoardBtn:hover { border-color: #cc88ff; color: #cc88ff; box-shadow: 0 0 8px rgba(204,136,255,0.3); }
+
   /* ── IMAGE BOARD OVERLAY ── */
   #imageBoardOverlay {
     position:fixed; inset:0; z-index:700;

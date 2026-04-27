@@ -387,7 +387,15 @@ function _csRender(pn, data) {
 function _csPatchFields(playerName, data, focused) {
   const isText = focused && (focused.tagName === 'TEXTAREA' ||
     (focused.tagName === 'INPUT' && (focused.type === 'text' || focused.type === '')));
-  if (!isText) { _csRender(playerName, data); return; }
+  if (!isText) {
+    // Defer the re-render past the current event loop tick. Firing a
+    // synchronous innerHTML swap from inside a checkbox change handler
+    // can race with the browser's click default action — the new <input>
+    // gets toggled back, making it look like the click did nothing.
+    // setTimeout(0) lets the click flow fully unwind before we rebuild.
+    setTimeout(() => _csRender(playerName, _csAllSheets[playerName] || data || {}), 0);
+    return;
+  }
   const fp    = focused.dataset.path;
   const start = focused.selectionStart;
   const end   = focused.selectionEnd;

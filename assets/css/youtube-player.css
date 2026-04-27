@@ -1,0 +1,144 @@
+/* ══════════════════════════════════════════════════════════════
+   YOUTUBE PLAYER — GM panel + per-client volume widget
+   Color palette: cyan (info), green-cyan accents to match handout/IB.
+══════════════════════════════════════════════════════════════ */
+
+/* GM sidebar button (matches gm-ho-btn / gm-ib-btn family) */
+.gm-aud-btn {
+  width:100%; padding:7px 0; margin-bottom:4px;
+  background:transparent; border:1px solid #336688;
+  color:#44aacc; font-family:"Share Tech Mono",monospace;
+  font-size:10px; letter-spacing:2px; cursor:pointer;
+  transition:all 0.2s;
+}
+.gm-aud-btn:hover {
+  background:rgba(68,170,204,0.08);
+  box-shadow:0 0 12px rgba(68,170,204,0.3);
+}
+
+/* GM panel */
+#audioPanel {
+  position:fixed; inset:0; z-index:850;
+  background:rgba(0,0,0,0.85); display:none;
+  align-items:center; justify-content:center;
+  font-family:"Share Tech Mono",monospace;
+}
+#audioPanel.open { display:flex; }
+.aud-box {
+  background:#070d12; border:1px solid #336688;
+  box-shadow:0 0 30px rgba(68,170,204,0.2);
+  width:min(540px,92vw); padding:24px;
+  display:flex; flex-direction:column; gap:14px;
+  position:relative;
+}
+.aud-box-title {
+  color:#44aacc; font-size:12px; letter-spacing:3px;
+  border-bottom:1px solid #1a3344; padding-bottom:10px;
+}
+.aud-state {
+  color:#88ccdd; font-size:11px; letter-spacing:2px;
+  background:#040810; border:1px solid #1a3344; padding:8px 10px;
+  word-break:break-all;
+}
+#audUrl {
+  width:100%; box-sizing:border-box;
+  background:#040810; border:1px solid #1a3344;
+  color:#88ccdd; font-family:"Share Tech Mono",monospace;
+  font-size:11px; padding:10px; outline:none;
+}
+#audUrl:focus { border-color:#336688; }
+#audUrl::placeholder { color:#33556a; }
+.aud-err {
+  color:#ff6677; font-size:10px; letter-spacing:1px;
+  min-height:14px;
+}
+.aud-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.aud-btn {
+  flex:1 1 calc(50% - 4px);
+  padding:9px 0; background:transparent;
+  border:1px solid #336688; color:#44aacc;
+  font-family:"Share Tech Mono",monospace; font-size:10px;
+  letter-spacing:2px; cursor:pointer; transition:all 0.2s;
+}
+.aud-btn:hover {
+  background:rgba(68,170,204,0.10);
+  box-shadow:0 0 12px rgba(68,170,204,0.3);
+}
+.aud-btn.play { border-color:#44cc88; color:#44cc88; }
+.aud-btn.play:hover {
+  background:rgba(68,204,136,0.10);
+  box-shadow:0 0 12px rgba(68,204,136,0.3);
+}
+.aud-btn.stop { border-color:#cc4455; color:#cc6677; }
+.aud-btn.stop:hover {
+  background:rgba(204,68,85,0.10);
+  box-shadow:0 0 12px rgba(204,68,85,0.3);
+}
+.aud-close {
+  position:absolute; top:8px; right:10px;
+  background:transparent; border:none; color:#557788;
+  font-family:"Share Tech Mono",monospace; font-size:11px;
+  letter-spacing:2px; cursor:pointer;
+}
+.aud-close:hover { color:#aaccdd; }
+
+/* ──────────────────────────────────────────────────────────────
+   PER-CLIENT VOLUME WIDGET (always visible after login)
+────────────────────────────────────────────────────────────── */
+#audioWidget {
+  position:fixed; right:14px; bottom:34px; z-index:500;
+  display:none;                    /* set to flex by startAudioWatcher */
+  flex-direction:column; align-items:flex-end;
+  font-family:"Share Tech Mono",monospace;
+}
+.aw-toggle {
+  background:rgba(7,13,18,0.92); border:1px solid #336688;
+  color:#44aacc; font-family:"Share Tech Mono",monospace;
+  font-size:10px; letter-spacing:2px; padding:5px 10px;
+  cursor:pointer; transition:all 0.15s;
+  display:flex; align-items:center; gap:6px;
+}
+.aw-toggle:hover {
+  border-color:#66ccee; color:#66ccee;
+  box-shadow:0 0 10px rgba(68,170,204,0.4);
+}
+.aw-popup {
+  display:none;
+  margin-bottom:6px;
+  background:rgba(7,13,18,0.96); border:1px solid #336688;
+  padding:10px 12px; min-width:220px;
+  box-shadow:0 0 20px rgba(68,170,204,0.2);
+}
+.aw-popup.open { display:block; }
+.aw-track {
+  color:#88ccdd; font-size:9px; letter-spacing:1.5px;
+  margin-bottom:8px; padding-bottom:6px;
+  border-bottom:1px solid #1a3344;
+  word-break:break-all; line-height:1.4;
+  max-height:60px; overflow:hidden;
+}
+.aw-vol-row {
+  display:flex; align-items:center; gap:10px;
+}
+.aw-vol-icon {
+  font-size:14px; cursor:pointer;
+  color:#44aacc; user-select:none;
+  transition:color 0.15s;
+}
+.aw-vol-icon:hover { color:#66ccee; }
+.aw-vol-slider {
+  flex:1; -webkit-appearance:none; appearance:none;
+  height:4px; background:#1a3344; border:none; outline:none;
+  cursor:pointer;
+}
+.aw-vol-slider::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none;
+  width:12px; height:12px; background:#44aacc;
+  border:none; cursor:pointer;
+  box-shadow:0 0 6px rgba(68,170,204,0.6);
+}
+.aw-vol-slider::-moz-range-thumb {
+  width:12px; height:12px; background:#44aacc;
+  border:none; cursor:pointer;
+  box-shadow:0 0 6px rgba(68,170,204,0.6);
+}

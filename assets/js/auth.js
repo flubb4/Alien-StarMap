@@ -153,6 +153,7 @@ function _doLogin(nameUpper) {
       window.startSupplyPanel?.();
       window.startRationsPanel?.();
       window.startXPChestWatcher?.();
+      window.startAudioWatcher?.();
     }, 300);
   });
 }

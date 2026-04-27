@@ -147,15 +147,49 @@ function _csRender(pn, data) {
       ${ro?'':` data-stress="${i+1}" data-pn="${pn}"`}>●</div>`
   ).join('');
 
-  // Panic checkboxes
-  const PANICS = ['Aggravated','Catatonic','Deflated','Flee','Frantic','Freeze','Frenzy','Hesitant','Lose Item','Loud Noise','Paranoid','Scream','Seek Cover','Shakes'];
-  const panicBoxes = PANICS.map(p => {
-    const key = 'panic.' + p.replace(/\s/g,'_');
-    const chk = !!_csGet(data, key);
-    return `<label class="cs-panic-item">
-      <input type="checkbox" ${chk?'checked':''} ${ro?'disabled':''} class="cs-chk" data-pn="${pn}" data-path="${key}"> ${p}
+  // Stress + Panic Responses — aligned with Alien Evolved Edition Core Rules
+  // Stress Response Table (p.44): D6 + stress − Resolve
+  const STRESS_RESPONSES = [
+    { k:'Jumpy',         label:'Jumpy',         tip:'#1 — Pushing a roll gives +2 stress (instead of +1).' },
+    { k:'Tunnel_Vision', label:'Tunnel Vision', tip:'#2 — All Wits-based skill rolls get −2 dice.' },
+    { k:'Aggravated',    label:'Aggravated',    tip:'#3 — All Empathy-based skill rolls get −2 dice.' },
+    { k:'Shakes',        label:'Shakes',        tip:'#4 — All Agility-based skill rolls get −2 dice.' },
+    { k:'Frantic',       label:'Frantic',       tip:'#5 — All Strength-based skill rolls get −2 dice.' },
+    { k:'Deflated',      label:'Deflated',      tip:'#6 — You cannot push any skill rolls.' },
+    { k:'Mess_Up',       label:'Mess Up',       tip:'#7+ — Your action fails outright; +1 stress.' },
+  ];
+  // Panic Response Table (p.73): D6 + stress − Resolve
+  const PANIC_RESPONSES = [
+    { k:'Spooked',     label:'Spooked',     tip:'2–3 — Stress level +1.' },
+    { k:'Noisy',       label:'Noisy',       tip:'4–6 — Nearby enemies are alerted to your presence.' },
+    { k:'Twitchy',     label:'Twitchy',     tip:'7–8 — Make an immediate supply roll (air/ammo/power).' },
+    { k:'Lose_Item',   label:'Lose Item',   tip:'9–10 — You lose a weapon or important item.' },
+    { k:'Paranoid',    label:'Paranoid',    tip:'11 — Cannot give or receive help on skill rolls.' },
+    { k:'Hesitant',    label:'Hesitant',    tip:'12 — Auto #10 initiative card until panic ends.' },
+    { k:'Freeze',      label:'Freeze',      tip:'13 — Lose your next turn; no interrupt actions.' },
+    { k:'Seek_Cover',  label:'Seek Cover',  tip:'14 — Take full cover (interrupt). Stress −1, lose next turn.' },
+    { k:'Scream',      label:'Scream',      tip:'15 — Lose next turn. Stress −1. Allies in zone roll panic.' },
+    { k:'Flee',        label:'Flee',        tip:'16 — Move to adjacent zone. Stress −1; allies in start zone +1 stress.' },
+    { k:'Frenzy',      label:'Frenzy',      tip:'17 — Attack the nearest target until panic ends.' },
+    { k:'Catatonic',   label:'Catatonic',   tip:'18+ — You collapse and cannot move until panic ends.' },
+  ];
+  const renderResp = (list, prefix) => list.map(r => {
+    const path = prefix + '.' + r.k;
+    const chk = !!_csGet(data, path);
+    return `<label class="cs-panic-item${chk?' chk':''}" title="${_esc(r.tip)}">
+      <input type="checkbox" ${chk?'checked':''} ${ro?'disabled':''} class="cs-chk" data-pn="${pn}" data-path="${path}"> ${r.label}
     </label>`;
   }).join('');
+  const stressRespBoxes = renderResp(STRESS_RESPONSES, 'stressResp');
+  const panicRespBoxes  = renderResp(PANIC_RESPONSES,  'panicResp');
+
+  // Auto-debuff badges on attributes (Stress Response Table p.44)
+  const debuff = (path, label) =>
+    _csGet(data, path) ? `<span class="cs-stat-debuff" title="${_esc(label)}">−2</span>` : '';
+  const strDebuff = debuff('stressResp.Frantic',       'Frantic: −2 dice on Strength skills');
+  const agiDebuff = debuff('stressResp.Shakes',        'Shakes: −2 dice on Agility skills');
+  const witDebuff = debuff('stressResp.Tunnel_Vision', 'Tunnel Vision: −2 dice on Wits skills');
+  const empDebuff = debuff('stressResp.Aggravated',    'Aggravated: −2 dice on Empathy skills');
 
   // Death roll boxes
   const dr = (path) => {
@@ -220,25 +254,25 @@ function _csRender(pn, data) {
     <div class="cs-section-title">// ATTRIBUTES & SKILLS</div>
     <div class="cs-attrs">
       <div class="cs-attr-block">
-        <div class="cs-attr-name">STRENGTH ${as('attr.str')}</div>
+        <div class="cs-attr-name">STRENGTH ${as('attr.str')}${strDebuff}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">CLOSE COMBAT</span>${ss('skill.closeCombat')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">HEAVY MACHINERY</span>${ss('skill.heavyMachinery')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">STAMINA</span>${ss('skill.stamina')}</div>
       </div>
       <div class="cs-attr-block">
-        <div class="cs-attr-name">AGILITY ${as('attr.agi')}</div>
+        <div class="cs-attr-name">AGILITY ${as('attr.agi')}${agiDebuff}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">MOBILITY</span>${ss('skill.mobility')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">PILOTING</span>${ss('skill.piloting')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">RANGED COMBAT</span>${ss('skill.rangedCombat')}</div>
       </div>
       <div class="cs-attr-block">
-        <div class="cs-attr-name">WITS ${as('attr.wit')}</div>
+        <div class="cs-attr-name">WITS ${as('attr.wit')}${witDebuff}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">COMTECH</span>${ss('skill.comtech')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">OBSERVATION</span>${ss('skill.observation')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">SURVIVAL</span>${ss('skill.survival')}</div>
       </div>
       <div class="cs-attr-block">
-        <div class="cs-attr-name">EMPATHY ${as('attr.emp')}</div>
+        <div class="cs-attr-name">EMPATHY ${as('attr.emp')}${empDebuff}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">COMMAND</span>${ss('skill.command')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">MANIPULATION</span>${ss('skill.manipulation')}</div>
         <div class="cs-skill-row"><span class="cs-skill-name">MEDICAL AID</span>${ss('skill.medicalAid')}</div>
@@ -267,8 +301,11 @@ function _csRender(pn, data) {
     <div class="cs-section-title">// STRESS LEVEL <span class="cs-stress-label" style="color:#446633;font-size:9px;font-weight:normal">${stressLvl}/10</span></div>
     <div class="cs-stress-row">${stressBoxes}</div>
 
-    <div class="cs-section-title">// STRESS &amp; PANIC RESPONSE</div>
-    <div class="cs-panic-grid">${panicBoxes}</div>
+    <div class="cs-section-title">// STRESS RESPONSE <span class="cs-resp-note">D6 + STRESS − RESOLVE · effects on hover</span></div>
+    <div class="cs-panic-grid">${stressRespBoxes}</div>
+
+    <div class="cs-section-title">// PANIC RESPONSE <span class="cs-resp-note">D6 + STRESS − RESOLVE · effects on hover</span></div>
+    <div class="cs-panic-grid">${panicRespBoxes}</div>
 
     <div class="cs-section-title">// DEATH ROLLS</div>
     <div class="cs-deathroll">

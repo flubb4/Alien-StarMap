@@ -107,6 +107,18 @@ window.onYouTubeIframeAPIReady = function() {
           errLabel.textContent = 'PLAYBACK ERROR (' + e.data + ') — VIDEO MAY BE EMBED-RESTRICTED';
           setTimeout(() => { errLabel.textContent = ''; }, 4000);
         }
+      },
+      onStateChange: (e) => {
+        // YT auto-mutes on autoplay when policy is uncertain. Force unmute +
+        // re-apply volume each time playback actually starts.
+        if (e.data === 1 /* PLAYING */ && ytReady) {
+          try {
+            if (ytPlayer.isMuted && ytPlayer.isMuted()) ytPlayer.unMute();
+            ytPlayer.setVolume(myVolume);
+          } catch(err) {}
+          // Refresh widget track label now that title metadata is available
+          get(audioRef).then(snap => _updateWidgetTrack(snap.val()));
+        }
       }
     }
   });
@@ -232,7 +244,11 @@ function applyState(d) {
 
   if (currentVid !== d.videoId) {
     if (d.isPlaying) {
-      try { ytPlayer.loadVideoById({ videoId: d.videoId, startSeconds: Math.max(0, targetPos) }); } catch(e) {}
+      try {
+        ytPlayer.loadVideoById({ videoId: d.videoId, startSeconds: Math.max(0, targetPos) });
+        if (ytPlayer.isMuted && ytPlayer.isMuted()) ytPlayer.unMute();
+        ytPlayer.setVolume(myVolume);
+      } catch(e) {}
     } else {
       try { ytPlayer.cueVideoById({ videoId: d.videoId, startSeconds: Math.max(0, targetPos) }); } catch(e) {}
     }
@@ -248,7 +264,11 @@ function applyState(d) {
       try { ytPlayer.seekTo(targetPos, true); } catch(e) {}
     }
     if (ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== 1) {
-      try { ytPlayer.playVideo(); } catch(e) {}
+      try {
+        ytPlayer.playVideo();
+        if (ytPlayer.isMuted && ytPlayer.isMuted()) ytPlayer.unMute();
+        ytPlayer.setVolume(myVolume);
+      } catch(e) {}
     }
     startDriftTimer();
   } else {
@@ -301,7 +321,14 @@ window.startAudioWatcher = function() {
 // ── Volume slider (per-client, persisted to localStorage) ────────────
 window.audioSetVolume = function(v) {
   myVolume = Math.max(0, Math.min(100, parseInt(v, 10) || 0));
-  if (ytReady) { try { ytPlayer.setVolume(myVolume); } catch(e) {} }
+  if (ytReady) {
+    try {
+      // If the YT player auto-muted itself (autoplay policy), undo it whenever
+      // the user moves the slider above 0.
+      if (myVolume > 0 && ytPlayer.isMuted && ytPlayer.isMuted()) ytPlayer.unMute();
+      ytPlayer.setVolume(myVolume);
+    } catch(e) {}
+  }
   try { localStorage.setItem('alien-map-yt-volume', String(myVolume)); } catch(e) {}
   const lab = document.getElementById('awVolLabel');
   if (lab) lab.textContent = myVolume;

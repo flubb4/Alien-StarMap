@@ -74,6 +74,21 @@
   background:rgba(204,68,85,0.10);
   box-shadow:0 0 12px rgba(204,68,85,0.3);
 }
+.aud-loop-btn {
+  width:100%; padding:9px 0;
+  background:transparent; border:1px solid #443322;
+  color:#776655; font-family:"Share Tech Mono",monospace;
+  font-size:10px; letter-spacing:2px; cursor:pointer;
+  transition:all 0.2s;
+}
+.aud-loop-btn:hover {
+  border-color:#886644; color:#aa8866;
+}
+.aud-loop-btn.active {
+  border-color:#ffaa44; color:#ffcc66;
+  background:rgba(255,170,68,0.08);
+  box-shadow:0 0 10px rgba(255,170,68,0.25);
+}
 .aud-close {
   position:absolute; top:8px; right:10px;
   background:transparent; border:none; color:#557788;

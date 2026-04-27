@@ -41,6 +41,10 @@ try {
   if (!isNaN(v)) myVolume = Math.max(0, Math.min(100, v));
 } catch(e) {}
 
+// ── GM-only: loop toggle (persists locally between sessions) ─────────
+let loopEnabled = false;
+try { loopEnabled = localStorage.getItem('alien-map-yt-loop') === '1'; } catch(e) {}
+
 // ── Inject all DOM (panel, widget, hidden player host, GM button) ────
 // Module scripts run after DOM parsing, so document.body is ready.
 (function injectDOM() {
@@ -67,6 +71,9 @@ try {
         <button class="aud-btn" onclick="audioResume()">▶ RESUME</button>
         <button class="aud-btn stop" onclick="audioStop()">⏹ STOP</button>
       </div>
+      <button class="aud-loop-btn" id="audLoopBtn" onclick="audioToggleLoop()">
+        🔁 LOOP — <span id="audLoopState">OFF</span>
+      </button>
     </div>`;
   document.body.appendChild(panel);
 
@@ -136,6 +143,22 @@ window.onYouTubeIframeAPIReady = function() {
           // Refresh widget track label now that title metadata is available
           get(audioRef).then(snap => _updateWidgetTrack(snap.val()));
         }
+        // ENDED + GM + loop ON → write a fresh "play from 0" state to Firebase.
+        // Only the GM does this so all clients restart in lockstep instead of
+        // each running their own loop with accumulating drift.
+        if (e.data === 0 /* ENDED */ && window.isGM && loopEnabled) {
+          get(audioRef).then(snap => {
+            const d = snap.val();
+            if (!d || !d.videoId) return;
+            set(audioRef, {
+              videoId:    d.videoId,
+              isPlaying:  true,
+              position:   0,
+              serverTime: serverTimestamp(),
+              cmd:        Date.now()
+            });
+          });
+        }
       }
     }
   });
@@ -161,6 +184,7 @@ function parseVideoId(input) {
 window.openAudioPanel = function() {
   if (!window.isGM) return;
   document.getElementById('audioPanel').classList.add('open');
+  _refreshLoopBtn();
   get(audioRef).then(snap => {
     const d = snap.val();
     const urlIn = document.getElementById('audUrl');
@@ -172,6 +196,20 @@ window.openAudioPanel = function() {
     }
   });
 };
+
+window.audioToggleLoop = function() {
+  if (!window.isGM) return;
+  loopEnabled = !loopEnabled;
+  try { localStorage.setItem('alien-map-yt-loop', loopEnabled ? '1' : '0'); } catch(e) {}
+  _refreshLoopBtn();
+};
+
+function _refreshLoopBtn() {
+  const btn   = document.getElementById('audLoopBtn');
+  const state = document.getElementById('audLoopState');
+  if (btn)   btn.classList.toggle('active', loopEnabled);
+  if (state) state.textContent = loopEnabled ? 'ON' : 'OFF';
+}
 
 window.closeAudioPanel = function() {
   document.getElementById('audioPanel').classList.remove('open');

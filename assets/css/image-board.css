@@ -75,3 +75,37 @@
     letter-spacing:2px; cursor:pointer; transition:all 0.2s;
   }
   .gm-ib-btn:hover { background:rgba(68,170,255,0.08); box-shadow:0 0 12px rgba(68,170,255,0.3); }
+
+  /* ── GM Stress Panel (read-only mirror of character-sheet stressLevel) ── */
+  #ibStressPanel {
+    position:absolute; top:12px; right:12px; z-index:5;
+    background:rgba(8,10,8,0.88);
+    border:1px solid var(--border);
+    padding:10px 14px 8px;
+    font-family:"Share Tech Mono",monospace;
+    min-width:220px; max-width:280px;
+    pointer-events:none;
+    box-shadow:0 0 16px rgba(0,0,0,0.6);
+  }
+  .ib-stress-title {
+    font-size:9px; letter-spacing:3px; color:var(--accent);
+    margin-bottom:8px; padding-bottom:5px;
+    border-bottom:1px solid #1a2a1a;
+  }
+  .ib-stress-row {
+    display:flex; align-items:center; gap:8px;
+    padding:3px 0;
+  }
+  .ib-stress-name { flex:1; color:#cfd0c5; font-size:10px; letter-spacing:1px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ib-stress-bar { display:flex; gap:2px; flex-shrink:0; }
+  .ib-stress-pip {
+    width:6px; height:11px;
+    background:transparent; border:1px solid #2a2a2a;
+  }
+  .ib-stress-pip.lvl-low  { background:#44cc44; border-color:#44cc44; box-shadow:0 0 3px #44cc44; }
+  .ib-stress-pip.lvl-med  { background:#e2c94a; border-color:#e2c94a; box-shadow:0 0 3px #e2c94a; }
+  .ib-stress-pip.lvl-high { background:#ff6600; border-color:#ff6600; box-shadow:0 0 4px #ff6600; }
+  .ib-stress-pip.lvl-crit { background:#ff2200; border-color:#ff2200; box-shadow:0 0 5px #ff2200; animation:ibStressPulse 1s infinite; }
+  @keyframes ibStressPulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
+  .ib-stress-num { font-size:10px; color:var(--dim); min-width:30px; text-align:right; flex-shrink:0; }
+  .ib-stress-empty { color:var(--dim); font-size:10px; font-style:italic; padding:4px 0; }

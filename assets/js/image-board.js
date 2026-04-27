@@ -12,6 +12,7 @@ var ibRevealMode   = false;
 var ibCoverDataUrl = null;
 var ibLocalRevealStrokes = new Set();
 var ibAllRevealStrokes   = [];
+var ibStressUnsub        = null;
 
 function ibGetOverlay()      { return document.getElementById('imageBoardOverlay'); }
 function ibGetCanvas()       { return document.getElementById('ibCanvas'); }
@@ -215,6 +216,63 @@ function ibDoOpen() {
   ibResizeCanvas();
   ibSetupDrawing();
   ibStartListeners();
+  ibStartStressWatch();
+}
+
+// ── GM-only stress overview (mirrors characters/{name}/stressLevel) ─────────
+function ibStartStressWatch() {
+  if (!window.isGM) return;
+  if (ibStressUnsub) return;
+  var panel = document.getElementById('ibStressPanel');
+  if (panel) panel.innerHTML = '<div class="ib-stress-title">▣ CREW STRESS</div>' +
+                               '<div class="ib-stress-empty">— LINKING —</div>';
+  ibStressUnsub = onValue(ref(window.db, 'characters'), function(snap) {
+    ibRenderStress(snap.val() || {});
+  });
+}
+
+function ibStopStressWatch() {
+  if (ibStressUnsub) { try { ibStressUnsub(); } catch(e) {} ibStressUnsub = null; }
+  var panel = document.getElementById('ibStressPanel');
+  if (panel) panel.innerHTML = '';
+}
+
+function ibStressEsc(s) {
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function ibRenderStress(data) {
+  var panel = document.getElementById('ibStressPanel');
+  if (!panel) return;
+  var names = Object.keys(data || {})
+    .filter(function(n) { return n && n !== window.myName; })
+    .sort();
+
+  var rows = names.map(function(name) {
+    var lvl = parseInt(data[name] && data[name].stressLevel, 10) || 0;
+    if (lvl < 0) lvl = 0; if (lvl > 10) lvl = 10;
+    var pips = '';
+    for (var i = 0; i < 10; i++) {
+      var cls = '';
+      if (i < lvl) {
+        if      (lvl >= 9) cls = ' lvl-crit';
+        else if (lvl >= 7) cls = ' lvl-high';
+        else if (lvl >= 4) cls = ' lvl-med';
+        else                cls = ' lvl-low';
+      }
+      pips += '<span class="ib-stress-pip' + cls + '"></span>';
+    }
+    return '<div class="ib-stress-row">' +
+             '<span class="ib-stress-name">' + ibStressEsc(name) + '</span>' +
+             '<span class="ib-stress-bar">' + pips + '</span>' +
+             '<span class="ib-stress-num">' + lvl + '/10</span>' +
+           '</div>';
+  }).join('');
+
+  panel.innerHTML = '<div class="ib-stress-title">▣ CREW STRESS</div>' +
+                    (rows || '<div class="ib-stress-empty">— NO CREW DATA —</div>');
 }
 
 window.startGlobalIbWatcher = function() {
@@ -239,6 +297,7 @@ window.closeImageBoard = function() {
   var ov = ibGetOverlay();
   ov.style.display = 'none';
   ibStopListeners();
+  ibStopStressWatch();
   ibDrawing = false;
   ibCurrentStroke = null;
   ibRevealMode = false;

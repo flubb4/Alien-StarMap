@@ -300,6 +300,7 @@ window.openImageBoard = function() {
 
 window.closeImageBoard = function() {
   ibIsOpen = false;
+  document.getElementById('ibClearConfirm').classList.remove('open');
   var ov = ibGetOverlay();
   ov.style.display = 'none';
   ibStopListeners();
@@ -318,7 +319,16 @@ window.closeImageBoard = function() {
 
 window.clearImageBoard = function() {
   if (!window.isGM) return;
+  document.getElementById('ibClearConfirm').classList.add('open');
+};
+
+window.ibClearConfirmed = function() {
+  document.getElementById('ibClearConfirm').classList.remove('open');
   remove(window.ibStrokesRef);
+};
+
+window.ibClearCancel = function() {
+  document.getElementById('ibClearConfirm').classList.remove('open');
 };
 
 window.handleImageSelect = function(input) {

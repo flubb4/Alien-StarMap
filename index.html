@@ -811,10 +811,21 @@
       <button class="ib-tool-btn ib-gm-only" onclick="document.getElementById('coverImageFileInput').click()">🗺 Load Cover</button>
       <button class="ib-tool-btn ib-gm-only" id="ibRevealBtn" onclick="ibToggleRevealMode()">👁 Reveal</button>
       <button class="ib-tool-btn ib-gm-only" onclick="clearImageBoard()">🗑 Clear</button>
+
       <button class="ib-tool-btn ib-gm-only" onclick="openInitiative()">⚡ Initiative</button>
       <button class="ib-tool-btn" onclick="openCharSheet()">📋 Character</button>
       <button class="ib-tool-btn" onclick="openSupplyPanel()">📦 Supply</button>
       <button class="ib-close-btn" onclick="closeImageBoard()">✕ Close</button>
+    </div>
+  </div>
+  <div id="ibClearConfirm" class="ib-confirm-overlay">
+    <div class="ib-confirm-box">
+      <div class="ib-confirm-title">// CLEAR BOARD</div>
+      <div class="ib-confirm-msg">Alle Zeichnungen löschen?</div>
+      <div class="ib-confirm-btns">
+        <button class="ib-tool-btn" onclick="ibClearCancel()">Abbrechen</button>
+        <button class="ib-tool-btn ib-confirm-yes" onclick="ibClearConfirmed()">🗑 Löschen</button>
+      </div>
     </div>
   </div>
   <div class="ib-canvas-wrap" id="ibCanvasWrap">

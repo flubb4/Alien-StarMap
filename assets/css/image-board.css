@@ -124,3 +124,26 @@
   @keyframes ibStressPulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
   .ib-stress-num { font-size:10px; color:var(--dim); min-width:30px; text-align:right; flex-shrink:0; }
   .ib-stress-empty { color:var(--dim); font-size:10px; font-style:italic; padding:4px 0; }
+
+  /* ── Clear confirmation overlay ── */
+  .ib-confirm-overlay {
+    position:absolute; inset:0; z-index:20;
+    background:rgba(0,0,0,0.78);
+    display:none; align-items:center; justify-content:center;
+  }
+  .ib-confirm-overlay.open { display:flex; }
+  .ib-confirm-box {
+    background:var(--panel); border:1px solid var(--accent2);
+    padding:24px 32px; text-align:center;
+    box-shadow:0 0 32px rgba(255,68,0,0.3);
+  }
+  .ib-confirm-title {
+    font-family:"Orbitron",sans-serif; font-size:11px; letter-spacing:3px;
+    color:var(--accent2); margin-bottom:10px; text-transform:uppercase;
+  }
+  .ib-confirm-msg {
+    font-size:11px; letter-spacing:2px; color:var(--text); margin-bottom:18px;
+  }
+  .ib-confirm-btns { display:flex; gap:12px; justify-content:center; }
+  .ib-confirm-yes { border-color:var(--accent2) !important; color:var(--accent2) !important; }
+  .ib-confirm-yes:hover { background:rgba(255,68,0,0.12) !important; }

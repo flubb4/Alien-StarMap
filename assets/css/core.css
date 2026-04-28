@@ -571,9 +571,10 @@
     width: 100%; background: transparent;
     border: 1px solid var(--border); color: var(--dim);
     font-family: "Share Tech Mono", monospace;
-    font-size: 9px; padding: 7px; cursor: pointer;
+    font-size: 9px; padding: 7px 9px; cursor: pointer;
     letter-spacing: 2px; text-transform: uppercase;
     transition: all 0.15s; margin-bottom: 4px;
-    text-align: left; display: block;
+    display: flex; align-items: center; gap: 7px;
+    line-height: 1;
   }
   .gm-dd-btn:hover { border-color: var(--amber); color: var(--amber); }

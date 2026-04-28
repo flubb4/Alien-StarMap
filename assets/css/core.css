@@ -67,7 +67,7 @@
     text-transform: uppercase;
     transition: all 0.2s;
     white-space: nowrap;
-    min-width: 130px;
+    min-width: 150px;
     text-align: center;
   }
   /* Resting state — tinted border + text, subtle background */

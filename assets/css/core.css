@@ -54,6 +54,31 @@
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.25} }
   .online-count { font-size:9px; color:var(--dim); letter-spacing:1px; }
 
+  /* HEADER ACTION BUTTONS */
+  .header-btn {
+    background: transparent;
+    border: 1px solid var(--hair);
+    color: var(--dim);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    padding: 6px 14px;
+    cursor: pointer;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .header-btn--plum  { border-color: var(--plum);  color: var(--plum); }
+  .header-btn--bone  { border-color: var(--bone-2); color: var(--bone-2); }
+  .header-btn--chart { border-color: var(--chart);  color: var(--chart); }
+  .header-btn--teal  { border-color: var(--teal);   color: var(--teal); }
+
+  .header-btn:hover               { border-color: var(--bone-2); color: var(--bone); background: var(--panel-3); }
+  .header-btn--plum:hover         { border-color: var(--plum);   color: var(--plum);  background: rgba(163,125,187,0.12); box-shadow: 0 0 10px rgba(163,125,187,0.35); }
+  .header-btn--bone:hover         { border-color: var(--bone);   color: var(--bone);  background: rgba(240,230,210,0.08); }
+  .header-btn--chart:hover        { border-color: var(--chart);  color: var(--chart); background: rgba(212,209,104,0.12); box-shadow: 0 0 10px rgba(212,209,104,0.30); }
+  .header-btn--teal:hover         { border-color: var(--teal);   color: var(--teal);  background: rgba(110,192,196,0.12); box-shadow: 0 0 10px rgba(110,192,196,0.30); }
+
   .main { display:flex; flex:1; overflow:hidden; }
 
   .sidebar {

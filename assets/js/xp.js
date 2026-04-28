@@ -1,5 +1,12 @@
 import { ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
+// ── All known players from Firebase characters/ node ─────────────
+let _xpaAllKnownPlayers = new Set();
+onValue(ref(window.db, 'characters'), snap => {
+  const data = snap.val() || {};
+  _xpaAllKnownPlayers = new Set(Object.keys(data));
+});
+
 // ── XP Award System ───────────────────────────────────────────────
 const XP_QUESTIONS = [
   { id:'participated', label:'Hast du an der Session teilgenommen?',                                                          xp: 1 },
@@ -14,10 +21,9 @@ const XP_QUESTIONS = [
 ];
 
 function _xpaGetPlayers() {
-  const names = new Set();
+  const names = new Set(_xpaAllKnownPlayers);
   if (window._onlinePlayers) window._onlinePlayers.forEach(n => names.add(n));
-  Object.keys(_csAllSheets).forEach(n => names.add(n));
-  // Remove GM from list
+  Object.keys(window._csAllSheets || {}).forEach(n => names.add(n));
   if (window.isGM && window.myName) names.delete(window.myName);
   return [...names].sort();
 }
@@ -88,7 +94,7 @@ window.applyXPAward = function() {
 
   players.forEach(p => {
     if (!totals[p]) return;
-    const cur = parseInt(_csGet(_csAllSheets[p] || {}, 'xp')) || 0;
+    const cur = parseInt(window._csGet(window._csAllSheets[p] || {}, 'xp')) || 0;
     window._csSave(p, 'xp', cur + totals[p]);
     // Write chest notification to Firebase for each player
     set(ref(window.db, 'session/xpChest/' + p), { amount: totals[p], ts: Date.now() });

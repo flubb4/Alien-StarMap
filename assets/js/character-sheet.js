@@ -8,6 +8,7 @@ import { ref, set, remove, update, onValue } from "https://www.gstatic.com/fireb
 let _csViewingPlayer = null;
 let _csDebounce      = {};
 let _csAllSheets     = {};
+window._csAllSheets = _csAllSheets; // shared reference for xp.js
 const _CS_MS         = 300;
 
 // ── Open / close ──────────────────────────────────────────────────
@@ -111,6 +112,7 @@ window._csDB = function(playerName, path, value) {
 function _csGet(obj, path) {
   return path.split('.').reduce((o, k) => (o && o[k] !== undefined ? o[k] : ''), obj) || '';
 }
+window._csGet = _csGet;
 function _esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }

@@ -3,17 +3,17 @@
    Color palette: cyan (info), green-cyan accents to match handout/IB.
 ══════════════════════════════════════════════════════════════ */
 
-/* GM sidebar button (matches gm-ho-btn / gm-ib-btn family) */
+/* GM dropdown button — layout via .gm-dd-btn, colour override here */
 .gm-aud-btn {
-  width:100%; padding:7px 0; margin-bottom:4px;
-  background:transparent; border:1px solid #336688;
-  color:#44aacc; font-family:"Share Tech Mono",monospace;
-  font-size:10px; letter-spacing:2px; cursor:pointer;
-  transition:all 0.2s;
+  border-color: var(--teal);
+  color: var(--teal);
+  background: rgba(110,192,196,0.07);
 }
 .gm-aud-btn:hover {
-  background:rgba(68,170,204,0.08);
-  box-shadow:0 0 12px rgba(68,170,204,0.3);
+  border-color: var(--teal);
+  color: var(--bone);
+  background: rgba(110,192,196,0.18);
+  box-shadow: 0 0 12px rgba(110,192,196,0.35);
 }
 
 /* GM panel */

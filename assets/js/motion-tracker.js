@@ -32,8 +32,9 @@ let mtCursor     = { x: 0, y: 0 };
 let mtRafId      = null;
 let mtListeners  = [];
 let mtRunning    = false;
-let mtKeyHandler = null;
+let mtKeyHandler  = null;
 let mtMoveHandler = null;
+let mtCtxHandler  = null;
 
 // ── Public lifecycle ──────────────────────────────────────────
 window.mtStart = function() {
@@ -63,6 +64,11 @@ window.mtStop = function() {
     if (wrap) wrap.removeEventListener('mousemove', mtMoveHandler);
     mtMoveHandler = null;
   }
+  if (mtCtxHandler) {
+    const c = document.getElementById('ibCanvas');
+    if (c) c.removeEventListener('contextmenu', mtCtxHandler);
+    mtCtxHandler = null;
+  }
   mtUpdateButtons();
   mtUpdateHint();
   mtClearCanvas();
@@ -72,6 +78,12 @@ window.mtStop = function() {
 window.mtClearAll = function() {
   remove(window.mtTrackersRef);
   remove(window.mtBlipsRef);
+};
+
+// GM only: wipe all trackers (blips will be cone-gated invisible & expire on their own)
+window.mtClearTrackers = function() {
+  if (!window.isGM) return;
+  remove(window.mtTrackersRef);
 };
 
 // ── Button handlers ───────────────────────────────────────────
@@ -186,6 +198,27 @@ function mtAttachInput() {
     }
   };
   document.addEventListener('keydown', mtKeyHandler);
+
+  // GM right-click on a tracker center → remove that tracker
+  const c = document.getElementById('ibCanvas');
+  if (c) {
+    mtCtxHandler = e => {
+      if (!window.isGM || !window.ibToPix) return;
+      const rect = c.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const trackers = Object.values(mtTrackers || {});
+      for (const t of trackers) {
+        const tp = window.ibToPix(t.nx, t.ny);
+        if (Math.hypot(px - tp.px, py - tp.py) < 14) {
+          e.preventDefault();
+          remove(ref(window.db, 'session/imageBoard/motionTrackers/' + t.id));
+          return;
+        }
+      }
+    };
+    c.addEventListener('contextmenu', mtCtxHandler);
+  }
 }
 
 // ── UI helpers ────────────────────────────────────────────────
@@ -357,9 +390,7 @@ function mtDrawTracker(ctx, rect, t, blips, now) {
   const center = window.ibToPix(t.nx, t.ny);
   const rangePx = mtRangePx(rect, t);
   const a1 = t.angle - MT_HALF_FOV;
-  const sliceArc = MT_FOV / MT_SLICES;
-  const bandLen  = rangePx / MT_BANDS;
-  const color    = t.color || '#44ddff';
+  const color = t.color || '#44ddff';
 
   // ── Sweep ──────────────────────────────────────────────────
   const sweepPhase = ((now - (t.ts || 0)) % MT_SWEEP_MS) / MT_SWEEP_MS;
@@ -378,7 +409,7 @@ function mtDrawTracker(ctx, rect, t, blips, now) {
   ctx.fill();
   ctx.restore();
 
-  // ── Blips → sector cells ──────────────────────────────────
+  // ── Blips → exact dots (still cone-gated) ─────────────────
   blips.forEach(b => {
     const bp = window.ibToPix(b.nx, b.ny);
     const dx = bp.px - center.px;
@@ -391,35 +422,32 @@ function mtDrawTracker(ctx, rect, t, blips, now) {
     while (dAngle < -Math.PI) dAngle += 2 * Math.PI;
     if (Math.abs(dAngle) > MT_HALF_FOV) return;
 
-    const sliceIdx = Math.min(MT_SLICES - 1, Math.max(0, Math.floor((dAngle + MT_HALF_FOV) / sliceArc)));
-    const bandIdx  = Math.min(MT_BANDS - 1,  Math.max(0, Math.floor(dist / bandLen)));
-
-    const cellA1 = a1 + sliceIdx * sliceArc;
-    const cellA2 = cellA1 + sliceArc;
-    const cellR1 = bandIdx * bandLen;
-    const cellR2 = (bandIdx + 1) * bandLen;
-
     const age   = now - b.ts;
     const fade  = Math.max(0, 1 - age / MT_BLIP_TTL);
     const pulse = 0.55 + 0.45 * Math.abs(Math.sin(age * 0.011));
     const alpha = pulse * fade;
 
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(center.px, center.py, cellR2, cellA1, cellA2);
-    ctx.arc(center.px, center.py, cellR1, cellA2, cellA1, true);
-    ctx.closePath();
+    const r = 6;
 
-    ctx.globalAlpha = alpha * 0.55;
-    ctx.fillStyle = '#ff2200';
+    ctx.save();
+    // Outer glow halo
+    const halo = ctx.createRadialGradient(bp.px, bp.py, 0, bp.px, bp.py, r * 4);
+    halo.addColorStop(0,   `rgba(255,40,20,${alpha * 0.55})`);
+    halo.addColorStop(0.5, `rgba(255,40,20,${alpha * 0.18})`);
+    halo.addColorStop(1,   'rgba(255,40,20,0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(bp.px, bp.py, r * 4, 0, Math.PI * 2);
     ctx.fill();
 
+    // Hard center dot
     ctx.globalAlpha = alpha;
-    ctx.strokeStyle = '#ff3a1a';
-    ctx.lineWidth = 1.8;
+    ctx.fillStyle = '#ff2200';
     ctx.shadowColor = '#ff2200';
-    ctx.shadowBlur  = 14;
-    ctx.stroke();
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.arc(bp.px, bp.py, r, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   });
 }

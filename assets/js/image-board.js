@@ -31,6 +31,7 @@ function ibResizeCanvas() {
   var cc = ibGetCoverCanvas();
   cc.width  = wrap.clientWidth;
   cc.height = wrap.clientHeight;
+  if (window.mtResize) window.mtResize();
   ibDrawCoverImage(function() {
     ibAllRevealStrokes.forEach(function(s) { ibDrawRevealStroke(s); });
   });
@@ -92,6 +93,11 @@ function ibToPix(nx, ny) {
   if (!r) return { px: nx * ibGetCanvas().width, py: ny * ibGetCanvas().height };
   return { px: r.x + nx*r.w, py: r.y + ny*r.h };
 }
+
+// Exposed for motion-tracker.js (cone needs the same image-rect math)
+window.ibToNorm    = ibToNorm;
+window.ibToPix     = ibToPix;
+window.ibImageRect = ibImageRect;
 
 function ibDrawStroke(stroke) {
   if (!stroke || !stroke.points || stroke.points.length < 1) return;
@@ -217,6 +223,7 @@ function ibDoOpen() {
   ibSetupDrawing();
   ibStartListeners();
   ibStartStressWatch();
+  if (window.mtStart) window.mtStart();
 }
 
 // ── GM-only stress overview (mirrors characters/{name}/stressLevel) ─────────
@@ -305,6 +312,7 @@ window.closeImageBoard = function() {
   ov.style.display = 'none';
   ibStopListeners();
   ibStopStressWatch();
+  if (window.mtStop) window.mtStop();
   ibDrawing = false;
   ibCurrentStroke = null;
   ibRevealMode = false;
@@ -325,6 +333,7 @@ window.clearImageBoard = function() {
 window.ibClearConfirmed = function() {
   document.getElementById('ibClearConfirm').classList.remove('open');
   remove(window.ibStrokesRef);
+  if (window.mtClearAll) window.mtClearAll();
 };
 
 window.ibClearCancel = function() {
@@ -353,6 +362,7 @@ window.handleImageSelect = function(input) {
       remove(window.ibStrokesRef).then(function() {
         set(ref(window.db, 'session/imageBoard/imageData'), compressed);
       });
+      if (window.mtClearAll) window.mtClearAll();
     };
     srcImg.src = e.target.result;
   };
@@ -415,6 +425,12 @@ function ibEventPos(e) {
 function ibPointerDown(e) {
   var img = ibGetImage();
   if (!img.src || img.style.display === 'none') return;
+  // Motion tracker takes precedence: placing a tracker / dropping a blip
+  // must not also start a pen stroke.
+  if (window.mtHandleClick && window.mtHandleClick(e)) {
+    if (e.preventDefault) e.preventDefault();
+    return;
+  }
   ibDrawing = true;
   var pos = ibEventPos(e);
   var size = parseInt(document.getElementById('ibSizeSlider').value, 10);

@@ -1,0 +1,56 @@
+/* ── MOTION TRACKER OVERLAY (image board) ─────────────────────────────────── */
+
+#ibTrackerCanvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Hint banner shown to the player while placing/aiming */
+#mtHint {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8, 4, 4, 0.88);
+  border: 1px solid #ff4400;
+  color: #ffaa66;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  padding: 8px 18px;
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 9;
+  display: none;
+  text-shadow: 0 0 8px rgba(255, 80, 0, 0.6);
+  box-shadow: 0 0 18px rgba(255, 68, 0, 0.25);
+}
+#mtHint.visible { display: block; }
+#mtHint .mt-kbd {
+  border: 1px solid #ff6622;
+  padding: 1px 6px;
+  margin-left: 8px;
+  font-size: 10px;
+  color: #ff6622;
+}
+
+/* Tool buttons reuse .ib-tool-btn — extra accents for active states */
+#mtTrackerBtn.active {
+  border-color: #44ddff !important;
+  color: #44ddff !important;
+  background: rgba(68, 221, 255, 0.08);
+  box-shadow: 0 0 10px rgba(68, 221, 255, 0.25);
+}
+#mtBlipBtn.active {
+  border-color: #ff2200 !important;
+  color: #ff2200 !important;
+  background: rgba(255, 34, 0, 0.08);
+  box-shadow: 0 0 10px rgba(255, 34, 0, 0.3);
+  animation: mtBlipBtnPulse 1.1s infinite;
+}
+@keyframes mtBlipBtnPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 34, 0, 0.3); }
+  50%      { box-shadow: 0 0 18px rgba(255, 34, 0, 0.55); }
+}

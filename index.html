@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="assets/css/xp.css">
 <link rel="stylesheet" href="assets/css/handout.css">
 <link rel="stylesheet" href="assets/css/image-board.css">
+<link rel="stylesheet" href="assets/css/motion-tracker.css">
 <link rel="stylesheet" href="assets/css/black-veil.css">
 <link rel="stylesheet" href="assets/css/youtube-player.css">
 </head>
@@ -810,6 +811,8 @@
       <button class="ib-tool-btn ib-gm-only" onclick="document.getElementById('imageBoardFileInput').click()">📁 Load Image</button>
       <button class="ib-tool-btn ib-gm-only" onclick="document.getElementById('coverImageFileInput').click()">🗺 Load Cover</button>
       <button class="ib-tool-btn ib-gm-only" id="ibRevealBtn" onclick="ibToggleRevealMode()">👁 Reveal</button>
+      <button class="ib-tool-btn" id="mtTrackerBtn" onclick="mtToggleTrackerPlacement()">📡 Motion Tracker</button>
+      <button class="ib-tool-btn ib-gm-only" id="mtBlipBtn" onclick="mtToggleBlipMode()">🎯 Blip setzen</button>
       <button class="ib-tool-btn ib-gm-only" onclick="clearImageBoard()">🗑 Clear</button>
 
       <button class="ib-tool-btn ib-gm-only" onclick="openInitiative()">⚡ Initiative</button>
@@ -832,6 +835,8 @@
     <img id="ibImage" alt="">
     <canvas id="ibCoverCanvas"></canvas>
     <canvas id="ibCanvas"></canvas>
+    <canvas id="ibTrackerCanvas"></canvas>
+    <div id="mtHint"></div>
     <div class="ib-placeholder" id="ibPlaceholder">Waiting for GM to load an image...</div>
     <div id="ibStressPanel" class="ib-gm-only"></div>
   </div>
@@ -892,6 +897,7 @@
 <script type="module" src="assets/js/wuerfel-duerfel.js"></script>
 <script type="module" src="assets/js/black-veil.js"></script>
 <script type="module" src="assets/js/image-board.js"></script>
+<script type="module" src="assets/js/motion-tracker.js"></script>
 <script type="module" src="assets/js/xp.js"></script>
 <script type="module" src="assets/js/youtube-player.js"></script>
 </body>

@@ -30,6 +30,8 @@ window.db = db;
 window.ibStrokesRef       = ref(db, 'session/imageBoard/strokes');
 window.ibRevealStrokesRef = ref(db, 'session/imageBoard/revealStrokes');
 window.ibCoverDataRef     = ref(db, 'session/imageBoard/coverImageData');
+window.mtTrackersRef      = ref(db, 'session/imageBoard/motionTrackers');
+window.mtBlipsRef         = ref(db, 'session/imageBoard/motionBlips');
 
 // ── Anonymous auth ─────────────────────────────────────────────
 // Firebase rules require auth != null for all writes.

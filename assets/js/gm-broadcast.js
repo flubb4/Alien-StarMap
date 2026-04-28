@@ -1,6 +1,6 @@
 import { ref, get, push, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const bcRef = () => ref(window.db, 'gmBroadcast');
+const bcRef = () => ref(window.db, 'session/broadcast');
 
 window.openGMBroadcast = function () {
   document.getElementById('gm-broadcast-panel').classList.add('open');
@@ -37,8 +37,9 @@ function refreshBCList() {
         row.appendChild(del);
         list.appendChild(row);
       });
-    }).catch(() => {
-      list.innerHTML = '<span class="gm-bc-empty">Fehler beim Laden.</span>';
+    }).catch(err => {
+      console.error('[gm-broadcast] Firebase read failed:', err);
+      list.innerHTML = `<span class="gm-bc-empty">Fehler: ${err?.code || err?.message || 'unbekannt'}</span>`;
     });
   });
 }
@@ -51,6 +52,8 @@ window.addBCEntry = function () {
     push(bcRef(), text).then(() => {
       input.value = '';
       refreshBCList();
+    }).catch(err => {
+      console.error('[gm-broadcast] Firebase push failed:', err);
     });
   });
 };

@@ -215,7 +215,7 @@ function renderBroadcastMessages(msgs) {
 window.renderBroadcastMessages = renderBroadcastMessages;
 
 window._authReadyPromise.then(() => {
-  get(ref(window.db, 'gmBroadcast')).then(snap => {
+  get(ref(window.db, 'session/broadcast')).then(snap => {
     if (!snap.exists()) return;
     const data = snap.val();
     const msgs = (typeof data === 'object' && data !== null)

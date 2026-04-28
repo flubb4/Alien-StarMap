@@ -155,7 +155,7 @@ const PRESETS = [
   if (gmAnchor) {
     const gmBtn = document.createElement('button');
     gmBtn.className = 'gm-aud-btn gm-dd-btn';
-    gmBtn.innerHTML = '<span class="gm-ico">🎵</span>Audio Transmission';
+    gmBtn.textContent = 'Audio Transmission';
     gmBtn.onclick = () => window.openAudioPanel();
     gmAnchor.insertAdjacentElement('afterend', gmBtn);
   }

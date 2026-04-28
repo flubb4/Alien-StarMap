@@ -495,3 +495,58 @@
     background: repeating-linear-gradient(to bottom,transparent,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 6px);
     z-index: 10000;
   }
+
+
+  /* GM TOOLS DROPDOWN IN HEADER */
+  #gmSection { display:none; position:relative; }
+  #gmSection.visible { display:block; }
+
+  .gm-tools-btn {
+    background: transparent;
+    border: 1px solid var(--rust);
+    color: var(--rust);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 9px; padding: 5px 12px;
+    cursor: pointer; letter-spacing: 2px;
+    transition: all 0.2s; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .gm-tools-btn:hover,
+  .gm-tools-btn.open {
+    background: rgba(198,66,37,0.12);
+    box-shadow: 0 0 10px var(--rust-glow);
+  }
+
+  .gm-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 260px;
+    background: var(--panel);
+    border: 1px solid var(--rust);
+    box-shadow: 0 6px 28px rgba(198,66,37,0.30);
+    padding: 12px;
+    z-index: 1000;
+  }
+  .gm-dropdown.open { display: block; }
+
+  .gm-dropdown-title {
+    font-size: 8px; letter-spacing: 3px;
+    color: var(--rust); text-transform: uppercase;
+    margin-bottom: 8px; margin-top: 2px;
+  }
+  .gm-dropdown-divider {
+    height: 1px; background: var(--hair);
+    margin: 10px 0;
+  }
+  .gm-dd-btn {
+    width: 100%; background: transparent;
+    border: 1px solid var(--border); color: var(--dim);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 9px; padding: 7px; cursor: pointer;
+    letter-spacing: 2px; text-transform: uppercase;
+    transition: all 0.15s; margin-bottom: 4px;
+    text-align: left; display: block;
+  }
+  .gm-dd-btn:hover { border-color: var(--amber); color: var(--amber); }

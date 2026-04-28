@@ -60,6 +60,42 @@
     <div class="sub">ALIEN RPG // 2183 // WEYLAND-YUTANI STARSHIP TRAFFIC CONTROL</div>
   </div>
   <div class="header-right">
+    <!-- GM TOOLS DROPDOWN — shown only to GM via .visible (toggled by initiative.js) -->
+    <div id="gmSection" style="position:relative;">
+      <button id="gmToolsToggle" class="gm-tools-btn" onclick="toggleGMTools(event)">⚙ GM TOOLS ▾</button>
+      <div id="gmDropdown" class="gm-dropdown">
+        <div class="gm-dropdown-title">// GM Controls</div>
+        <button class="gm-init-btn gm-dd-btn" onclick="openInitiative();closeGMTools()">⚡ Initiative Draw</button>
+        <button class="gm-wd-btn gm-dd-btn" onclick="openWuerfelLobby();closeGMTools()">🎲 Würfel Dürfel</button>
+        <button class="gm-ib-btn gm-dd-btn" onclick="openImageBoard();closeGMTools()">🖼 Image Board</button>
+        <button class="gm-ho-btn gm-dd-btn" onclick="openHandoutPanel();closeGMTools()">📄 Transmission</button>
+        <button class="gm-xp-btn gm-dd-btn" onclick="openXPAward();closeGMTools()">🏆 XP Award</button>
+        <button class="gm-session-btn" id="gmSessionBtn" onclick="toggleSession()">✓ Session Active — Close Map</button>
+        <div class="gm-dropdown-divider"></div>
+        <div class="gm-dropdown-title" style="color:var(--rust);">⚠ Clunkkynoost</div>
+        <button class="gm-intercept-btn" id="gmInterceptBtn" onclick="triggerManualIntercept()">🚨 Trigger Interception</button>
+        <div class="intercept-toggle-row">
+          <span class="intercept-toggle-label">Interception Active</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="interceptToggle" checked onchange="toggleInterception(this)">
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+        <div class="chance-bar-wrap">
+          <div class="chance-bar-label">INTERCEPT CHANCE: <span id="chanceLabel">20%</span></div>
+          <div class="chance-bar-track">
+            <div class="chance-bar-fill" id="chanceBarFill" style="width:20%"></div>
+          </div>
+          <div class="chance-adj-row">
+            <button class="chance-adj-btn decrease" onclick="adjustInterceptChance(-0.05)">-5%</button>
+            <button class="chance-adj-btn decrease" onclick="adjustInterceptChance(-0.10)">-10%</button>
+            <button class="chance-adj-btn decrease" onclick="adjustInterceptChance(-0.20)">-20%</button>
+            <button class="chance-adj-btn" onclick="adjustInterceptChance(0.10)">+10%</button>
+          </div>
+          <button class="chance-reset-btn" onclick="resetInterceptChance()">↺ Reset to 20%</button>
+        </div>
+      </div>
+    </div>
     <div class="date-display">
       <div>
         <div class="date-label">// STARDATE</div>
@@ -89,9 +125,6 @@
         <button class="marker-btn active" data-type="colony" onclick="selectType(this)"><span class="mico">🏭</span>Colony / Station</button>
         <button class="marker-btn" data-type="hazard" onclick="selectType(this)"><span class="mico">☢</span>Hazard Zone</button>
         <button class="marker-btn" data-type="ship" onclick="selectType(this)"><span class="mico">🚀</span>Ship / Vessel</button>
-        <button class="marker-btn" data-type="ruin" onclick="selectType(this)"><span class="mico">💀</span>Ruins</button>
-        <button class="marker-btn" data-type="resource" onclick="selectType(this)"><span class="mico">⚡</span>Resource</button>
-        <button class="marker-btn" data-type="enemy" onclick="selectType(this)"><span class="mico">👾</span>Hostile</button>
         <button class="marker-btn" data-type="note" onclick="selectType(this)"><span class="mico">📡</span>Signal / Note</button>
         <button class="marker-btn" data-type="mission" onclick="selectType(this)"><span class="mico">🎯</span>Mission Target</button>
       </div>
@@ -105,7 +138,6 @@
         <div class="color-swatch" style="background:#44ff88" data-color="#44ff88" onclick="selectColor(this)"></div>
         <div class="color-swatch" style="background:#ff44cc" data-color="#ff44cc" onclick="selectColor(this)"></div>
         <div class="color-swatch" style="background:#cc88ff" data-color="#cc88ff" onclick="selectColor(this)"></div>
-        <div class="color-swatch" style="background:#ffffff" data-color="#ffffff" onclick="selectColor(this)"></div>
         <div class="color-swatch" style="background:#ff8800" data-color="#ff8800" onclick="selectColor(this)"></div>
       </div>
     </div>
@@ -123,43 +155,6 @@
       <div class="sidebar-title">// Navigation</div>
       <button class="pos-btn" id="posBtn" onclick="togglePositionMode()" style="display:none">📍 Set Ship Position</button>
       <button class="pos-btn" id="removePosBtn" onclick="removePosition()" style="display:none">🗑 Remove Position</button>
-      <div class="gm-section" id="gmSection">
-        <div class="gm-title">// GM Controls</div>
-        <button class="gm-init-btn" onclick="openInitiative()">⚡ Initiative Draw</button>
-        <button class="gm-wd-btn" onclick="openWuerfelLobby()">🎲 Würfel Dürfel</button>
-        <button class="gm-ib-btn" onclick="openImageBoard()">🖼 Image Board</button>
-        <button class="gm-ho-btn" onclick="openHandoutPanel()">📄 Transmission</button>
-        <button class="gm-xp-btn" onclick="openXPAward()">🏆 XP Award</button>
-        <button class="gm-session-btn" id="gmSessionBtn" onclick="toggleSession()">
-          ✓ Session Active — Close Map
-        </button>
-        <div class="gm-title" style="margin-top:4px;">⚠ Clunkkynoost</div>
-        <button class="gm-intercept-btn" id="gmInterceptBtn" onclick="triggerManualIntercept()">
-          🚨 Trigger Interception
-        </button>
-        <div class="intercept-toggle-row">
-          <span class="intercept-toggle-label">Interception Active</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="interceptToggle" checked onchange="toggleInterception(this)">
-            <div class="toggle-track"></div>
-          </label>
-        </div>
-        <div class="chance-bar-wrap">
-          <div class="chance-bar-label">
-            INTERCEPT CHANCE: <span id="chanceLabel">20%</span>
-          </div>
-          <div class="chance-bar-track">
-            <div class="chance-bar-fill" id="chanceBarFill" style="width:20%"></div>
-          </div>
-          <div class="chance-adj-row">
-            <button class="chance-adj-btn decrease" onclick="adjustInterceptChance(-0.05)">-5%</button>
-            <button class="chance-adj-btn decrease" onclick="adjustInterceptChance(-0.10)">-10%</button>
-            <button class="chance-adj-btn decrease" onclick="adjustInterceptChance(-0.20)">-20%</button>
-            <button class="chance-adj-btn" onclick="adjustInterceptChance(0.10)">+10%</button>
-          </div>
-          <button class="chance-reset-btn" onclick="resetInterceptChance()">↺ Reset to 20%</button>
-        </div>
-      </div>
 
             <div id="captainControls" style="display:none">
         <div class="sidebar-title" style="margin-top:8px;">// Captain: Plot Course</div>
@@ -901,5 +896,20 @@
 <script type="module" src="assets/js/motion-tracker.js"></script>
 <script type="module" src="assets/js/xp.js"></script>
 <script type="module" src="assets/js/youtube-player.js"></script>
+<script>
+function toggleGMTools(e) {
+  if (e) e.stopPropagation();
+  const open = document.getElementById('gmDropdown').classList.toggle('open');
+  document.getElementById('gmToolsToggle').classList.toggle('open', open);
+}
+function closeGMTools() {
+  document.getElementById('gmDropdown')?.classList.remove('open');
+  document.getElementById('gmToolsToggle')?.classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  const sec = document.getElementById('gmSection');
+  if (sec && !sec.contains(e.target)) closeGMTools();
+});
+</script>
 </body>
 </html>

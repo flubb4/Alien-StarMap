@@ -169,11 +169,11 @@ document.getElementById('pwUsername').focus();
 
 // ── GM BROADCAST — render stored memories on login screen ─────
 const BC_PALETTE = [
-  { c: '#6e6650', min: 0.22, max: 0.38 },
-  { c: '#ff9a3c', min: 0.07, max: 0.14 },
-  { c: '#7fb069', min: 0.08, max: 0.14 },
-  { c: '#b9a98c', min: 0.06, max: 0.12 },
-  { c: '#c64225', min: 0.06, max: 0.12 },
+  { c: '#6e6650', min: 0.45, max: 0.65 },
+  { c: '#ff9a3c', min: 0.25, max: 0.40 },
+  { c: '#7fb069', min: 0.25, max: 0.38 },
+  { c: '#b9a98c', min: 0.22, max: 0.35 },
+  { c: '#c64225', min: 0.22, max: 0.35 },
 ];
 
 function bcRand(a, b) { return a + Math.random() * (b - a); }
@@ -182,25 +182,48 @@ function renderBroadcastMessages(msgs) {
   const layer = document.getElementById('gm-msg-layer');
   if (!layer) return;
   layer.innerHTML = '';
+
   const W = window.innerWidth, H = window.innerHeight;
-  const cx1 = W * 0.5 - 240, cx2 = W * 0.5 + 240;
-  const cy1 = H * 0.05,      cy2 = H * 0.65;
+  // Login form exclusion zone (center column)
+  const cx1 = W * 0.5 - 260, cx2 = W * 0.5 + 260;
+  const cy1 = H * 0.06,      cy2 = H * 0.70;
+
+  // Estimated dimensions for 13px Share Tech Mono + letter-spacing:2px
+  const CHAR_W = 9.5, MSG_H = 20, PAD = 28, MARGIN = 18;
+  const placed = [];
+
+  function canPlace(x, y, w) {
+    // Reject if inside center exclusion zone
+    if (x < cx2 + 30 && x + w > cx1 - 30 && y < cy2 + 16 && y + MSG_H > cy1 - 16) return false;
+    // Reject if overlaps an already-placed message
+    for (const p of placed) {
+      if (x < p.x + p.w + PAD && x + w + PAD > p.x &&
+          y < p.y + MSG_H + PAD && y + MSG_H + PAD > p.y) return false;
+    }
+    return true;
+  }
 
   msgs.forEach((msg, i) => {
     if (!msg.trim()) return;
     const el = document.createElement('span');
     el.className = 'gm-msg';
     el.textContent = msg.trim();
-    const pal = BC_PALETTE[i % BC_PALETTE.length];
+
+    const pal     = BC_PALETTE[i % BC_PALETTE.length];
     const opacity = bcRand(pal.min, pal.max).toFixed(2);
-    const rot     = bcRand(-20, 20).toFixed(1);
-    const delay   = (i * 0.45 + bcRand(0.3, 1.2)).toFixed(2);
-    let x, y, tries = 0;
-    do {
-      x = bcRand(16, Math.max(16, W - 280));
-      y = bcRand(8,  Math.max(8,  H - 28));
-      tries++;
-    } while (tries < 30 && x > cx1 - 40 && x < cx2 + 40 && y > cy1 && y < cy2);
+    const rot     = bcRand(-8, 8).toFixed(1);
+    const delay   = (i * 0.5 + bcRand(0.2, 0.7)).toFixed(2);
+    const estW    = msg.trim().length * CHAR_W;
+
+    let x, y, ok = false;
+    for (let t = 0; t < 200; t++) {
+      x = bcRand(MARGIN, Math.max(MARGIN, W - estW - MARGIN));
+      y = bcRand(MARGIN, Math.max(MARGIN, H - MSG_H - MARGIN));
+      if (canPlace(x, y, estW)) { ok = true; break; }
+    }
+    if (!ok) return; // skip message if no room found
+
+    placed.push({ x, y, w: estW });
     el.style.left            = x + 'px';
     el.style.top             = y + 'px';
     el.style.color           = pal.c;

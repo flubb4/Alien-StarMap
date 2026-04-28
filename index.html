@@ -52,6 +52,17 @@
     <div class="pw-error" id="pwError"></div>
     <button class="pw-btn" onclick="checkPassword()">Access Map</button>
   </div>
+  <!-- GM Broadcast: scattered sentences across login background (Strg+Shift+G) -->
+  <div id="gm-msg-layer"></div>
+  <div id="gm-bc-panel">
+    <button class="gm-bc-close" type="button" id="gm-bc-close">×</button>
+    <div class="gm-bc-title">// GM BROADCAST — LOGIN SCREEN</div>
+    <textarea id="gm-bc-textarea" placeholder="Julian zündet ausversehen Silas an&#10;Mae weiß mehr als sie sagt&#10;Das Schiff hat keinen Rückweg&#10;Silas hat gelogen"></textarea>
+    <p class="gm-bc-hint">eine Zeile pro Nachricht · Strg+Shift+G zum Schließen · URL an Spieler schicken</p>
+    <button id="gm-bc-encode-btn" type="button">ENCODE &amp; COPY URL</button>
+    <span id="gm-bc-copy-ok">✓ URL KOPIERT</span>
+  </div>
+  <div id="gm-bc-trigger" title="GM Broadcast"></div>
 </div>
 
 <header>

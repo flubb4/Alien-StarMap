@@ -305,14 +305,20 @@
 
   .intercept-box {
     border:2px solid var(--rust);
-    box-shadow:0 0 60px var(--rust-glow), 0 0 120px rgba(198,66,37,0.20);
     max-width:480px; width:90%;
-    animation:alertPulse 1.5s infinite;
-    overflow:hidden;
+    position:relative; overflow:visible;
   }
+  .intercept-box::after {
+    content:''; position:absolute; inset:-2px;
+    pointer-events:none;
+    box-shadow:0 0 80px rgba(198,66,37,0.90), 0 0 160px rgba(198,66,37,0.40);
+    animation:alertPulse 1.5s infinite;
+    will-change:opacity;
+  }
+  .intercept-body { overflow:hidden; }
   @keyframes alertPulse {
-    0%,100%{ box-shadow:0 0 40px rgba(198,66,37,0.50), 0 0 80px rgba(198,66,37,0.20); }
-    50%    { box-shadow:0 0 80px rgba(198,66,37,0.90), 0 0 160px rgba(198,66,37,0.40); }
+    0%,100%{ opacity:0.5; }
+    50%    { opacity:1; }
   }
   .intercept-header {
     background:var(--rust); padding:10px 16px;

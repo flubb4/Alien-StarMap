@@ -398,13 +398,17 @@
   }
   .pick-player-chip.waiting { opacity:0.5; border-style:dashed; }
   .pick-player-chip.picked-chip { opacity:1; }
-  .pick-player-chip.my-turn {
-    animation:myTurnPulse 1s infinite;
-    cursor:default;
+  .pick-player-chip.my-turn { cursor:default; }
+  .pick-player-chip.my-turn::after {
+    content:''; position:absolute; inset:-1px;
+    pointer-events:none;
+    box-shadow:0 0 20px currentColor;
+    animation:myTurnPulse 1s ease-in-out infinite;
+    will-change:opacity;
   }
   @keyframes myTurnPulse {
-    0%,100%{ box-shadow:0 0 8px currentColor; }
-    50%    { box-shadow:0 0 20px currentColor; }
+    0%,100%{ opacity:0.4; }
+    50%    { opacity:1; }
   }
   .pick-player-dot { width:8px; height:8px; border-radius:50%; }
   .pick-player-card-num {

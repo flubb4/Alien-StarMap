@@ -65,15 +65,15 @@
       <button id="gmToolsToggle" class="gm-tools-btn" onclick="toggleGMTools(event)">⚙ GM TOOLS ▾</button>
       <div id="gmDropdown" class="gm-dropdown">
         <div class="gm-dropdown-title">// GM Controls</div>
-        <button class="gm-init-btn gm-dd-btn" onclick="openInitiative();closeGMTools()">⚡ Initiative Draw</button>
-        <button class="gm-wd-btn gm-dd-btn" onclick="openWuerfelLobby();closeGMTools()">🎲 Würfel Dürfel</button>
-        <button class="gm-ib-btn gm-dd-btn" onclick="openImageBoard();closeGMTools()">🖼 Image Board</button>
-        <button class="gm-ho-btn gm-dd-btn" onclick="openHandoutPanel();closeGMTools()">📄 Transmission</button>
-        <button class="gm-xp-btn gm-dd-btn" onclick="openXPAward();closeGMTools()">🏆 XP Award</button>
-        <button class="gm-session-btn" id="gmSessionBtn" onclick="toggleSession()">✓ Session Active — Close Map</button>
+        <button class="gm-init-btn gm-dd-btn" onclick="openInitiative();closeGMTools()"><span class="gm-ico">⚡</span>Initiative Draw</button>
+        <button class="gm-wd-btn gm-dd-btn" onclick="openWuerfelLobby();closeGMTools()"><span class="gm-ico">🎲</span>Würfel Dürfel</button>
+        <button class="gm-ib-btn gm-dd-btn" onclick="openImageBoard();closeGMTools()"><span class="gm-ico">🖼</span>Image Board</button>
+        <button class="gm-ho-btn gm-dd-btn" onclick="openHandoutPanel();closeGMTools()"><span class="gm-ico">📄</span>Transmission</button>
+        <button class="gm-xp-btn gm-dd-btn" onclick="openXPAward();closeGMTools()"><span class="gm-ico">🏆</span>XP Award</button>
+        <button class="gm-session-btn gm-dd-btn" id="gmSessionBtn" onclick="toggleSession()"><span class="gm-ico">✓</span>Session Active — Close Map</button>
         <div class="gm-dropdown-divider"></div>
         <div class="gm-dropdown-title" style="color:var(--rust);">⚠ Clunkkynoost</div>
-        <button class="gm-intercept-btn" id="gmInterceptBtn" onclick="triggerManualIntercept()">🚨 Trigger Interception</button>
+        <button class="gm-intercept-btn gm-dd-btn" id="gmInterceptBtn" onclick="triggerManualIntercept()"><span class="gm-ico">🚨</span>Trigger Interception</button>
         <div class="intercept-toggle-row">
           <span class="intercept-toggle-label">Interception Active</span>
           <label class="toggle-switch">

@@ -535,46 +535,22 @@
     transition: opacity 2.5s ease;
     white-space: nowrap;
   }
-  #gm-bc-panel {
+  /* GM Broadcast management panel (GM Tools → Login Screen Memories) */
+  #gm-broadcast-panel {
     display: none; position: fixed;
     top: 50%; left: 50%; transform: translate(-50%, -50%);
     background: var(--panel); border: 1px solid var(--accent);
-    padding: 24px 28px; width: 480px; max-width: 92vw;
+    padding: 24px 28px; width: 500px; max-width: 92vw; max-height: 80vh;
     z-index: 10001; font-family: 'Share Tech Mono', monospace;
     box-shadow: 0 0 60px var(--amber-glow); box-sizing: border-box;
+    display: none; flex-direction: column; gap: 0;
   }
-  #gm-bc-panel.open { display: block; }
+  #gm-broadcast-panel.open { display: flex; }
   .gm-bc-title {
     color: var(--accent); font-size: 10px; letter-spacing: 5px;
-    margin-bottom: 16px; padding-bottom: 10px;
-    border-bottom: 1px solid var(--hair);
+    margin-bottom: 14px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--hair); flex-shrink: 0;
   }
-  #gm-bc-textarea {
-    width: 100%; height: 180px;
-    background: var(--ink); border: 1px solid var(--hair);
-    color: var(--bone-2); font-family: 'Share Tech Mono', monospace;
-    font-size: 12px; line-height: 1.7; padding: 10px 12px;
-    resize: vertical; outline: none; box-sizing: border-box;
-  }
-  #gm-bc-textarea:focus { border-color: var(--accent); }
-  #gm-bc-textarea::placeholder { color: var(--dim-2); }
-  .gm-bc-hint {
-    font-size: 9px; color: var(--dim-2);
-    letter-spacing: 1px; margin: 6px 0 14px;
-  }
-  #gm-bc-encode-btn {
-    background: transparent; border: 1px solid var(--accent);
-    color: var(--accent); font-family: 'Share Tech Mono', monospace;
-    font-size: 9px; letter-spacing: 3px;
-    padding: 9px 18px; cursor: pointer; text-transform: uppercase;
-  }
-  #gm-bc-encode-btn:hover { background: var(--amber-soft); }
-  #gm-bc-copy-ok {
-    display: inline-block; margin-left: 12px;
-    color: var(--accent); font-size: 9px; letter-spacing: 2px;
-    opacity: 0; transition: opacity 0.3s;
-  }
-  #gm-bc-copy-ok.show { opacity: 1; }
   .gm-bc-close {
     position: absolute; top: 12px; right: 14px;
     background: none; border: none; color: var(--dim-2);
@@ -582,12 +558,45 @@
     line-height: 1; padding: 2px 6px;
   }
   .gm-bc-close:hover { color: var(--accent); }
-  #gm-bc-trigger {
-    position: fixed; bottom: 8px; right: 10px;
-    width: 14px; height: 14px; cursor: pointer;
-    z-index: 9999; opacity: 0.01;
+  #gm-bc-list {
+    flex: 1; overflow-y: auto; min-height: 60px; max-height: 300px;
+    margin-bottom: 14px;
   }
-  #gm-bc-trigger:hover { opacity: 0.3; background: var(--hair-soft); }
+  .gm-bc-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 0; border-bottom: 1px solid var(--hair-soft);
+  }
+  .gm-bc-row-text {
+    flex: 1; font-size: 11px; color: var(--bone-2); letter-spacing: 1px;
+  }
+  .gm-bc-del {
+    background: none; border: none; color: var(--dim-2);
+    font-size: 16px; cursor: pointer; font-family: monospace;
+    padding: 0 4px; line-height: 1; flex-shrink: 0;
+  }
+  .gm-bc-del:hover { color: var(--rust); }
+  .gm-bc-empty {
+    display: block; font-size: 10px; color: var(--dim-2);
+    letter-spacing: 2px; padding: 12px 0;
+  }
+  .gm-bc-add-row {
+    display: flex; gap: 8px; flex-shrink: 0;
+    padding-top: 12px; border-top: 1px solid var(--hair);
+  }
+  #gm-bc-new {
+    flex: 1; background: var(--ink); border: 1px solid var(--hair);
+    color: var(--bone-2); font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: 1px; padding: 8px 10px; outline: none;
+  }
+  #gm-bc-new:focus { border-color: var(--accent); }
+  #gm-bc-new::placeholder { color: var(--dim-2); }
+  #gm-bc-add-btn {
+    background: transparent; border: 1px solid var(--accent);
+    color: var(--accent); font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 3px; padding: 8px 16px;
+    cursor: pointer; text-transform: uppercase; flex-shrink: 0;
+  }
+  #gm-bc-add-btn:hover { background: var(--amber-soft); }
 
 
   /* GM TOOLS DROPDOWN IN HEADER */

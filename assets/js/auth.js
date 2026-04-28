@@ -167,91 +167,60 @@ try {
 // Focus username input on load
 document.getElementById('pwUsername').focus();
 
-// ── GM BROADCAST ──────────────────────────────────────────────
-(function () {
-  const PALETTE = [
-    { c: '#6e6650', min: 0.22, max: 0.38 },
-    { c: '#ff9a3c', min: 0.07, max: 0.14 },
-    { c: '#7fb069', min: 0.08, max: 0.14 },
-    { c: '#b9a98c', min: 0.06, max: 0.12 },
-    { c: '#c64225', min: 0.06, max: 0.12 },
-  ];
+// ── GM BROADCAST — render stored memories on login screen ─────
+const BC_PALETTE = [
+  { c: '#6e6650', min: 0.22, max: 0.38 },
+  { c: '#ff9a3c', min: 0.07, max: 0.14 },
+  { c: '#7fb069', min: 0.08, max: 0.14 },
+  { c: '#b9a98c', min: 0.06, max: 0.12 },
+  { c: '#c64225', min: 0.06, max: 0.12 },
+];
 
-  function rand(a, b) { return a + Math.random() * (b - a); }
+function bcRand(a, b) { return a + Math.random() * (b - a); }
 
-  function renderMessages(msgs) {
-    const layer = document.getElementById('gm-msg-layer');
-    if (!layer) return;
-    const W = window.innerWidth, H = window.innerHeight;
-    const cx1 = W * 0.5 - 240, cx2 = W * 0.5 + 240;
-    const cy1 = H * 0.05,      cy2 = H * 0.65;
+function renderBroadcastMessages(msgs) {
+  const layer = document.getElementById('gm-msg-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+  const W = window.innerWidth, H = window.innerHeight;
+  const cx1 = W * 0.5 - 240, cx2 = W * 0.5 + 240;
+  const cy1 = H * 0.05,      cy2 = H * 0.65;
 
-    msgs.forEach((msg, i) => {
-      if (!msg.trim()) return;
-      const el = document.createElement('span');
-      el.className = 'gm-msg';
-      el.textContent = msg.trim();
-
-      const pal   = PALETTE[i % PALETTE.length];
-      const opacity = rand(pal.min, pal.max).toFixed(2);
-      const rot   = rand(-20, 20).toFixed(1);
-      const delay = (i * 0.45 + rand(0.3, 1.2)).toFixed(2);
-
-      let x, y, tries = 0;
-      do {
-        x = rand(16, Math.max(16, W - 280));
-        y = rand(8,  Math.max(8,  H - 28));
-        tries++;
-      } while (tries < 30 && x > cx1 - 40 && x < cx2 + 40 && y > cy1 && y < cy2);
-
-      el.style.left      = x + 'px';
-      el.style.top       = y + 'px';
-      el.style.color     = pal.c;
-      el.style.transform = `rotate(${rot}deg)`;
-      el.style.transitionDelay = delay + 's';
-      layer.appendChild(el);
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => { el.style.opacity = opacity; })
-      );
-    });
-  }
-
-  function loadFromHash() {
-    const hash = window.location.hash;
-    if (!hash.startsWith('#msgs=')) return;
-    try {
-      const msgs = decodeURIComponent(atob(hash.slice(6))).split('\n').filter(s => s.trim());
-      renderMessages(msgs);
-    } catch (_) { /* ignore malformed hash */ }
-  }
-
-  loadFromHash();
-
-  // Panel controls
-  const panel     = document.getElementById('gm-bc-panel');
-  const closeBtn  = document.getElementById('gm-bc-close');
-  const encodeBtn = document.getElementById('gm-bc-encode-btn');
-  const copyOk    = document.getElementById('gm-bc-copy-ok');
-  const trigger   = document.getElementById('gm-bc-trigger');
-
-  const togglePanel = () => panel.classList.toggle('open');
-  closeBtn.addEventListener('click', () => panel.classList.remove('open'));
-  trigger.addEventListener('click', togglePanel);
-
-  document.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.shiftKey && (e.key === 'G' || e.key === 'g')) {
-      e.preventDefault();
-      togglePanel();
-    }
+  msgs.forEach((msg, i) => {
+    if (!msg.trim()) return;
+    const el = document.createElement('span');
+    el.className = 'gm-msg';
+    el.textContent = msg.trim();
+    const pal = BC_PALETTE[i % BC_PALETTE.length];
+    const opacity = bcRand(pal.min, pal.max).toFixed(2);
+    const rot     = bcRand(-20, 20).toFixed(1);
+    const delay   = (i * 0.45 + bcRand(0.3, 1.2)).toFixed(2);
+    let x, y, tries = 0;
+    do {
+      x = bcRand(16, Math.max(16, W - 280));
+      y = bcRand(8,  Math.max(8,  H - 28));
+      tries++;
+    } while (tries < 30 && x > cx1 - 40 && x < cx2 + 40 && y > cy1 && y < cy2);
+    el.style.left            = x + 'px';
+    el.style.top             = y + 'px';
+    el.style.color           = pal.c;
+    el.style.transform       = `rotate(${rot}deg)`;
+    el.style.transitionDelay = delay + 's';
+    layer.appendChild(el);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => { el.style.opacity = opacity; })
+    );
   });
+}
+window.renderBroadcastMessages = renderBroadcastMessages;
 
-  encodeBtn.addEventListener('click', () => {
-    const text = document.getElementById('gm-bc-textarea').value;
-    if (!text.trim()) return;
-    const url = location.href.split('#')[0] + '#msgs=' + btoa(encodeURIComponent(text));
-    navigator.clipboard.writeText(url).then(() => {
-      copyOk.classList.add('show');
-      setTimeout(() => copyOk.classList.remove('show'), 2500);
-    }).catch(() => prompt('URL kopieren (Strg+C):', url));
-  });
-})();
+window._authReadyPromise.then(() => {
+  get(ref(window.db, 'gmBroadcast')).then(snap => {
+    if (!snap.exists()) return;
+    const data = snap.val();
+    const msgs = (typeof data === 'object' && data !== null)
+      ? Object.values(data).filter(s => s && s.trim())
+      : [];
+    renderBroadcastMessages(msgs);
+  }).catch(() => {});
+});

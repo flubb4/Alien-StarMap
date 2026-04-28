@@ -52,17 +52,8 @@
     <div class="pw-error" id="pwError"></div>
     <button class="pw-btn" onclick="checkPassword()">Access Map</button>
   </div>
-  <!-- GM Broadcast: scattered sentences across login background (Strg+Shift+G) -->
+  <!-- scattered session memories, loaded from Firebase -->
   <div id="gm-msg-layer"></div>
-  <div id="gm-bc-panel">
-    <button class="gm-bc-close" type="button" id="gm-bc-close">×</button>
-    <div class="gm-bc-title">// GM BROADCAST — LOGIN SCREEN</div>
-    <textarea id="gm-bc-textarea" placeholder="Julian zündet ausversehen Silas an&#10;Mae weiß mehr als sie sagt&#10;Das Schiff hat keinen Rückweg&#10;Silas hat gelogen"></textarea>
-    <p class="gm-bc-hint">eine Zeile pro Nachricht · Strg+Shift+G zum Schließen · URL an Spieler schicken</p>
-    <button id="gm-bc-encode-btn" type="button">ENCODE &amp; COPY URL</button>
-    <span id="gm-bc-copy-ok">✓ URL KOPIERT</span>
-  </div>
-  <div id="gm-bc-trigger" title="GM Broadcast"></div>
 </div>
 
 <header>
@@ -82,6 +73,7 @@
         <button class="gm-ho-btn gm-dd-btn" onclick="openHandoutPanel();closeGMTools()">Transmission</button>
         <button class="gm-xp-btn gm-dd-btn" onclick="openXPAward();closeGMTools()">XP Award</button>
         <button class="gm-session-btn gm-dd-btn" id="gmSessionBtn" onclick="toggleSession()">Session Active — Close Map</button>
+        <button class="gm-dd-btn" onclick="openGMBroadcast();closeGMTools()">Login Screen Memories</button>
         <div class="gm-dropdown-divider"></div>
         <div class="gm-dropdown-title" style="color:var(--rust);">Clunkkynoost</div>
         <button class="gm-intercept-btn gm-dd-btn" id="gmInterceptBtn" onclick="triggerManualIntercept()">Trigger Interception</button>
@@ -907,6 +899,18 @@
 <script type="module" src="assets/js/motion-tracker.js"></script>
 <script type="module" src="assets/js/xp.js"></script>
 <script type="module" src="assets/js/youtube-player.js"></script>
+<script type="module" src="assets/js/gm-broadcast.js"></script>
+<!-- GM Broadcast management panel -->
+<div id="gm-broadcast-panel">
+  <button class="gm-bc-close" type="button" onclick="closeGMBroadcast()">×</button>
+  <div class="gm-bc-title">// LOGIN SCREEN — SESSION MEMORIES</div>
+  <div id="gm-bc-list"></div>
+  <div class="gm-bc-add-row">
+    <input id="gm-bc-new" type="text" placeholder="Neuen Satz eingeben…" autocomplete="off" spellcheck="false"/>
+    <button id="gm-bc-add-btn" type="button" onclick="addBCEntry()">+ ADD</button>
+  </div>
+</div>
+
 <script>
 function toggleGMTools(e) {
   if (e) e.stopPropagation();

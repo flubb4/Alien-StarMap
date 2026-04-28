@@ -67,6 +67,8 @@
     text-transform: uppercase;
     transition: all 0.2s;
     white-space: nowrap;
+    min-width: 130px;
+    text-align: center;
   }
   /* Resting state — tinted border + text, subtle background */
   .header-btn--plum  { border-color: var(--plum);  color: var(--plum);  background: rgba(163,125,187,0.07); }

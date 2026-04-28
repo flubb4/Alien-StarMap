@@ -10,6 +10,9 @@
   letter-spacing: 1.5px;
   transition: all 0.2s;
   text-transform: uppercase;
+  min-width: 130px;
+  text-align: center;
+  white-space: nowrap;
 }
 #bvBtn:hover { opacity: 0.8; border-color: #2a6640; }
 #bvBtn.unlocked {

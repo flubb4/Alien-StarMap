@@ -245,12 +245,8 @@
 /* Rounds remaining warning */
 .wd-rounds-warn { color:#ff4444 !important; }
 /* GM sidebar button */
-.gm-wd-btn {
-  width:100%;background:transparent;border:1px solid #885522;
-  color:#cc6633;font-family:"Share Tech Mono",monospace;font-size:9px;
-  padding:7px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;
-  transition:all 0.15s;margin-top:5px;
-}
+/* .gm-wd-btn layout is now handled by .gm-dropdown button in core.css */
+.gm-wd-btn { color:#cc6633; border-color:#885522; transition:all 0.15s; }
 .gm-wd-btn:hover { border-color:#ff9944;color:#ff9944;background:rgba(255,153,68,0.06); }
 /* ANIMATIONS */
 @keyframes wdDropIn {

@@ -1,10 +1,6 @@
   /* ── XP AWARD OVERLAY ── */
-  .gm-xp-btn {
-    display:block;width:100%;margin-bottom:6px;
-    background:rgba(68,255,136,0.06);border:1px solid #44ff88;
-    color:#44ff88;font-family:'Share Tech Mono',monospace;font-size:10px;
-    padding:7px 0;cursor:pointer;letter-spacing:2px;transition:all 0.2s;
-  }
+  /* .gm-xp-btn layout is now handled by .gm-dropdown button in core.css */
+  .gm-xp-btn { color:#44ff88; border-color:#44ff88; background:rgba(68,255,136,0.06); transition:all 0.2s; }
   .gm-xp-btn:hover { background:rgba(68,255,136,0.15); box-shadow:0 0 12px rgba(68,255,136,0.3); }
 
   #xpAwardOverlay {

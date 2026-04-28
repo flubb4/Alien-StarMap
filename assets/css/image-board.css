@@ -83,12 +83,8 @@
     color:var(--dim); font-size:12px; letter-spacing:3px;
     pointer-events:none;
   }
-  .gm-ib-btn {
-    width:100%; margin-top:6px; padding:8px 12px;
-    background:transparent; border:1px solid #44aaff; color:#44aaff;
-    font-family:"Share Tech Mono",monospace; font-size:10px;
-    letter-spacing:2px; cursor:pointer; transition:all 0.2s;
-  }
+  /* .gm-ib-btn layout is now handled by .gm-dropdown button in core.css */
+  .gm-ib-btn { color:#44aaff; border-color:#44aaff; transition:all 0.2s; }
   .gm-ib-btn:hover { background:rgba(68,170,255,0.08); box-shadow:0 0 12px rgba(68,170,255,0.3); }
 
   /* ── GM Stress Panel (read-only mirror of character-sheet stressLevel) ── */

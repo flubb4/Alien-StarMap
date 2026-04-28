@@ -558,18 +558,24 @@
     height: 1px; background: var(--hair);
     margin: 10px 0;
   }
-  .gm-dd-btn {
+  /* Target ALL buttons inside the dropdown — higher specificity than any single class */
+  .gm-dropdown button {
     width: 100%; background: transparent;
     border: 1px solid var(--border); color: var(--dim);
     font-family: "Share Tech Mono", monospace;
     font-size: 9px; padding: 7px 14px; cursor: pointer;
     letter-spacing: 2px; text-transform: uppercase;
     transition: all 0.15s; margin-bottom: 4px;
-    display: flex; align-items: center; justify-content: flex-start;
-    line-height: 1;
+    display: flex; align-items: center;
+    text-align: left; line-height: 1; box-sizing: border-box;
   }
-  .gm-dd-btn:hover { border-color: var(--amber); color: var(--amber); }
-  .gm-ico {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 18px; font-size: 13px; flex-shrink: 0; line-height: 1;
-  }
+  .gm-dropdown button:hover { border-color: var(--amber); color: var(--amber); }
+
+  /* Colour overrides — two classes = specificity 0,2,0, beats .gm-dropdown button */
+  .gm-dropdown .gm-session-btn  { border-color: var(--green); color: var(--green); }
+  .gm-dropdown .gm-session-btn:hover  { background: rgba(127,176,105,0.12); border-color: var(--green); color: var(--green); }
+  .gm-dropdown .gm-session-btn.closing { border-color: var(--rust); color: var(--rust); }
+  .gm-dropdown .gm-intercept-btn { border-color: var(--rust); color: var(--rust); background: rgba(198,66,37,0.07); }
+  .gm-dropdown .gm-intercept-btn:hover { background: rgba(198,66,37,0.18); box-shadow: 0 0 12px var(--rust-glow); border-color: var(--rust); color: var(--rust); }
+  .gm-dropdown .gm-aud-btn { border-color: var(--teal); color: var(--teal); background: rgba(110,192,196,0.07); }
+  .gm-dropdown .gm-aud-btn:hover { background: rgba(110,192,196,0.18); border-color: var(--teal); color: var(--bone); }

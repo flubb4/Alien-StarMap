@@ -80,10 +80,14 @@
 }
 #charSheetOverlay.open { display: flex; }
 
-/* Global scanline overlay inside the sheet */
+/* Global scanline overlay inside the sheet — fixed to viewport (CRT-style),
+   no blend-mode (mix-blend-mode forces re-compositing on every scroll frame). */
 #charSheetOverlay::before {
   content: ""; position: fixed; inset: 0; pointer-events: none;
-  background: var(--cs-scanline); mix-blend-mode: overlay; z-index: 1;
+  background: var(--cs-scanline);
+  opacity: 0.5;
+  z-index: 1;
+  will-change: transform;
 }
 
 /* ── Modal frame ─────────────────────────────────────────────── */
@@ -109,10 +113,6 @@
   padding: 10px 18px;
   position: relative;
   gap: 18px;
-}
-.cs-header::before {
-  content: ""; position: absolute; inset: 0;
-  background: var(--cs-scanline); pointer-events: none;
 }
 .cs-header > div { position: relative; z-index: 1; }
 .cs-header-title {
@@ -165,12 +165,8 @@
 .cs-title-block {
   border: 1px solid var(--cs-hair); background: var(--cs-panel);
   padding: 18px 22px 14px; margin-bottom: 16px; position: relative;
+  contain: layout paint;
 }
-.cs-title-block::before {
-  content: ""; position: absolute; inset: 0;
-  background: var(--cs-scanline); pointer-events: none;
-}
-.cs-title-block > * { position: relative; }
 .cs-corner {
   position: absolute; width: 14px; height: 14px; pointer-events: none;
 }
@@ -204,12 +200,9 @@
   border: 1px solid var(--cs-hair);
   padding: 0;
   margin-bottom: 14px;
+  contain: layout paint;
 }
 .cs-panel:last-child { margin-bottom: 0; }
-.cs-panel::before {
-  content: ""; position: absolute; inset: 0;
-  background: var(--cs-scanline); pointer-events: none;
-}
 .cs-panel-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 12px; border-bottom: 1px solid var(--cs-hair);
@@ -807,10 +800,6 @@ textarea.cs-inp {
   display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
   font-size: 9px; letter-spacing: 2.5px; color: var(--cs-bone-2);
   position: relative;
-}
-.cs-footer::before {
-  content: ""; position: absolute; inset: 0;
-  background: var(--cs-scanline); pointer-events: none;
 }
 .cs-footer > div { position: relative; z-index: 1; }
 

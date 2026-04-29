@@ -701,13 +701,18 @@ function _csPatchFields(playerName, data, focused) {
   if (!overlay) { setTimeout(_csInitEvents, 200); return; }
 
   // Text / textarea → debounced save
+  // Skip checkboxes: they fire `input` too, but el.value is the literal
+  // "on" attribute regardless of state — saving it would clobber the
+  // boolean the `change` handler just wrote. (Bug: stress responses
+  // stayed checked after unchecking, and re-renders surfaced the
+  // truthy "on" as a phantom check.)
   overlay.addEventListener('input', e => {
     const el = e.target;
+    if (el.type === 'checkbox') return;
     if (el.hasAttribute('readonly')) return;
     const pn = el.dataset.pn, path = el.dataset.path;
     if (!pn || !path) return;
     window._csDB(pn, path, el.value);
-    // Live-update encumbrance fill bar when its inputs change
     if (path === 'encumb.cur' || path === 'encumb.max') {
       _csUpdateEncFill(_csAllSheets[pn] || {});
     }

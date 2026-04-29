@@ -1,14 +1,14 @@
 import { ref, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ════════════════════════════════════════════════════════════════
-// CHARACTER SHEET SYSTEM
+// CHARACTER SHEET SYSTEM — v2 Industrial CRT redesign
 // Firebase path: characters/{playerName}/
 // ════════════════════════════════════════════════════════════════
 
 let _csViewingPlayer = null;
 let _csDebounce      = {};
 let _csAllSheets     = {};
-window._csAllSheets = _csAllSheets; // shared reference for xp.js
+window._csAllSheets = _csAllSheets;
 const _CS_MS         = 300;
 
 // ── Open / close ──────────────────────────────────────────────────
@@ -48,19 +48,13 @@ function _csRebuildTabs() {
 // ── Subscribe to a player's sheet in Firebase ─────────────────────
 const _csSubs = {};
 function _csSubscribe(playerName) {
-  // Always render immediately with whatever we have (empty sheet on first open)
   _csRender(playerName, _csAllSheets[playerName] || {});
 
-  if (_csSubs[playerName]) return; // already listening
+  if (_csSubs[playerName]) return;
   _csSubs[playerName] = true;
 
-  // Sync with Firebase
   onValue(ref(window.db, 'characters/' + playerName), snap => {
     const data = snap.val() || {};
-    // Skip self-echo: when our own _csSave write comes back, the snapshot
-    // equals the local optimistic state we already applied. Re-rendering
-    // here would race with any in-progress UI interaction (e.g. a
-    // checkbox just toggled by the same user).
     const prev = _csAllSheets[playerName];
     if (prev && JSON.stringify(prev) === JSON.stringify(data)) return;
     _csAllSheets[playerName] = data;
@@ -68,15 +62,13 @@ function _csSubscribe(playerName) {
       const body = document.getElementById('csBody');
       const overlay = document.getElementById('charSheetOverlay');
       const sheetOpen = overlay && overlay.classList.contains('open');
-      if (!sheetOpen) return; // don't touch DOM if sheet isn't visible
+      if (!sheetOpen) return;
 
       const active = document.activeElement;
       const userFocused = body && body.contains(active);
       if (userFocused) {
-        // User is active — do a light targeted patch (skip focused field)
         _csPatchFields(playerName, data, active);
       } else {
-        // No focus — safe to do a full re-render
         _csRender(playerName, data);
       }
     }
@@ -86,9 +78,8 @@ function _csSubscribe(playerName) {
   });
 }
 
-// ── Save helpers (on window so event delegation can reach them) ───
+// ── Save helpers ──────────────────────────────────────────────────
 window._csSave = function(playerName, path, value) {
-  // Optimistic local update — navigate by dots so _csGet can read it back
   if (!_csAllSheets[playerName]) _csAllSheets[playerName] = {};
   const parts = path.split('.');
   let obj = _csAllSheets[playerName];
@@ -97,8 +88,6 @@ window._csSave = function(playerName, path, value) {
     obj = obj[parts[i]];
   }
   obj[parts[parts.length - 1]] = value;
-  // Firebase path uses / as separator so snap.val() returns nested objects
-  // that match the dot-navigation in _csGet
   set(ref(window.db, 'characters/' + playerName + '/' + path.split('.').join('/')), value);
 };
 window._csDB = function(playerName, path, value) {
@@ -107,8 +96,7 @@ window._csDB = function(playerName, path, value) {
   _csDebounce[key] = setTimeout(() => window._csSave(playerName, path, value), _CS_MS);
 };
 
-
-// ── Helper: nested path getter ────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────
 function _csGet(obj, path) {
   return path.split('.').reduce((o, k) => (o && o[k] !== undefined ? o[k] : ''), obj) || '';
 }
@@ -117,34 +105,65 @@ function _esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// ── Stress / Panic response tables (Alien Evolved Edition Core Rules) ──
+// Stress Response Table (p.44): D6 + stress − Resolve
+const STRESS_RESPONSES = [
+  { k:'Jumpy',         label:'Jumpy',         tip:'#1 — Pushing a roll gives +2 stress (instead of +1).' },
+  { k:'Tunnel_Vision', label:'Tunnel Vision', tip:'#2 — All Wits-based skill rolls get −2 dice.' },
+  { k:'Aggravated',    label:'Aggravated',    tip:'#3 — All Empathy-based skill rolls get −2 dice.' },
+  { k:'Shakes',        label:'Shakes',        tip:'#4 — All Agility-based skill rolls get −2 dice.' },
+  { k:'Frantic',       label:'Frantic',       tip:'#5 — All Strength-based skill rolls get −2 dice.' },
+  { k:'Deflated',      label:'Deflated',      tip:'#6 — You cannot push any skill rolls.' },
+  { k:'Mess_Up',       label:'Mess Up',       tip:'#7+ — Your action fails outright; +1 stress.' },
+];
+// Panic Response Table (p.73): D6 + stress − Resolve
+const PANIC_RESPONSES = [
+  { k:'Spooked',     label:'Spooked',     tip:'2–3 — Stress level +1.' },
+  { k:'Noisy',       label:'Noisy',       tip:'4–6 — Nearby enemies are alerted to your presence.' },
+  { k:'Twitchy',     label:'Twitchy',     tip:'7–8 — Make an immediate supply roll (air/ammo/power).' },
+  { k:'Lose_Item',   label:'Lose Item',   tip:'9–10 — You lose a weapon or important item.' },
+  { k:'Paranoid',    label:'Paranoid',    tip:'11 — Cannot give or receive help on skill rolls.' },
+  { k:'Hesitant',    label:'Hesitant',    tip:'12 — Auto #10 initiative card until panic ends.' },
+  { k:'Freeze',      label:'Freeze',      tip:'13 — Lose your next turn; no interrupt actions.' },
+  { k:'Seek_Cover',  label:'Seek Cover',  tip:'14 — Take full cover (interrupt). Stress −1, lose next turn.' },
+  { k:'Scream',      label:'Scream',      tip:'15 — Lose next turn. Stress −1. Allies in zone roll panic.' },
+  { k:'Flee',        label:'Flee',        tip:'16 — Move to adjacent zone. Stress −1; allies in start zone +1 stress.' },
+  { k:'Frenzy',      label:'Frenzy',      tip:'17 — Attack the nearest target until panic ends.' },
+  { k:'Catatonic',   label:'Catatonic',   tip:'18+ — You collapse and cannot move until panic ends.' },
+];
+// Roll-mechanic states surfaced as a banner above the stress section.
+const ROLL_STATES = [
+  { k:'Jumpy',    label:'JUMPY',    eff:'PUSH GIVES +2 STRESS' },
+  { k:'Deflated', label:'DEFLATED', eff:'CANNOT PUSH ANY ROLL'  },
+  { k:'Mess_Up',  label:'MESS UP',  eff:'ACTIONS FAIL · +1 STRESS' },
+];
+// Attribute → stress-response that debuffs it (Stress Response Table p.44).
+const DEBUFF_MAP = [
+  { resp:'Frantic',       attr:'str', name:'Frantic',       skill:'Strength'  },
+  { resp:'Shakes',        attr:'agi', name:'Shakes',        skill:'Agility'   },
+  { resp:'Tunnel_Vision', attr:'wit', name:'Tunnel Vision', skill:'Wits'      },
+  { resp:'Aggravated',    attr:'emp', name:'Aggravated',    skill:'Empathy'   },
+];
+
 // ── Render ────────────────────────────────────────────────────────
 function _csRender(pn, data) {
   const body = document.getElementById('csBody');
   if (!body) return;
   const ro = window.isGM && pn !== window.myName;
 
-  // Text input
+  // ── primitive helpers ─────────────────────────────────────────
   const fi = (path, ph='') =>
     `<input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
       value="${_esc(_csGet(data,path))}" placeholder="${ph}">`;
-
-  // Textarea
   const ta = (path, ph='', rows=2) =>
     `<textarea class="cs-inp" rows="${rows}" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
       placeholder="${ph}">${_esc(_csGet(data,path))}</textarea>`;
-
-  // Number/small input
-  const ni = (path, w=36) =>
-    `<input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
+  const ni = (path, w=40, extraClass='') =>
+    `<input class="cs-inp ${extraClass}" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
       value="${_esc(_csGet(data,path))}" style="width:${w}px;text-align:center">`;
 
-  // Attribute score box
-  const as = (path) =>
-    `<input class="cs-attr-score cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
-      value="${_esc(_csGet(data,path))}">`;
-
-  // Attribute score with auto stress-response debuff applied (−2 if active).
-  // The stored base value is never modified — we just display base − 2 and
+  // attribute score with auto stress-response debuff applied (−2 if active).
+  // Stored base value is never modified — we just display base − 2 and
   // lock the input while the debuff is active so the original isn't lost.
   const asD = (path, deb, name) => {
     const base = _csGet(data, path);
@@ -157,74 +176,38 @@ function _csRender(pn, data) {
     return `<input class="${cls}" type="text" ${(ro||active)?'readonly':''} data-pn="${pn}" data-path="${path}"
       value="${_esc(eff)}"${tip?` title="${_esc(tip)}"`:''}>`;
   };
-
-  // Skill score
   const ss = (path) =>
     `<input class="cs-skill-score cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="${path}"
       value="${_esc(_csGet(data,path))}">`;
 
-  // Stress boxes
+  // Stress level boxes (10)
   const stressLvl = parseInt(_csGet(data,'stressLevel')) || 0;
   const stressBoxes = Array.from({length:10}, (_,i) =>
     `<div class="cs-stress-box ${i<stressLvl?'filled':''} ${ro?'readonly':''}"
-      ${ro?'':` data-stress="${i+1}" data-pn="${pn}"`}>●</div>`
+      ${ro?'':` data-stress="${i+1}" data-pn="${pn}"`}></div>`
   ).join('');
 
-  // Stress + Panic Responses — aligned with Alien Evolved Edition Core Rules
-  // Stress Response Table (p.44): D6 + stress − Resolve
-  const STRESS_RESPONSES = [
-    { k:'Jumpy',         label:'Jumpy',         tip:'#1 — Pushing a roll gives +2 stress (instead of +1).' },
-    { k:'Tunnel_Vision', label:'Tunnel Vision', tip:'#2 — All Wits-based skill rolls get −2 dice.' },
-    { k:'Aggravated',    label:'Aggravated',    tip:'#3 — All Empathy-based skill rolls get −2 dice.' },
-    { k:'Shakes',        label:'Shakes',        tip:'#4 — All Agility-based skill rolls get −2 dice.' },
-    { k:'Frantic',       label:'Frantic',       tip:'#5 — All Strength-based skill rolls get −2 dice.' },
-    { k:'Deflated',      label:'Deflated',      tip:'#6 — You cannot push any skill rolls.' },
-    { k:'Mess_Up',       label:'Mess Up',       tip:'#7+ — Your action fails outright; +1 stress.' },
-  ];
-  // Panic Response Table (p.73): D6 + stress − Resolve
-  const PANIC_RESPONSES = [
-    { k:'Spooked',     label:'Spooked',     tip:'2–3 — Stress level +1.' },
-    { k:'Noisy',       label:'Noisy',       tip:'4–6 — Nearby enemies are alerted to your presence.' },
-    { k:'Twitchy',     label:'Twitchy',     tip:'7–8 — Make an immediate supply roll (air/ammo/power).' },
-    { k:'Lose_Item',   label:'Lose Item',   tip:'9–10 — You lose a weapon or important item.' },
-    { k:'Paranoid',    label:'Paranoid',    tip:'11 — Cannot give or receive help on skill rolls.' },
-    { k:'Hesitant',    label:'Hesitant',    tip:'12 — Auto #10 initiative card until panic ends.' },
-    { k:'Freeze',      label:'Freeze',      tip:'13 — Lose your next turn; no interrupt actions.' },
-    { k:'Seek_Cover',  label:'Seek Cover',  tip:'14 — Take full cover (interrupt). Stress −1, lose next turn.' },
-    { k:'Scream',      label:'Scream',      tip:'15 — Lose next turn. Stress −1. Allies in zone roll panic.' },
-    { k:'Flee',        label:'Flee',        tip:'16 — Move to adjacent zone. Stress −1; allies in start zone +1 stress.' },
-    { k:'Frenzy',      label:'Frenzy',      tip:'17 — Attack the nearest target until panic ends.' },
-    { k:'Catatonic',   label:'Catatonic',   tip:'18+ — You collapse and cannot move until panic ends.' },
-  ];
+  // Stress / Panic checkbox row builder
   const renderResp = (list, prefix) => list.map(r => {
     const path = prefix + '.' + r.k;
     const chk = !!_csGet(data, path);
     return `<label class="cs-panic-item${chk?' chk':''}" title="${_esc(r.tip)}">
-      <input type="checkbox" ${chk?'checked':''} ${ro?'disabled':''} class="cs-chk" data-pn="${pn}" data-path="${path}"> ${r.label}
+      <input type="checkbox" ${chk?'checked':''} ${ro?'disabled':''} class="cs-chk" data-pn="${pn}" data-path="${path}"> <span>${r.label}</span>
     </label>`;
   }).join('');
   const stressRespBoxes = renderResp(STRESS_RESPONSES, 'stressResp');
   const panicRespBoxes  = renderResp(PANIC_RESPONSES,  'panicResp');
 
-  // Roll-mechanic states (Jumpy / Deflated / Mess Up) — they don't modify a
-  // stat, they change how pushing/resolving rolls behaves. Surfaced as a
-  // prominent banner so the player can't forget mid-session.
-  const ROLL_STATES = [
-    { k:'Jumpy',    label:'JUMPY',    eff:'PUSH GIVES +2 STRESS' },
-    { k:'Deflated', label:'DEFLATED', eff:'CANNOT PUSH ANY ROLL'  },
-    { k:'Mess_Up',  label:'MESS UP',  eff:'ACTIONS FAIL · +1 STRESS' },
-  ];
-  const rollStateBadges = ROLL_STATES
+  // Roll-state banner (Jumpy / Deflated / Mess Up)
+  const rollStateHtml = ROLL_STATES
     .filter(s => !!_csGet(data, 'stressResp.' + s.k))
     .map(s => `<div class="cs-active-state">
       <span class="cs-active-icon">⚠</span>
       <span class="cs-active-name">${s.label}</span>
       <span class="cs-active-effect">${s.eff}</span>
     </div>`).join('');
-  const rollStatesBlock = rollStateBadges
-    ? `<div class="cs-active-states">${rollStateBadges}</div>` : '';
 
-  // Auto-debuff badges on attributes (Stress Response Table p.44)
+  // −2 badge in attribute headers
   const debuff = (path, label) =>
     _csGet(data, path) ? `<span class="cs-stat-debuff" title="${_esc(label)}">−2</span>` : '';
   const strDebuff = debuff('stressResp.Frantic',       'Frantic: −2 dice on Strength skills');
@@ -236,156 +219,387 @@ function _csRender(pn, data) {
   const dr = (path) => {
     const filled = !!_csGet(data, path);
     return `<div class="cs-dr-box ${filled?'filled':''} ${ro?'readonly':''}"
-      ${ro?'':` data-dr="${path}" data-pn="${pn}"`}>●</div>`;
+      ${ro?'':` data-dr="${path}" data-pn="${pn}"`}></div>`;
   };
 
-  // Weapon rows
+  // Vital toggle (label + hidden checkbox styled as button via :has())
+  const togBtn = (path, label) => {
+    const chk = !!_csGet(data, path);
+    return `<label class="cs-vital-toggle">
+      <input type="checkbox" class="cs-chk" ${chk?'checked':''} ${ro?'disabled':''}
+        data-pn="${pn}" data-path="${path}"><span>${label}</span>
+    </label>`;
+  };
+
+  // Weapon row
   const wrow = (i) => `<tr>
-    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.name"
+    <td><input type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.name"
         value="${_esc(_csGet(data,'weapons.'+i+'.name'))}" placeholder="—"></td>
-    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.mod"
-        value="${_esc(_csGet(data,'weapons.'+i+'.mod'))}" style="width:34px"></td>
-    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.dmg"
-        value="${_esc(_csGet(data,'weapons.'+i+'.dmg'))}" style="width:34px"></td>
-    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.range"
-        value="${_esc(_csGet(data,'weapons.'+i+'.range'))}" style="width:46px"></td>
-    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.ammo"
-        value="${_esc(_csGet(data,'weapons.'+i+'.ammo'))}" style="width:34px"></td>
-    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.wt"
-        value="${_esc(_csGet(data,'weapons.'+i+'.wt'))}" style="width:34px"></td>
+    <td class="num-col"><input class="cs-num" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.mod"
+        value="${_esc(_csGet(data,'weapons.'+i+'.mod'))}" placeholder="—"></td>
+    <td class="num-col"><input class="cs-num" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.dmg"
+        value="${_esc(_csGet(data,'weapons.'+i+'.dmg'))}" placeholder="—"></td>
+    <td><input type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.range"
+        value="${_esc(_csGet(data,'weapons.'+i+'.range'))}" placeholder="range"></td>
+    <td class="num-col"><input class="cs-num" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.ammo"
+        value="${_esc(_csGet(data,'weapons.'+i+'.ammo'))}" placeholder="—"></td>
+    <td class="num-col"><input class="cs-num" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="weapons.${i}.wt"
+        value="${_esc(_csGet(data,'weapons.'+i+'.wt'))}" placeholder="—"></td>
   </tr>`;
 
-  // Gear rows
+  // Gear row (10 slots) — keeps existing schema { name, air, wt }
   const grow = (i) => `<tr>
-    <td style="width:20px;text-align:center;color:#334433;font-size:9px">${i+1}</td>
-    <td><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="gear.${i}.name"
-        value="${_esc(_csGet(data,'gear.'+i+'.name'))}" placeholder="—"></td>
-    <td style="width:60px"><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="gear.${i}.air"
-        value="${_esc(_csGet(data,'gear.'+i+'.air'))}" style="width:54px"></td>
-    <td style="width:50px"><input class="cs-inp" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="gear.${i}.wt"
-        value="${_esc(_csGet(data,'gear.'+i+'.wt'))}" style="width:44px"></td>
+    <td class="idx-col">${String(i+1).padStart(2,'0')}</td>
+    <td><input type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="gear.${i}.name"
+        value="${_esc(_csGet(data,'gear.'+i+'.name'))}" placeholder="— slot ${String(i+1).padStart(2,'0')} —"></td>
+    <td style="width:60px"><input type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="gear.${i}.air"
+        value="${_esc(_csGet(data,'gear.'+i+'.air'))}" placeholder="—"></td>
+    <td class="num-col"><input class="cs-num" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="gear.${i}.wt"
+        value="${_esc(_csGet(data,'gear.'+i+'.wt'))}" placeholder="—"></td>
   </tr>`;
 
-  const fatChk = `<input type="checkbox" ${_csGet(data,'fatigued')?'checked':''} ${ro?'disabled':''} class="cs-chk"
-    data-pn="${pn}" data-path="fatigued" style="width:22px;height:22px;accent-color:#88cc44">`;
-
+  // ── Page assembly ─────────────────────────────────────────────
   body.innerHTML = `
-    <div class="cs-section-title">// OPERATIVE PROFILE</div>
-    <div class="cs-field-row">
-      <div class="cs-field" style="flex:2"><label>NAME</label>${fi('name','Operative designation...')}</div>
-      <div class="cs-field" style="flex:2"><label>CAREER</label>${fi('career','Colonial Marine, Roughneck...')}</div>
-      <div class="cs-field" style="flex:1"><label>XP</label>${ni('xp',40)}</div>
-      <div class="cs-field" style="flex:1"><label>STORY PTS</label>${ni('storyPoints',40)}</div>
-    </div>
-    <div class="cs-field-row">
-      <div class="cs-field"><label>APPEARANCE</label>${ta('appearance','Physical description...',2)}</div>
-      <div class="cs-field"><label>PERSONAL AGENDA</label>${ta('agenda','What do you want...',2)}</div>
-    </div>
-    <div class="cs-field-row">
-      <div class="cs-field"><label>TALENTS</label>${ta('talents','Special abilities...',3)}</div>
-    </div>
-    <div class="cs-field-row">
-      <div class="cs-field"><label>BUDDY</label>${fi('buddy','Who do you trust?')}</div>
-      <div class="cs-field"><label>RIVAL</label>${fi('rival','Who do you hate?')}</div>
-    </div>
-    <div class="cs-field-row">
-      <div class="cs-field"><label>SIGNATURE ITEM</label>${fi('sigItem','Your most prized possession...')}</div>
-    </div>
-
-    <div class="cs-section-title">// ATTRIBUTES & SKILLS</div>
-    <div class="cs-attrs">
-      <div class="cs-attr-block">
-        <div class="cs-attr-name">STRENGTH ${asD('attr.str', !!_csGet(data,'stressResp.Frantic'),       'Frantic')}${strDebuff}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">CLOSE COMBAT</span>${ss('skill.closeCombat')}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">HEAVY MACHINERY</span>${ss('skill.heavyMachinery')}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">STAMINA</span>${ss('skill.stamina')}</div>
-      </div>
-      <div class="cs-attr-block">
-        <div class="cs-attr-name">AGILITY ${asD('attr.agi', !!_csGet(data,'stressResp.Shakes'),        'Shakes')}${agiDebuff}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">MOBILITY</span>${ss('skill.mobility')}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">PILOTING</span>${ss('skill.piloting')}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">RANGED COMBAT</span>${ss('skill.rangedCombat')}</div>
-      </div>
-      <div class="cs-attr-block">
-        <div class="cs-attr-name">WITS ${asD('attr.wit', !!_csGet(data,'stressResp.Tunnel_Vision'), 'Tunnel Vision')}${witDebuff}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">COMTECH</span>${ss('skill.comtech')}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">OBSERVATION</span>${ss('skill.observation')}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">SURVIVAL</span>${ss('skill.survival')}</div>
-      </div>
-      <div class="cs-attr-block">
-        <div class="cs-attr-name">EMPATHY ${asD('attr.emp', !!_csGet(data,'stressResp.Aggravated'),    'Aggravated')}${empDebuff}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">COMMAND</span>${ss('skill.command')}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">MANIPULATION</span>${ss('skill.manipulation')}</div>
-        <div class="cs-skill-row"><span class="cs-skill-name">MEDICAL AID</span>${ss('skill.medicalAid')}</div>
+    <!-- TITLE BLOCK -->
+    <div class="cs-title-block">
+      <span class="cs-corner tl"></span><span class="cs-corner tr"></span>
+      <span class="cs-corner bl"></span><span class="cs-corner br"></span>
+      <h1 class="cs-sheet-title">CHARACTER SHEET</h1>
+      <div class="cs-sheet-sub">
+        <span>ASSET RECOVERY DIVISION</span>
+        <span class="cs-tag">CLASSIFIED · EYES ONLY</span>
+        <span>OPERATIVE · ${_esc(pn)}</span>
       </div>
     </div>
 
-    <div class="cs-section-title">// CONDITION</div>
-    <div class="cs-stats" style="margin-bottom:12px">
-      <div class="cs-stat-box">
-        <div class="cs-stat-label">HEALTH</div>
-        <div class="cs-stat-val">${ni('health.cur',30)} <span class="cs-stat-sep">/</span> ${ni('health.max',30)}</div>
+    <!-- §01 IDENTITY (full width) -->
+    <div class="cs-panel">
+      <div class="cs-panel-head">
+        <div class="cs-panel-title">§ 01 · IDENTITY</div>
+        <div class="cs-panel-meta">OPERATOR INPUT</div>
       </div>
-      <div class="cs-stat-box">
-        <div class="cs-stat-label">RESOLVE</div>
-        <div class="cs-stat-val">${ni('resolve.cur',30)} <span class="cs-stat-sep">/</span> ${ni('resolve.max',30)}</div>
+      <div class="cs-panel-body">
+        <div class="cs-field-row cols-4">
+          <div class="cs-field"><label>NAME / DESIGNATION</label>${fi('name','— operative designation —')}</div>
+          <div class="cs-field"><label>CAREER</label>${fi('career','— colonial marine, roughneck —')}</div>
+          <div class="cs-field"><label>BUDDY</label>${fi('buddy','— who do you trust —')}</div>
+          <div class="cs-field"><label>RIVAL</label>${fi('rival','— who do you hate —')}</div>
+        </div>
+        <div class="cs-field-row cols-2">
+          <div class="cs-field"><label>APPEARANCE</label>${ta('appearance','— physical description / distinguishing marks —',2)}</div>
+          <div class="cs-field"><label>PERSONAL AGENDA</label>${ta('agenda','— classified objectives —',2)}</div>
+        </div>
       </div>
-      <div class="cs-stat-box"><div class="cs-stat-label">RADIATION</div><div class="cs-stat-val">${ni('radiation',36)}</div></div>
-      <div class="cs-stat-box">
-        <div class="cs-stat-label">ENCUMBRANCE</div>
-        <div class="cs-stat-val">${ni('encumb.cur',30)} <span class="cs-stat-sep">/</span> ${ni('encumb.max',30)}</div>
-      </div>
-      <div class="cs-stat-box"><div class="cs-stat-label">CASH ($)</div><div class="cs-stat-val">${ni('cash',60)}</div></div>
-      <div class="cs-stat-box"><div class="cs-stat-label">FATIGUED</div><div class="cs-stat-val">${fatChk}</div></div>
     </div>
 
-    ${rollStatesBlock}
+    <!-- ─── 3-COLUMN GRID ─── -->
+    <div class="cs-grid">
 
-    <div class="cs-section-title">// STRESS LEVEL <span class="cs-stress-label" style="color:#446633;font-size:9px;font-weight:normal">${stressLvl}/10</span></div>
-    <div class="cs-stress-row">${stressBoxes}</div>
+      <!-- COLUMN 1 -->
+      <div class="cs-col">
 
-    <div class="cs-section-title">// STRESS RESPONSE <span class="cs-resp-note">D6 + STRESS − RESOLVE · effects on hover</span></div>
-    <div class="cs-panic-grid">${stressRespBoxes}</div>
+        <!-- §02 ATTRIBUTES & SKILLS -->
+        <div class="cs-panel">
+          <div class="cs-panel-head">
+            <div class="cs-panel-title">§ 02 · ATTRIBUTES &nbsp;/&nbsp; SKILLS</div>
+            <div class="cs-panel-meta">SCORES · 1–5</div>
+          </div>
+          <div class="cs-panel-body">
+            <div class="cs-attrs">
+              <div class="cs-attr-block">
+                <div class="cs-attr-name"><span>STRENGTH</span>${strDebuff}${asD('attr.str', !!_csGet(data,'stressResp.Frantic'),       'Frantic')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">CLOSE COMBAT</span>${ss('skill.closeCombat')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">HEAVY MACHINERY</span>${ss('skill.heavyMachinery')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">STAMINA</span>${ss('skill.stamina')}</div>
+              </div>
+              <div class="cs-attr-block">
+                <div class="cs-attr-name"><span>AGILITY</span>${agiDebuff}${asD('attr.agi', !!_csGet(data,'stressResp.Shakes'),        'Shakes')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">MOBILITY</span>${ss('skill.mobility')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">PILOTING</span>${ss('skill.piloting')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">RANGED COMBAT</span>${ss('skill.rangedCombat')}</div>
+              </div>
+              <div class="cs-attr-block">
+                <div class="cs-attr-name"><span>WITS</span>${witDebuff}${asD('attr.wit', !!_csGet(data,'stressResp.Tunnel_Vision'), 'Tunnel Vision')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">COMTECH</span>${ss('skill.comtech')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">OBSERVATION</span>${ss('skill.observation')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">SURVIVAL</span>${ss('skill.survival')}</div>
+              </div>
+              <div class="cs-attr-block">
+                <div class="cs-attr-name"><span>EMPATHY</span>${empDebuff}${asD('attr.emp', !!_csGet(data,'stressResp.Aggravated'),    'Aggravated')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">COMMAND</span>${ss('skill.command')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">MANIPULATION</span>${ss('skill.manipulation')}</div>
+                <div class="cs-skill-row"><span class="cs-skill-name">MEDICAL AID</span>${ss('skill.medicalAid')}</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <div class="cs-section-title">// PANIC RESPONSE <span class="cs-resp-note">D6 + STRESS − RESOLVE · effects on hover</span></div>
-    <div class="cs-panic-grid">${panicRespBoxes}</div>
+        <!-- §03 TALENTS -->
+        <div class="cs-panel">
+          <div class="cs-panel-head">
+            <div class="cs-panel-title">§ 03 · TALENTS</div>
+            <div class="cs-panel-meta">SPECIALIZATIONS</div>
+          </div>
+          <div class="cs-panel-body">
+            ${ta('talents','— list talents (one per line) —',5)}
+          </div>
+        </div>
 
-    <div class="cs-section-title">// DEATH ROLLS</div>
-    <div class="cs-deathroll">
-      <div class="cs-dr-group"><div class="cs-dr-label">SUCCESSES</div>
-        <div class="cs-dr-boxes">${dr('dr.s1')}${dr('dr.s2')}${dr('dr.s3')}</div></div>
-      <div class="cs-dr-group"><div class="cs-dr-label">FAILURES</div>
-        <div class="cs-dr-boxes">${dr('dr.f1')}${dr('dr.f2')}${dr('dr.f3')}</div></div>
+        <!-- §04 PROGRESSION -->
+        <div class="cs-panel">
+          <div class="cs-panel-head">
+            <div class="cs-panel-title">§ 04 · PROGRESSION</div>
+            <div class="cs-panel-meta">OPERATOR RESOURCES</div>
+          </div>
+          <div class="cs-panel-body">
+            <div class="cs-xp-grid">
+              <div class="cs-xp-cell">
+                <div class="cs-xp-lbl">EXPERIENCE</div>
+                <input class="cs-xp-val" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="xp"
+                  value="${_esc(_csGet(data,'xp'))}" placeholder="0">
+              </div>
+              <div class="cs-xp-cell story">
+                <div class="cs-xp-lbl">STORY POINTS</div>
+                <input class="cs-xp-val" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="storyPoints"
+                  value="${_esc(_csGet(data,'storyPoints'))}" placeholder="0">
+              </div>
+              <div class="cs-xp-cell cash">
+                <div class="cs-xp-lbl">CASH · $</div>
+                <input class="cs-xp-val" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="cash"
+                  value="${_esc(_csGet(data,'cash'))}" placeholder="0">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- COLUMN 2 -->
+      <div class="cs-col">
+
+        <!-- §05 VITALS -->
+        <div class="cs-panel">
+          <div class="cs-panel-head">
+            <div class="cs-panel-title">§ 05 · VITALS</div>
+            <div class="cs-panel-meta">BIOMETRIC READOUT</div>
+          </div>
+          <div class="cs-panel-body">
+            <div class="cs-vitals">
+              <div class="cs-vital health">
+                <div class="cs-vital-label">HEALTH</div>
+                <div class="cs-vital-readout">
+                  ${ni('health.cur',38)}<span class="cs-stat-sep">/</span>${ni('health.max',38)}
+                </div>
+              </div>
+              <div class="cs-vital resolve">
+                <div class="cs-vital-label">RESOLVE</div>
+                <div class="cs-vital-readout">
+                  ${ni('resolve.cur',38)}<span class="cs-stat-sep">/</span>${ni('resolve.max',38)}
+                </div>
+              </div>
+              <div class="cs-vital radiation">
+                <div class="cs-vital-label">RADIATION</div>
+                <div class="cs-vital-readout">${ni('radiation',38)}</div>
+              </div>
+              <div class="cs-vital">
+                <div class="cs-vital-label">STATUS</div>
+                <div class="cs-vital-toggles">
+                  ${togBtn('fatigued','FATIGUED')}
+                </div>
+              </div>
+            </div>
+
+            <div class="cs-divider"></div>
+
+            <!-- Roll-state banner (Jumpy / Deflated / Mess Up) -->
+            <div class="cs-active-states" id="csActiveStates">${rollStateHtml}</div>
+
+            <div class="cs-vital-label" style="margin-bottom:6px">
+              STRESS LEVEL
+              <span class="cs-stress-label" id="csStressLabel">${stressLvl}/10</span>
+            </div>
+            <div class="cs-stress-row">${stressBoxes}</div>
+          </div>
+        </div>
+
+        <!-- §06 STRESS RESPONSE -->
+        <div class="cs-panel">
+          <div class="cs-panel-head">
+            <div class="cs-panel-title">§ 06 · STRESS RESPONSE</div>
+            <div class="cs-panel-meta">D6 + STRESS − RESOLVE</div>
+          </div>
+          <div class="cs-panel-body">
+            <div class="cs-hazard"></div>
+            <div class="cs-panic-grid">${stressRespBoxes}</div>
+          </div>
+        </div>
+
+        <!-- §07 PANIC RESPONSE -->
+        <div class="cs-panel">
+          <div class="cs-panel-head">
+            <div class="cs-panel-title">§ 07 · PANIC RESPONSE</div>
+            <div class="cs-panel-meta">PSYCHOLOGICAL LOG</div>
+          </div>
+          <div class="cs-panel-body">
+            <div class="cs-hazard"></div>
+            <div class="cs-panic-grid">${panicRespBoxes}</div>
+          </div>
+        </div>
+
+        <!-- §08 DEATH ROLLS -->
+        <div class="cs-panel">
+          <div class="cs-panel-head">
+            <div class="cs-panel-title">§ 08 · DEATH ROLLS</div>
+            <div class="cs-panel-meta"><span style="color:var(--cs-rust)">◉</span> BROKEN STATE ONLY</div>
+          </div>
+          <div class="cs-panel-body">
+            <div class="cs-deathroll">
+              <div class="cs-dr-group cs-dr-success">
+                <div class="cs-dr-label">SUCCESSES</div>
+                <div class="cs-dr-boxes">${dr('dr.s1')}${dr('dr.s2')}${dr('dr.s3')}</div>
+              </div>
+              <div class="cs-dr-group">
+                <div class="cs-dr-label">FAILURES</div>
+                <div class="cs-dr-boxes">${dr('dr.f1')}${dr('dr.f2')}${dr('dr.f3')}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- COLUMN 3 -->
+      <div class="cs-col">
+
+        <!-- §09 WEAPONS -->
+        <div class="cs-panel">
+          <div class="cs-panel-head">
+            <div class="cs-panel-title">§ 09 · WEAPONS</div>
+            <div class="cs-panel-meta">LOADOUT · ARMED</div>
+          </div>
+          <div class="cs-panel-body">
+            <table class="cs-tbl cs-weapons">
+              <thead><tr>
+                <th style="width:32%">WEAPON</th>
+                <th style="width:12%">MOD</th>
+                <th style="width:12%">DMG</th>
+                <th style="width:18%">RANGE</th>
+                <th style="width:13%">AMMO</th>
+                <th style="width:13%">WT</th>
+              </tr></thead>
+              <tbody>${[0,1,2,3].map(wrow).join('')}</tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- §10 ARMOR -->
+        <div class="cs-panel">
+          <div class="cs-panel-head">
+            <div class="cs-panel-title">§ 10 · ARMOR</div>
+            <div class="cs-panel-meta">PROTECTIVE RATING</div>
+          </div>
+          <div class="cs-panel-body">
+            <div class="cs-armor-row cs-armor-head">
+              <span>DESIGNATION</span><span>WT</span><span>LVL</span>
+            </div>
+            <div class="cs-armor-row">
+              <input type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="armor.name"
+                value="${_esc(_csGet(data,'armor.name'))}" placeholder="— M3 personnel armor —">
+              <input class="cs-num" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="armor.weight"
+                value="${_esc(_csGet(data,'armor.weight'))}" placeholder="—">
+              <input class="cs-num" type="text" ${ro?'readonly':''} data-pn="${pn}" data-path="armor.level"
+                value="${_esc(_csGet(data,'armor.level'))}" placeholder="—">
+            </div>
+          </div>
+        </div>
+
+        <!-- §11 GEAR -->
+        <div class="cs-panel">
+          <div class="cs-panel-head">
+            <div class="cs-panel-title">§ 11 · GEAR</div>
+            <div class="cs-panel-meta">10 SLOTS · WT TRACKED</div>
+          </div>
+          <div class="cs-panel-body">
+            <table class="cs-tbl cs-gear">
+              <thead><tr>
+                <th style="width:24px">#</th>
+                <th>ITEM</th>
+                <th style="width:60px">AIR/PWR</th>
+                <th style="width:48px">WT</th>
+              </tr></thead>
+              <tbody>${Array.from({length:10},(_,i)=>grow(i)).join('')}</tbody>
+            </table>
+
+            <div class="cs-divider"></div>
+            <div class="cs-field" style="margin-top:4px">
+              <label>TINY ITEMS</label>
+              ${ta('tinyItems','— cigarettes, data tapes, drugs, cash —',2)}
+            </div>
+
+            <div class="cs-signature">
+              <div class="cs-field" style="margin:0">
+                <label>⚑ SIGNATURE ITEM</label>
+                ${fi('sigItem','— item of personal significance —')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- §12 ENCUMBRANCE -->
+        <div class="cs-panel">
+          <div class="cs-panel-head">
+            <div class="cs-panel-title">§ 12 · ENCUMBRANCE</div>
+            <div class="cs-panel-meta">LOAD · STRENGTH × 2</div>
+          </div>
+          <div class="cs-panel-body">
+            <div class="cs-enc-wrap">
+              <div class="cs-enc-track">
+                <div class="cs-enc-fill" id="csEncFill" style="width:0%"></div>
+              </div>
+              <div class="cs-enc-vals">
+                ${ni('encumb.cur',38)}<span class="cs-enc-sep">/</span>${ni('encumb.max',38)}
+              </div>
+            </div>
+            <div class="cs-enc-note">MANUAL · UPDATE FROM GEAR &amp; WEAPONS</div>
+          </div>
+        </div>
+
+      </div>
     </div>
 
-    <div class="cs-section-title">// SERIOUS INJURIES &amp; MENTAL TRAUMA</div>
-    <textarea class="cs-injuries cs-inp" rows="3" ${ro?'readonly':''} data-pn="${pn}" data-path="injuries"
-      placeholder="List injuries and trauma...">${_esc(_csGet(data,'injuries'))}</textarea>
-
-    <div class="cs-section-title">// ARMOR</div>
-    <div class="cs-field-row">
-      <div class="cs-field" style="flex:3"><label>ARMOR NAME</label>${fi('armor.name','M3 Personnel Armor...')}</div>
-      <div class="cs-field" style="flex:1"><label>LEVEL</label>${ni('armor.level',40)}</div>
-      <div class="cs-field" style="flex:1"><label>WEIGHT</label>${ni('armor.weight',40)}</div>
+    <!-- §13 INJURIES (full width) -->
+    <div class="cs-panel" style="margin-top:14px">
+      <div class="cs-panel-head">
+        <div class="cs-panel-title">§ 13 · SERIOUS INJURIES &amp; MENTAL TRAUMA</div>
+        <div class="cs-panel-meta"><span style="color:var(--cs-rust)">⚠</span> MEDICAL LOG · CLASSIFIED</div>
+      </div>
+      <div class="cs-panel-body">
+        <div class="cs-hazard"></div>
+        <textarea class="cs-injuries" rows="3" ${ro?'readonly':''} data-pn="${pn}" data-path="injuries"
+          placeholder="— critical injuries / trauma conditions / long-term damage —">${_esc(_csGet(data,'injuries'))}</textarea>
+      </div>
     </div>
 
-    <div class="cs-section-title">// WEAPONS</div>
-    <table class="cs-weapons">
-      <thead><tr><th>WEAPON</th><th>MOD</th><th>DMG</th><th>RANGE</th><th>AMMO</th><th>WT</th></tr></thead>
-      <tbody>${[0,1,2,3].map(wrow).join('')}</tbody>
-    </table>
-
-    <div class="cs-section-title">// GEAR</div>
-    <table class="cs-gear">
-      <thead><tr><th>#</th><th>ITEM</th><th>AIR/PWR</th><th>WT</th></tr></thead>
-      <tbody>${Array.from({length:10},(_,i)=>grow(i)).join('')}</tbody>
-    </table>
-
-    <div class="cs-section-title">// TINY ITEMS</div>
-    ${ta('tinyItems','Cigarettes, data tapes, drugs, cash...',2)}
+    <!-- FOOTER -->
+    <div class="cs-footer">
+      <div>WEYLAND–YUTANI CORPORATION · ASSET RECOVERY DIVISION</div>
+      <div>FORM CS-7 · REV 4.11-EVOLVED · OPERATIVE: ${_esc(pn)}</div>
+    </div>
   `;
 
-}  // end _csRender
+  // Update the encumbrance fill bar on initial render
+  _csUpdateEncFill(data);
+}
+
+// ── Encumbrance progress bar (visual only — values are still manual) ──
+function _csUpdateEncFill(data) {
+  const fill = document.getElementById('csEncFill');
+  if (!fill) return;
+  const cur = parseFloat(_csGet(data, 'encumb.cur')) || 0;
+  const max = parseFloat(_csGet(data, 'encumb.max')) || 0;
+  const pct = max > 0 ? Math.min(100, (cur / max) * 100) : 0;
+  fill.style.width = pct + '%';
+}
 
 // ── Targeted patch: derived UI that depends on stressResp.* ──────
 // Updates the active-states banner and attribute debuff badges in place,
@@ -397,11 +611,8 @@ function _csPatchDerived(pn, data) {
   if (!body) return;
   const ro = window.isGM && pn !== window.myName;
 
-  // Source of truth for stress response state: read directly from the
-  // checkbox DOM. During rapid toggles, the Firebase echo can carry a
-  // briefly stale snapshot that would otherwise revive a debuff the
-  // user just cleared. The checkboxes themselves are always correct
-  // because the browser's default action toggles them synchronously.
+  // Source of truth: the live checkbox DOM. Firebase echoes can briefly
+  // carry stale snapshots that would revive a debuff the user just cleared.
   const respState = (key) => {
     const cb = body.querySelector(
       'input.cs-chk[data-path="stressResp.' + key + '"]'
@@ -409,54 +620,23 @@ function _csPatchDerived(pn, data) {
     return cb ? !!cb.checked : !!_csGet(data, 'stressResp.' + key);
   };
 
-  // 1) Roll-state banner (Jumpy / Deflated / Mess Up)
-  const ROLL_STATES = [
-    { k:'Jumpy',    label:'JUMPY',    eff:'PUSH GIVES +2 STRESS' },
-    { k:'Deflated', label:'DEFLATED', eff:'CANNOT PUSH ANY ROLL'  },
-    { k:'Mess_Up',  label:'MESS UP',  eff:'ACTIONS FAIL · +1 STRESS' },
-  ];
+  // 1) Roll-state banner (stable host)
   const active = ROLL_STATES.filter(s => respState(s.k));
   const html = active.map(s => `<div class="cs-active-state">
       <span class="cs-active-icon">⚠</span>
       <span class="cs-active-name">${s.label}</span>
       <span class="cs-active-effect">${s.eff}</span>
     </div>`).join('');
-  let banner = body.querySelector('.cs-active-states');
-  if (active.length) {
-    if (banner) {
-      banner.innerHTML = html;
-    } else {
-      // Insert banner just before the STRESS LEVEL section title
-      const titles = body.querySelectorAll('.cs-section-title');
-      let stressTitle = null;
-      titles.forEach(t => { if (!stressTitle && t.textContent.includes('STRESS LEVEL')) stressTitle = t; });
-      if (stressTitle) {
-        const div = document.createElement('div');
-        div.className = 'cs-active-states';
-        div.innerHTML = html;
-        stressTitle.parentNode.insertBefore(div, stressTitle);
-      }
-    }
-  } else if (banner) {
-    banner.remove();
-  }
+  const banner = document.getElementById('csActiveStates');
+  if (banner) banner.innerHTML = html;
 
   // 2) Attribute debuffs and effective scores (STR/AGI/WIT/EMP)
-  const debuffMap = [
-    { resp:'Frantic',       attr:'str', name:'Frantic',       skill:'Strength'  },
-    { resp:'Shakes',        attr:'agi', name:'Shakes',        skill:'Agility'   },
-    { resp:'Tunnel_Vision', attr:'wit', name:'Tunnel Vision', skill:'Wits'      },
-    { resp:'Aggravated',    attr:'emp', name:'Aggravated',    skill:'Empathy'   },
-  ];
-  // Map every cs-attr-score input by its data-path (csBody only ever
-  // shows one player, so no need to filter by pn — and avoids CSS
-  // attribute-selector escaping issues with special chars in names)
   const scoreByPath = {};
   body.querySelectorAll('input.cs-attr-score').forEach(el => {
     if (el.dataset.path) scoreByPath[el.dataset.path] = el;
   });
 
-  for (const d of debuffMap) {
+  for (const d of DEBUFF_MAP) {
     const inp = scoreByPath['attr.' + d.attr];
     if (!inp) continue;
     const base    = _csGet(data, 'attr.' + d.attr);
@@ -470,7 +650,7 @@ function _csPatchDerived(pn, data) {
     if (ro || isDeb) inp.setAttribute('readonly', '');
     else             inp.removeAttribute('readonly');
 
-    // Update −2 badge in the .cs-attr-name header
+    // −2 badge in the .cs-attr-name header
     const nameEl = inp.closest('.cs-attr-block')?.querySelector('.cs-attr-name');
     if (!nameEl) continue;
     let badge = nameEl.querySelector('.cs-stat-debuff');
@@ -479,7 +659,8 @@ function _csPatchDerived(pn, data) {
       span.className = 'cs-stat-debuff';
       span.title = d.name + ': −2 dice on ' + d.skill + ' skills';
       span.textContent = '−2';
-      nameEl.appendChild(span);
+      // Insert badge before the score input (badge shows next to attr name)
+      nameEl.insertBefore(span, inp);
     } else if (!want && badge) {
       badge.remove();
     }
@@ -510,26 +691,29 @@ function _csPatchFields(playerName, data, focused) {
   if (!fp) return;
   const sel = document.querySelector('#csBody [data-path="' + fp + '"]');
   if (!sel) return;
-  sel.value = live;                    // keep unsaved keystrokes
+  sel.value = live;
   try { sel.focus(); sel.setSelectionRange(start, end); } catch (e) {}
 }
 
-// ── ONE-TIME event delegation on the overlay (never re-added) ───
+// ── ONE-TIME event delegation on the overlay ─────────────────────
 (function _csInitEvents() {
   const overlay = document.getElementById('charSheetOverlay');
   if (!overlay) { setTimeout(_csInitEvents, 200); return; }
 
-  // Text / textarea → debounced save (skip if readonly attr present)
+  // Text / textarea → debounced save
   overlay.addEventListener('input', e => {
     const el = e.target;
     if (el.hasAttribute('readonly')) return;
     const pn = el.dataset.pn, path = el.dataset.path;
     if (!pn || !path) return;
     window._csDB(pn, path, el.value);
+    // Live-update encumbrance fill bar when its inputs change
+    if (path === 'encumb.cur' || path === 'encumb.max') {
+      _csUpdateEncFill(_csAllSheets[pn] || {});
+    }
   });
 
-  // Checkbox → immediate save + targeted UI refresh (no full re-render,
-  // see _csPatchFields for why)
+  // Checkbox → immediate save + targeted UI refresh
   overlay.addEventListener('change', e => {
     const el = e.target;
     if (!el.classList.contains('cs-chk') || el.disabled) return;
@@ -550,14 +734,12 @@ function _csPatchFields(playerName, data, focused) {
       if (!pn) return;
       const cur = parseInt(_csGet(_csAllSheets[pn]||{}, 'stressLevel')) || 0;
       const next = (cur === lvl) ? lvl - 1 : lvl;
-      // Instant visual update — don't wait for Firebase
       const row = sb.closest('.cs-stress-row') || sb.parentElement;
       row.querySelectorAll('.cs-stress-box').forEach(box => {
         const bi = parseInt(box.dataset.stress);
         box.classList.toggle('filled', bi <= next);
       });
-      // Update label if present
-      const lbl = sb.closest('.cs-body, #csBody')?.querySelector('.cs-stress-label');
+      const lbl = document.getElementById('csStressLabel');
       if (lbl) lbl.textContent = next + '/10';
       window._csSave(pn, 'stressLevel', next);
       return;
@@ -568,7 +750,6 @@ function _csPatchFields(playerName, data, focused) {
       const pn = db2.dataset.pn, path = db2.dataset.dr;
       if (!pn || !path) return;
       const cur = !!_csGet(_csAllSheets[pn]||{}, path);
-      // Instant visual update
       db2.classList.toggle('filled', !cur);
       window._csSave(pn, path, !cur);
     }

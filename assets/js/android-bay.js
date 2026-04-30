@@ -243,6 +243,9 @@ function placeRivets() {
 
 // ── Firebase listener ─────────────────────────────────────────────────────────
 
+// Render immediately with empty pods so the grid is never blank on open
+renderGrid();
+
 window._authReadyPromise.then(() => {
   onValue(ref(window.db, 'android-bay/pods'), snap => {
     pods = snap.val() || {};
@@ -294,6 +297,7 @@ window.openAndroidBay = function () {
   document.getElementById('androidBayOverlay').style.display = 'flex';
   placeRivets();
   startClock();
+  renderGrid();
 };
 
 window.closeAndroidBay = function () {

@@ -305,14 +305,18 @@ document.getElementById('abAssignOverlay')?.addEventListener('click', e => {
 // ── Public API ────────────────────────────────────────────────────────────────
 
 window.openAndroidBay = function () {
-  document.getElementById('androidBayOverlay').style.display = 'flex';
+  const overlay = document.getElementById('androidBayOverlay');
+  overlay.style.display = 'flex';
+  overlay.querySelectorAll('*').forEach(el => el.style.animationPlayState = '');
   placeRivets();
   startClock();
   renderGrid();
 };
 
 window.closeAndroidBay = function () {
-  document.getElementById('androidBayOverlay').style.display = 'none';
+  const overlay = document.getElementById('androidBayOverlay');
+  overlay.querySelectorAll('*').forEach(el => el.style.animationPlayState = 'paused');
+  overlay.style.display = 'none';
   closeAssignModal();
   stopClock();
 };

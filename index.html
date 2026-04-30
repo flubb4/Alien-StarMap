@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="assets/css/motion-tracker.css">
 <link rel="stylesheet" href="assets/css/black-veil.css">
 <link rel="stylesheet" href="assets/css/youtube-player.css">
+<link rel="stylesheet" href="assets/css/android-bay.css">
 </head>
 <body>
 
@@ -112,6 +113,7 @@
     <button id="charSheetBtn" class="header-btn header-btn--bone" onclick="openCharSheet()">📋 CHARACTER</button>
     <button id="rationsBtn" class="header-btn header-btn--chart" onclick="openRationsPanel()">🍫 PROVISIONS</button>
     <button id="supplyBtn" class="header-btn header-btn--teal" onclick="openSupplyPanel()">📦 SUPPLY</button>
+    <button id="androidBayBtn" class="header-btn header-btn--android" onclick="openAndroidBay()">🤖 ANDROID BAY</button>
     <button id="imageBoardBtn" onclick="reopenImageBoard()" style="display:none">🖼 IMAGE BOARD</button>
     <div class="user-badge">
       <div class="user-dot" id="myDot" style="background:#00e5ff"></div>
@@ -841,6 +843,138 @@
   </div>
 </div>
 
+<!-- ANDROID STORAGE BAY OVERLAY -->
+<div id="androidBayOverlay">
+
+  <div class="ab-backdrop-text">WEYLAND-YUTANI CORP // SYNTHETIC LOGISTICS // CLEARANCE DELTA
+&gt; subsystem: HANGAR / DECK 4-C / ANDROID STORAGE
+&gt; rendering pod array...........[ OK ]
+&gt; sync vitals telemetry.........[ OK ]
+&gt; awaiting operator input
+
+[ DECK 4-C ]  temp: 4.2°C      humidity: 12%     pressure: 101.3 kPa
+[ MAIN BUS ]  power: 98.4%     hull: nominal     grav: 1.0g
+[ COMMS    ]  uplink: MU/TH/UR 9000     latency: 218ms</div>
+
+  <div class="ab-panel">
+    <div class="ab-stripe ab-top"></div>
+    <div class="ab-stripe ab-bot"></div>
+    <div class="ab-stripe ab-side ab-l"></div>
+    <div class="ab-stripe ab-side ab-r"></div>
+    <div class="ab-rivets" id="abRivets"></div>
+
+    <header class="ab-bay-header">
+      <div class="ab-corp">
+        <div class="ab-corp-mark">
+          <svg viewBox="0 0 40 40" width="36" height="36">
+            <polygon points="20,3 35,11 35,29 20,37 5,29 5,11" fill="none" stroke="#f5a623" stroke-width="1.4"/>
+            <circle cx="20" cy="20" r="7" fill="none" stroke="#f5a623" stroke-width="1"/>
+            <circle cx="20" cy="20" r="2.4" fill="#f5a623"/>
+            <line x1="6" y1="34" x2="34" y2="6" stroke="#f5a623" stroke-width="1" opacity=".55"/>
+          </svg>
+        </div>
+        <div class="ab-corp-text">
+          <div class="ab-l1">WEYLAND-YUTANI&nbsp;CORP</div>
+          <div class="ab-l2">SYNTHETIC LOGISTICS DIVISION</div>
+          <div class="ab-l3">CONTRACT HD-0931 // CLEARANCE&nbsp;Δ</div>
+        </div>
+      </div>
+      <div class="ab-title-block">
+        <div class="ab-title">ANDROID STORAGE BAY</div>
+        <div class="ab-subtitle">DECK 4-C <span class="ab-sep">·</span> CRYO-RACK 02 <span class="ab-sep">·</span> COLDLINE 7</div>
+      </div>
+      <div class="ab-hdr-right">
+        <div class="ab-clock" id="abClock">2183.118 · 04:32:11 SHIP-TIME</div>
+        <div class="ab-pill">SUBSYSTEM ONLINE</div>
+        <div id="abUserLine">USER: OPERATIVE</div>
+      </div>
+    </header>
+
+    <div class="ab-readouts">
+      <div class="ab-ro"><div class="ab-k">DECK TEMP</div><div class="ab-v ab-amber">4.2°C / NOMINAL</div></div>
+      <div class="ab-ro"><div class="ab-k">HUMIDITY</div><div class="ab-v">12.4% RH</div></div>
+      <div class="ab-ro"><div class="ab-k">PRESSURE</div><div class="ab-v">101.3 KPA</div></div>
+      <div class="ab-ro"><div class="ab-k">PWR · CRYO BUS</div><div class="ab-v ab-green">98.4% STABLE</div></div>
+      <div class="ab-ro"><div class="ab-k">SEAL INTEGRITY</div><div class="ab-v ab-amber" id="abSealReadout">0 / 10 LOCKED</div></div>
+      <div class="ab-ro"><div class="ab-k">LAST INCIDENT</div><div class="ab-v ab-red">2183.094 · BAY-03</div></div>
+    </div>
+
+    <main class="ab-bay">
+      <div class="ab-bay-frame">
+        <div class="ab-bay-label-row">
+          <div class="ab-corner">// BAY-A · ROW 01-05</div>
+          <div class="ab-center">— STASIS UNIT ARRAY —</div>
+          <div class="ab-corner">PROC&nbsp;ID&nbsp;0xA4F2-DECK4C //</div>
+        </div>
+        <div class="ab-grid" id="abGrid"></div>
+        <div class="ab-bay-label-row">
+          <div class="ab-corner">// BAY-B · ROW 06-10</div>
+          <div class="ab-center">CLASS-V SYNTHETICS · DO NOT TAMPER</div>
+          <div class="ab-corner">// REV.04.21</div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="ab-bay-footer">
+      <div class="ab-legend">
+        <div class="ab-item ab-amber"><div class="ab-swatch"></div>OCCUPIED · SEALED</div>
+        <div class="ab-item ab-green"><div class="ab-swatch"></div>VITALS OK</div>
+        <div class="ab-item ab-red"><div class="ab-swatch"></div>FAULT / DAMAGED</div>
+        <div class="ab-item ab-dim"><div class="ab-swatch"></div>SLOT AVAILABLE</div>
+      </div>
+      <div class="ab-occupied-counter">
+        <div class="ab-lbl">OCCUPIED</div>
+        <div><span class="ab-val">00</span><span class="ab-of"> / 10</span></div>
+      </div>
+      <div class="ab-footer-actions">
+        <button class="ab-btn ab-ghost" id="abCloseBtn" type="button">[ ESC ] CLOSE</button>
+      </div>
+    </footer>
+
+    <div class="ab-scanlines"></div>
+    <div class="ab-vignette"></div>
+    <div class="ab-flicker"></div>
+
+    <!-- Assign modal -->
+    <div class="ab-assign-overlay" id="abAssignOverlay">
+      <div class="ab-assign-modal">
+        <div class="ab-assign-head">
+          <div class="ab-eyebrow">// WEYLAND-YUTANI // SYNTHETIC INTAKE</div>
+          <div class="ab-modal-title">ASSIGN UNIT TO BAY</div>
+          <div class="ab-meta">TARGET: <span id="abTargetBay">—</span></div>
+        </div>
+        <div class="ab-assign-body">
+          <div>
+            <div class="ab-field-label">▸ SELECT SYNTHETIC UNIT</div>
+            <div class="ab-android-list" id="abAndroidList"></div>
+          </div>
+          <div>
+            <div class="ab-field-label">▸ INTAKE CONDITION</div>
+            <div class="ab-cond-row">
+              <button class="ab-cond-opt ab-intact" data-cond="intact" type="button">
+                <span class="ab-cond-lbl">▸ INTACT</span>
+                <span class="ab-cond-desc">UNIT NOMINAL · VITALS OK · STANDARD STASIS PROCEDURE</span>
+              </button>
+              <button class="ab-cond-opt ab-damaged" data-cond="damaged" type="button">
+                <span class="ab-cond-lbl">▸ DAMAGED</span>
+                <span class="ab-cond-desc">FAULT DETECTED · LOG INCIDENT · FLAG FOR REPAIR CYCLE</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="ab-assign-foot">
+          <div class="ab-foot-info">PRESS [ESC] TO ABORT INTAKE</div>
+          <div class="ab-actions">
+            <button class="ab-btn ab-ghost" id="abCancelBtn" type="button">[ ESC ] CANCEL</button>
+            <button class="ab-btn" id="abConfirmBtn" type="button" disabled>[ ENTER ] CONFIRM INTAKE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 <!-- WÜRFEL DÜRFEL OVERLAY -->
 <div id="wdOverlay">
   <div id="wdContent">
@@ -900,6 +1034,7 @@
 <script type="module" src="assets/js/xp.js"></script>
 <script type="module" src="assets/js/youtube-player.js"></script>
 <script type="module" src="assets/js/gm-broadcast.js"></script>
+<script type="module" src="assets/js/android-bay.js"></script>
 <!-- GM Broadcast management panel -->
 <div id="gm-broadcast-panel">
   <button class="gm-bc-close" type="button" onclick="closeGMBroadcast()">×</button>

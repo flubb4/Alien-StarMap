@@ -177,12 +177,11 @@
 /* ── Pod ── */
 #androidBayOverlay .ab-pod {
   position: relative; overflow: hidden; cursor: default;
-  isolation: isolate; transition: transform .2s ease; background: #000;
+  contain: layout paint; transition: transform .2s ease; background: #000;
 }
 #androidBayOverlay .ab-pod .ab-photo {
   position: absolute; inset: 0;
   background-size: cover; background-position: center; background-repeat: no-repeat;
-  transition: filter .25s ease;
 }
 #androidBayOverlay .ab-pod[data-state="empty"]    .ab-photo { background-image: url("../images/pod-empty.jpg");    filter: saturate(.45) brightness(.7) contrast(1.05); }
 #androidBayOverlay .ab-pod[data-state="occupied"] .ab-photo { background-image: url("../images/pod-occupied.jpg"); filter: saturate(1.05) brightness(.95) hue-rotate(-10deg); }
@@ -190,7 +189,7 @@
 #androidBayOverlay .ab-pod[data-state="occupied"][data-cond="damaged"] .ab-photo { background-image: url("../images/pod-damaged.jpg"); filter: saturate(1.1) brightness(.85) hue-rotate(-50deg) contrast(1.15); }
 
 /* Tint overlay */
-#androidBayOverlay .ab-pod .ab-tint { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; }
+#androidBayOverlay .ab-pod .ab-tint { position: absolute; inset: 0; pointer-events: none; }
 #androidBayOverlay .ab-pod[data-state="empty"]    .ab-tint { background: radial-gradient(ellipse at 50% 40%, rgba(110,140,170,.12), transparent 70%); }
 #androidBayOverlay .ab-pod[data-state="occupied"] .ab-tint { background: radial-gradient(ellipse at 50% 35%, rgba(245,166,35,.16), transparent 70%); }
 #androidBayOverlay .ab-pod[data-state="sealing"]  .ab-tint { background: radial-gradient(ellipse at 50% 35%, rgba(245,166,35,.28), transparent 70%); animation: ab-tintPulse 2.4s ease-in-out infinite; }
@@ -281,7 +280,7 @@
 #androidBayOverlay .ab-glitch span {
   position: absolute; left: 0; right: 0; height: 2px;
   background: linear-gradient(90deg, transparent, rgba(255,59,59,.7) 30%, rgba(255,255,255,.5) 50%, rgba(255,59,59,.7) 70%, transparent);
-  box-shadow: 0 0 10px rgba(255,59,59,.5); animation: ab-glitchShift 2.2s steps(8) infinite;
+  box-shadow: 0 0 10px rgba(255,59,59,.5); animation: ab-glitchShift 2.2s steps(8) infinite; will-change: transform;
 }
 #androidBayOverlay .ab-glitch span:nth-child(1) { top: 18%; animation-delay: .1s; }
 #androidBayOverlay .ab-glitch span:nth-child(2) { top: 54%; animation-delay: .7s; height: 1px; opacity: .7; }
@@ -292,15 +291,15 @@
 #androidBayOverlay .ab-vapor span {
   position: absolute; bottom: -25%; width: 75%; height: 75%; left: 12%;
   background: radial-gradient(ellipse at 50% 60%, rgba(255,220,170,.28), transparent 65%);
-  filter: blur(6px); animation: ab-rise 3.4s ease-in-out infinite;
+  filter: blur(6px); animation: ab-rise 3.4s ease-in-out infinite; will-change: transform;
 }
 #androidBayOverlay .ab-vapor span:nth-child(2) { left: -15%; animation-delay: .6s; animation-duration: 4s; }
 #androidBayOverlay .ab-vapor span:nth-child(3) { left: 45%; animation-delay: 1.2s; animation-duration: 3.2s; }
 #androidBayOverlay .ab-sweep {
   position: absolute; left: 8%; right: 8%; height: 2px;
   background: linear-gradient(90deg, transparent, rgba(57,255,20,.85), transparent);
-  box-shadow: 0 0 14px rgba(57,255,20,.7); top: 0; z-index: 9; pointer-events: none;
-  animation: ab-sweep 2.6s linear infinite;
+  box-shadow: 0 0 14px rgba(57,255,20,.7); top: 8%; z-index: 9; pointer-events: none;
+  animation: ab-sweep 2.6s linear infinite; will-change: transform;
 }
 #androidBayOverlay .ab-progress-wrap { position: absolute; left: 10px; right: 10px; bottom: 62px; display: flex; flex-direction: column; gap: 4px; z-index: 11; }
 #androidBayOverlay .ab-progress-label { display: flex; justify-content: space-between; font-size: 8px; letter-spacing: .32em; color: var(--ab-amber); text-shadow: 0 0 5px rgba(245,166,35,.6); }
@@ -414,6 +413,6 @@
 @keyframes ab-dmgGlow     { 0%,100%{box-shadow:inset 0 0 0 1px rgba(255,59,59,.45),inset 0 0 18px rgba(255,59,59,.2)} 50%{box-shadow:inset 0 0 0 1px rgba(255,59,59,.85),inset 0 0 30px rgba(255,59,59,.45)} }
 @keyframes ab-glitchShift { 0%,82%,100%{transform:translateX(-3%);opacity:0} 84%{transform:translateX(2%);opacity:1} 87%{transform:translateX(-1%);opacity:.7} 90%{opacity:1} 93%{transform:translateX(3%);opacity:.4} }
 @keyframes ab-rise        { 0%{transform:translateY(20%) scale(.9);opacity:0} 30%{opacity:.85} 100%{transform:translateY(-90%) scale(1.4);opacity:0} }
-@keyframes ab-sweep       { 0%{top:8%}100%{top:92%} }
+@keyframes ab-sweep       { 0%{transform:translateY(0)}100%{transform:translateY(800px)} }
 @keyframes ab-scrub       { from{transform:translateX(-3px)}to{transform:translateX(8px)} }
 @keyframes ab-flick       { 0%,97%{opacity:.4}98%{opacity:.9}99%{opacity:.2}100%{opacity:.5} }

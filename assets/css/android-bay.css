@@ -342,14 +342,14 @@
 #androidBayOverlay .ab-btn[disabled]:hover { background: rgba(245,166,35,.04); box-shadow: none; }
 
 /* CRT effects */
-#androidBayOverlay .ab-scanlines { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px); mix-blend-mode: multiply; z-index: 30; }
+#androidBayOverlay .ab-scanlines { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px); z-index: 30; }
 #androidBayOverlay .ab-vignette  { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%); z-index: 31; }
 #androidBayOverlay .ab-flicker   { position: absolute; inset: 0; pointer-events: none; background: rgba(245,166,35,.015); animation: ab-flick 4s steps(2) infinite; z-index: 32; }
 
 /* ── Assign modal (inside overlay) ── */
 #androidBayOverlay .ab-assign-overlay {
   position: absolute; inset: 0; z-index: 100;
-  background: rgba(0,0,0,.72); backdrop-filter: blur(2px);
+  background: rgba(0,0,0,.88);
   display: none; align-items: center; justify-content: center; padding: 24px;
 }
 #androidBayOverlay .ab-assign-overlay.open { display: flex; }

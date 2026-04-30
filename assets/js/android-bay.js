@@ -173,11 +173,16 @@ function openAssignModal(bayId) {
   renderRoster();
   updateConfirmBtn();
   document.getElementById('abAssignOverlay')?.classList.add('open');
+  // Freeze pod animations while modal is open
+  document.getElementById('abGrid')?.style.setProperty('animation-play-state', 'paused');
+  document.querySelectorAll('#abGrid *').forEach(el => el.style.animationPlayState = 'paused');
 }
 
 function closeAssignModal() {
   document.getElementById('abAssignOverlay')?.classList.remove('open');
   openBay = null;
+  // Resume pod animations
+  document.querySelectorAll('#abGrid *').forEach(el => el.style.animationPlayState = '');
 }
 
 function confirmAssign() {

@@ -187,17 +187,23 @@ function confirmAssign() {
   const cond = pickedCond;
   closeAssignModal();
 
-  const bayRef = ref(window.db, `android-bay/pods/${bayId}`);
+  // Immediate local update — grid responds instantly regardless of Firebase
+  pods[bayId] = { state: 'sealing', desig: android.desig, cls: android.cls, cond };
+  renderGrid();
 
-  // Sealing state → all players see animation
-  set(bayRef, { state: 'sealing', desig: android.desig, cls: android.cls, cond });
+  // Sync to Firebase (best-effort — other players see it too)
+  if (window.db) {
+    const bayRef = ref(window.db, `android-bay/pods/${bayId}`);
+    set(bayRef, pods[bayId]).catch(err => console.error('[AndroidBay] write error:', err));
 
-  // Transition to occupied after 4 s
-  if (sealTimers[bayId]) clearTimeout(sealTimers[bayId]);
-  sealTimers[bayId] = setTimeout(() => {
-    set(bayRef, { state: 'occupied', desig: android.desig, cls: android.cls, cond });
-    delete sealTimers[bayId];
-  }, 4000);
+    if (sealTimers[bayId]) clearTimeout(sealTimers[bayId]);
+    sealTimers[bayId] = setTimeout(() => {
+      pods[bayId] = { state: 'occupied', desig: android.desig, cls: android.cls, cond };
+      renderGrid();
+      set(bayRef, pods[bayId]).catch(err => console.error('[AndroidBay] write error:', err));
+      delete sealTimers[bayId];
+    }, 4000);
+  }
 }
 
 // ── Clock ─────────────────────────────────────────────────────────────────────

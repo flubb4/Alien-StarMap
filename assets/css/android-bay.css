@@ -183,10 +183,10 @@
   position: absolute; inset: 0;
   background-size: cover; background-position: center; background-repeat: no-repeat;
 }
-#androidBayOverlay .ab-pod[data-state="empty"]    .ab-photo { background-image: url("../images/pod-empty.jpg");    filter: saturate(.45) brightness(.7) contrast(1.05); }
-#androidBayOverlay .ab-pod[data-state="occupied"] .ab-photo { background-image: url("../images/pod-occupied.jpg"); filter: saturate(1.05) brightness(.95) hue-rotate(-10deg); }
-#androidBayOverlay .ab-pod[data-state="sealing"]  .ab-photo { background-image: url("../images/pod-occupied.jpg"); filter: saturate(1.2) brightness(1.05) hue-rotate(-15deg); }
-#androidBayOverlay .ab-pod[data-state="occupied"][data-cond="damaged"] .ab-photo { background-image: url("../images/pod-damaged.jpg"); filter: saturate(1.1) brightness(.85) hue-rotate(-50deg) contrast(1.15); }
+#androidBayOverlay .ab-pod[data-state="empty"]    .ab-photo { background-image: url("../images/pod-empty.jpg"); }
+#androidBayOverlay .ab-pod[data-state="occupied"] .ab-photo { background-image: url("../images/pod-occupied.jpg"); }
+#androidBayOverlay .ab-pod[data-state="sealing"]  .ab-photo { background-image: url("../images/pod-sealing.jpg"); }
+#androidBayOverlay .ab-pod[data-state="occupied"][data-cond="damaged"] .ab-photo { background-image: url("../images/pod-damaged.jpg"); }
 
 /* Tint overlay */
 #androidBayOverlay .ab-pod .ab-tint { position: absolute; inset: 0; pointer-events: none; }
@@ -244,7 +244,7 @@
 
 /* Empty hover */
 #androidBayOverlay .ab-pod[data-state="empty"] { cursor: pointer; }
-#androidBayOverlay .ab-pod[data-state="empty"]:hover .ab-photo { filter: saturate(.7) brightness(.85) hue-rotate(-15deg); }
+#androidBayOverlay .ab-pod[data-state="empty"]:hover .ab-photo { opacity: .75; }
 #androidBayOverlay .ab-pod[data-state="empty"]:hover::after { box-shadow: inset 0 0 0 1px rgba(245,166,35,.7), inset 0 0 28px rgba(245,166,35,.35); }
 #androidBayOverlay .ab-hover-prompt {
   position: absolute; left: 0; right: 0; top: 50%; text-align: center;

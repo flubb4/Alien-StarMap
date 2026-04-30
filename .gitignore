@@ -11,6 +11,7 @@ index_backup_*.html
 *.bak
 *~
 backups/
+*.orig.jpg
 
 # ==== OS / editors ====
 .DS_Store

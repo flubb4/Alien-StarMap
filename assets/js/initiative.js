@@ -29,6 +29,7 @@ window.openInitiative = function() {
   const nextBtn = document.getElementById('initNextRoundBtn');
   if (nextBtn) nextBtn.style.display = window.isGM ? '' : 'none';
   get(ref(window.db, 'session/initiative')).then(snap => renderInitiative(snap.val()));
+  if (window.resumeAlienHuntLoop) window.resumeAlienHuntLoop();
 };
 
 window.closeInitiative = function() {
@@ -551,6 +552,9 @@ function renderAlienHunt(area, data, now) {
   let lastTs = 0;
   function animLoop(ts) {
     if (!huntFieldEl.isConnected) { stopAlienHunt(); return; }
+    if (!document.getElementById('initiativeOverlay')?.classList.contains('open')) {
+      cancelAnimationFrame(alienHuntAnimFrame); alienHuntAnimFrame = null; return;
+    }
     const dt = Math.min(ts - lastTs, 80);
     lastTs = ts;
     if (dt > 0) {

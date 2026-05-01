@@ -931,7 +931,7 @@
         <div><span class="ab-val">00</span><span class="ab-of"> / 10</span></div>
       </div>
       <div class="ab-footer-actions">
-        <button class="ab-btn ab-ghost" id="abCloseBtn" type="button">[ ESC ] CLOSE</button>
+        <button class="ab-btn" id="abCloseBtn" type="button">[ ESC ] CLOSE</button>
       </div>
     </footer>
 
@@ -970,6 +970,40 @@
           <div class="ab-actions">
             <button class="ab-btn ab-ghost" id="abCancelBtn" type="button">[ ESC ] CANCEL</button>
             <button class="ab-btn" id="abConfirmBtn" type="button" disabled>[ ENTER ] CONFIRM INTAKE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manage modal -->
+    <div class="ab-assign-overlay" id="abManageOverlay">
+      <div class="ab-assign-modal ab-manage-modal">
+        <div class="ab-assign-head">
+          <div class="ab-eyebrow">// WEYLAND-YUTANI // SYNTHETIC STORAGE</div>
+          <div class="ab-modal-title">MANAGE UNIT</div>
+          <div class="ab-meta">CONTAINER: <span id="abManageBay">—</span> · UNIT: <span id="abManageDesig">—</span></div>
+        </div>
+        <div class="ab-assign-body">
+          <div>
+            <div class="ab-field-label">▸ UPDATE CONDITION</div>
+            <div class="ab-cond-row">
+              <button class="ab-cond-opt ab-intact" data-cond="intact" type="button">
+                <span class="ab-cond-lbl">▸ INTACT</span>
+                <span class="ab-cond-desc">UNIT NOMINAL · VITALS OK · STANDARD STASIS PROCEDURE</span>
+              </button>
+              <button class="ab-cond-opt ab-damaged" data-cond="damaged" type="button">
+                <span class="ab-cond-lbl">▸ DAMAGED</span>
+                <span class="ab-cond-desc">FAULT DETECTED · LOG INCIDENT · FLAG FOR REPAIR CYCLE</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="ab-assign-foot">
+          <div class="ab-foot-info">PRESS [ESC] TO ABORT</div>
+          <div class="ab-actions">
+            <button class="ab-btn ab-danger" id="abReleaseBtn" type="button">[ DEL ] RELEASE UNIT</button>
+            <button class="ab-btn ab-ghost" id="abManageCancelBtn" type="button">[ ESC ] CANCEL</button>
+            <button class="ab-btn" id="abManageConfirmBtn" type="button" disabled>[ ENTER ] UPDATE</button>
           </div>
         </div>
       </div>

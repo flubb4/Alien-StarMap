@@ -251,7 +251,8 @@
 #androidBayOverlay .ab-chip.ab-err  { color: var(--ab-red);   text-shadow: 0 0 4px rgba(255,59,59,.5); }
 
 /* Empty hover */
-#androidBayOverlay .ab-pod[data-state="empty"] { cursor: pointer; }
+#androidBayOverlay .ab-pod[data-state="empty"],
+#androidBayOverlay .ab-pod[data-state="occupied"] { cursor: pointer; }
 #androidBayOverlay .ab-hover-prompt {
   position: absolute; left: 0; right: 0; top: 50%; text-align: center;
   transform: translateY(-50%);
@@ -315,7 +316,7 @@
 
 /* ── Footer ── */
 #androidBayOverlay .ab-bay-footer {
-  position: relative; display: grid; grid-template-columns: 1fr auto 1fr;
+  position: relative; z-index: 35; display: grid; grid-template-columns: 1fr auto 1fr;
   align-items: center; gap: 24px; padding: 14px 40px 22px 40px;
   border-top: 1px dashed rgba(245,166,35,.25);
   font-size: 11px; letter-spacing: .28em; color: var(--ab-ink-dim);
@@ -367,6 +368,7 @@
   box-shadow: 0 0 0 4px #0a0a0a, 0 0 0 6px #1a1306, 0 30px 80px rgba(0,0,0,.85), inset 0 0 80px rgba(245,166,35,.05);
   font-family: 'Share Tech Mono', monospace; color: var(--ab-ink);
 }
+#androidBayOverlay .ab-manage-modal { width: min(520px, 92vw); }
 #androidBayOverlay .ab-assign-head { padding: 22px 28px 14px; border-bottom: 1px dashed rgba(245,166,35,.3); }
 #androidBayOverlay .ab-eyebrow { font-size: 9px; letter-spacing: .4em; color: var(--ab-ink-dim); }
 #androidBayOverlay .ab-modal-title { font-size: 20px; letter-spacing: .32em; color: var(--ab-amber); text-shadow: 0 0 8px rgba(245,166,35,.5); margin-top: 4px; }

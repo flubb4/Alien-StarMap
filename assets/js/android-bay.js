@@ -25,6 +25,8 @@ let pods = {};
 let openBay = null;
 let pickedAndroid = null;
 let pickedCond = null;
+let manageBay = null;
+let manageCond = null;
 const sealTimers = {};
 
 // ── Pod rendering ─────────────────────────────────────────────────────────────
@@ -94,6 +96,8 @@ function renderPod(bayId) {
   return `<div class="ab-pod" data-state="occupied" data-cond="${p.cond || 'intact'}" data-bay="${bayId}" tabindex="0">
     <div class="ab-photo"></div><div class="ab-tint"></div>
     <div class="ab-reticle"></div>${glitch}
+    <div class="ab-hover-glow"></div>
+    <div class="ab-hover-prompt">▸ UNIT SEALED ◂<small>CLICK TO MANAGE</small></div>
     <div class="ab-hud">
       <div class="ab-hud-top">
         <span class="ab-id"><span class="ab-led"></span>${bayId}</span>${stateLbl}
@@ -112,6 +116,7 @@ function renderGrid() {
   if (!grid) return;
   grid.innerHTML = BAY_IDS.map(renderPod).join('');
   bindEmptyClicks();
+  bindOccupiedClicks();
   updateCounter();
 }
 
@@ -129,8 +134,19 @@ function bindEmptyClicks() {
     const prompt = el.querySelector('.ab-hover-prompt');
     el.addEventListener('click',      () => openAssignModal(el.dataset.bay));
     el.addEventListener('keydown',    e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAssignModal(el.dataset.bay); } });
-    el.addEventListener('mouseenter', () => { if (glow)   glow.style.opacity   = '1'; if (prompt) prompt.style.opacity = '1'; });
-    el.addEventListener('mouseleave', () => { if (glow)   glow.style.opacity   = '0'; if (prompt) prompt.style.opacity = '0'; });
+    el.addEventListener('mouseenter', () => { if (glow) glow.style.opacity = '1'; if (prompt) prompt.style.opacity = '1'; });
+    el.addEventListener('mouseleave', () => { if (glow) glow.style.opacity = '0'; if (prompt) prompt.style.opacity = '0'; });
+  });
+}
+
+function bindOccupiedClicks() {
+  document.querySelectorAll('#abGrid .ab-pod[data-state="occupied"]').forEach(el => {
+    const glow   = el.querySelector('.ab-hover-glow');
+    const prompt = el.querySelector('.ab-hover-prompt');
+    el.addEventListener('click',      () => openManageModal(el.dataset.bay));
+    el.addEventListener('keydown',    e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openManageModal(el.dataset.bay); } });
+    el.addEventListener('mouseenter', () => { if (glow) glow.style.opacity = '1'; if (prompt) prompt.style.opacity = '1'; });
+    el.addEventListener('mouseleave', () => { if (glow) glow.style.opacity = '0'; if (prompt) prompt.style.opacity = '0'; });
   });
 }
 
@@ -186,6 +202,63 @@ function closeAssignModal() {
   openBay = null;
   // Resume pod animations
   document.querySelectorAll('#abGrid *').forEach(el => el.style.animationPlayState = '');
+}
+
+// ── Manage modal ──────────────────────────────────────────────────────────────
+
+function openManageModal(bayId) {
+  manageBay = bayId;
+  const p = pods[bayId];
+  manageCond = p?.cond || 'intact';
+  const bayEl  = document.getElementById('abManageBay');
+  const desigEl = document.getElementById('abManageDesig');
+  if (bayEl)  bayEl.textContent  = bayId;
+  if (desigEl) desigEl.textContent = p?.desig || '—';
+  document.querySelectorAll('#abManageOverlay .ab-cond-opt').forEach(x => {
+    x.classList.toggle('ab-sel', x.dataset.cond === manageCond);
+  });
+  updateManageConfirmBtn();
+  document.getElementById('abManageOverlay')?.classList.add('open');
+  document.querySelectorAll('#abGrid *').forEach(el => el.style.animationPlayState = 'paused');
+}
+
+function closeManageModal() {
+  document.getElementById('abManageOverlay')?.classList.remove('open');
+  manageBay = null;
+  manageCond = null;
+  document.querySelectorAll('#abGrid *').forEach(el => el.style.animationPlayState = '');
+}
+
+function updateManageConfirmBtn() {
+  const btn = document.getElementById('abManageConfirmBtn');
+  if (btn) btn.disabled = !manageCond;
+}
+
+function confirmManage() {
+  if (!manageBay || !manageCond) return;
+  const bayId = manageBay;
+  const p = pods[bayId];
+  if (!p) return;
+  const updated = { ...p, cond: manageCond };
+  closeManageModal();
+  pods[bayId] = updated;
+  renderGrid();
+  if (window.db) {
+    set(ref(window.db, `android-bay/pods/${bayId}`), updated)
+      .catch(err => console.error('[AndroidBay] write error:', err));
+  }
+}
+
+function releaseUnit() {
+  if (!manageBay) return;
+  const bayId = manageBay;
+  closeManageModal();
+  pods[bayId] = null;
+  renderGrid();
+  if (window.db) {
+    set(ref(window.db, `android-bay/pods/${bayId}`), null)
+      .catch(err => console.error('[AndroidBay] write error:', err));
+  }
 }
 
 function confirmAssign() {
@@ -298,17 +371,28 @@ window._authReadyPromise.then(() => {
 
 // Condition select
 document.addEventListener('click', e => {
-  const opt = e.target.closest('#androidBayOverlay .ab-cond-opt');
-  if (!opt) return;
-  document.querySelectorAll('#androidBayOverlay .ab-cond-opt').forEach(x => x.classList.remove('ab-sel'));
-  opt.classList.add('ab-sel');
-  pickedCond = opt.dataset.cond;
-  updateConfirmBtn();
+  const aOpt = e.target.closest('#abAssignOverlay .ab-cond-opt');
+  if (aOpt) {
+    document.querySelectorAll('#abAssignOverlay .ab-cond-opt').forEach(x => x.classList.remove('ab-sel'));
+    aOpt.classList.add('ab-sel');
+    pickedCond = aOpt.dataset.cond;
+    updateConfirmBtn();
+    return;
+  }
+  const mOpt = e.target.closest('#abManageOverlay .ab-cond-opt');
+  if (mOpt) {
+    document.querySelectorAll('#abManageOverlay .ab-cond-opt').forEach(x => x.classList.remove('ab-sel'));
+    mOpt.classList.add('ab-sel');
+    manageCond = mOpt.dataset.cond;
+    updateManageConfirmBtn();
+  }
 });
 
 // ESC / Enter
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    const mo = document.getElementById('abManageOverlay');
+    if (mo?.classList.contains('open')) { closeManageModal(); return; }
     const ao = document.getElementById('abAssignOverlay');
     if (ao?.classList.contains('open')) { closeAssignModal(); return; }
     const overlay = document.getElementById('androidBayOverlay');
@@ -316,6 +400,12 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.key === 'Enter') {
+    const mo = document.getElementById('abManageOverlay');
+    if (mo?.classList.contains('open')) {
+      const btn = document.getElementById('abManageConfirmBtn');
+      if (btn && !btn.disabled) confirmManage();
+      return;
+    }
     const ao = document.getElementById('abAssignOverlay');
     if (ao?.classList.contains('open')) {
       const btn = document.getElementById('abConfirmBtn');
@@ -330,6 +420,12 @@ document.getElementById('abCancelBtn')?.addEventListener('click', closeAssignMod
 document.getElementById('abCloseBtn')?.addEventListener('click', () => window.closeAndroidBay());
 document.getElementById('abAssignOverlay')?.addEventListener('click', e => {
   if (e.target === document.getElementById('abAssignOverlay')) closeAssignModal();
+});
+document.getElementById('abManageConfirmBtn')?.addEventListener('click', confirmManage);
+document.getElementById('abManageCancelBtn')?.addEventListener('click', closeManageModal);
+document.getElementById('abReleaseBtn')?.addEventListener('click', releaseUnit);
+document.getElementById('abManageOverlay')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('abManageOverlay')) closeManageModal();
 });
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -350,6 +446,7 @@ window.closeAndroidBay = function () {
   overlay.querySelectorAll('*').forEach(el => el.style.animationPlayState = 'paused');
   overlay.style.display = 'none';
   closeAssignModal();
+  closeManageModal();
   stopClock();
   if (window.resumeAlienHuntLoop) window.resumeAlienHuntLoop();
 };

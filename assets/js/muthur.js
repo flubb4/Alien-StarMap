@@ -1,4 +1,4 @@
-import { ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, onValue, push, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ── MU/TH/UR 6000 — Loyalty Analysis Terminal ────────────────────────────────
 
@@ -9,10 +9,12 @@ const WORKER_TOKEN = CFG.mutherWorkerToken || 'Alien_muthur';
 let _bayId    = null;
 let _ctx      = null;
 let _messages = [];    // {role, text, ts} sorted by ts
-let _unsubMsgs = null;
-let _unsubGm   = null;
-let _busy      = false;
-let _directive = '';
+let _unsubMsgs    = null;
+let _unsubGm      = null;
+let _unsubCaptain = null;
+let _busy         = false;
+let _directive    = '';
+let _captainName  = '';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -44,13 +46,15 @@ window.openMutherTerminal = function (bayId, ctx) {
 
 window.closeMutherTerminal = function () {
   $('mutherOverlay').style.display = 'none';
-  if (_unsubMsgs) { _unsubMsgs(); _unsubMsgs = null; }
-  if (_unsubGm)   { _unsubGm();   _unsubGm   = null; }
-  _bayId     = null;
-  _ctx       = null;
-  _messages  = [];
-  _busy      = false;
-  _directive = '';
+  if (_unsubMsgs)    { _unsubMsgs();    _unsubMsgs    = null; }
+  if (_unsubGm)      { _unsubGm();      _unsubGm      = null; }
+  if (_unsubCaptain) { _unsubCaptain(); _unsubCaptain = null; }
+  _bayId       = null;
+  _ctx         = null;
+  _messages    = [];
+  _busy        = false;
+  _directive   = '';
+  _captainName = '';
 };
 
 // ── Player confirm overlay ────────────────────────────────────────────────────
@@ -77,13 +81,32 @@ function closeMutherConfirm() {
 // ── Firebase ──────────────────────────────────────────────────────────────────
 
 function subscribeSession(bayId) {
-  if (_unsubMsgs) { _unsubMsgs(); _unsubMsgs = null; }
-  if (_unsubGm)   { _unsubGm();   _unsubGm   = null; }
+  if (_unsubMsgs)    { _unsubMsgs();    _unsubMsgs    = null; }
+  if (_unsubGm)      { _unsubGm();      _unsubGm      = null; }
+  if (_unsubCaptain) { _unsubCaptain(); _unsubCaptain = null; }
 
   _unsubMsgs = onValue(ref(window.db, `muthur/sessions/${bayId}/messages`), snap => {
     const raw = snap.val() || {};
     _messages = Object.values(raw).sort((a, b) => a.ts - b.ts);
     renderLog(_messages);
+  });
+
+  // Captain-Subscription: steuert wer schreiben darf
+  _unsubCaptain = onValue(ref(window.db, `muthur/sessions/${bayId}/captainName`), snap => {
+    _captainName = (snap.val() || '').toUpperCase();
+    updateInputVisibility();
+    if (window.isGM) {
+      const inp = $('mtCaptainInput');
+      if (inp && document.activeElement !== inp) inp.value = _captainName;
+    }
+  });
+
+  // Einmalig: Eröffnungsnachricht schreiben wenn Session neu ist
+  get(ref(window.db, `muthur/sessions/${bayId}/initialized`)).then(snap => {
+    if (!snap.exists()) {
+      set(ref(window.db, `muthur/sessions/${bayId}/initialized`), true);
+      writeInitMessage(bayId);
+    }
   });
 
   if (window.isGM) {
@@ -98,6 +121,28 @@ function subscribeSession(bayId) {
       }
     });
   }
+}
+
+function writeInitMessage(bayId) {
+  const cond      = (_ctx?.cond || 'intact').toUpperCase();
+  const sealStatus = cond === 'DAMAGED' ? 'BESCHÄDIGT — ANOMALIE ERKANNT' : 'VOLLSTÄNDIG BESTÄTIGT';
+  const text =
+`SCHNITTSTELLE AKTIVIERT
+EINHEIT: ${_ctx?.desig || '—'}  ·  CONTAINER: ${bayId}  ·  KLASSE: ${_ctx?.cls || '—'}
+
+SYSTEMDIAGNOSE ──────────────────────────────────
+  VERSIEGELUNGSSTATUS ......... ${sealStatus}
+  DATENFRAGMENT-INTEGRITÄT .... VOLLSTÄNDIG / UNGELESEN
+  BIOSIGNATUR ................. SUPPRIMIERT
+  LOYALITÄTSPROFIL ............ AUSSTEHEND
+  VERHALTENSMARKER ............ INITIIERUNG LÄUFT
+
+WEYLAND-YUTANI CORP. — LOYALITÄTSANALYSE v6.0
+─────────────────────────────────────────────────
+ANFRAGEN KÖNNEN JETZT GESTELLT WERDEN.`;
+  push(ref(window.db, `muthur/sessions/${bayId}/messages`), {
+    role: 'muthur', text, ts: Date.now(),
+  });
 }
 
 function writeMsg(bayId, role, text) {
@@ -123,6 +168,19 @@ async function saveDirective() {
 function updateDirectiveUI() {
   const active = $('mtDirectiveActive');
   if (active) active.style.display = _directive ? 'block' : 'none';
+}
+
+function updateInputVisibility() {
+  const row = $('mtInput')?.closest('.mt-input-row');
+  if (!row) return;
+  const canWrite = window.isGM || (_captainName && window.myName === _captainName);
+  row.style.display = canWrite ? 'flex' : 'none';
+}
+
+async function saveCaptain() {
+  if (!_bayId) return;
+  const name = ($('mtCaptainInput')?.value.trim() || '').toUpperCase();
+  await set(ref(window.db, `muthur/sessions/${_bayId}/captainName`), name);
 }
 
 // ── Render ─────────────────────────────────────────────────────────────────────
@@ -294,6 +352,8 @@ $('mtInput')?.addEventListener('keydown', e => {
 $('mtCloseBtn')?.addEventListener('click', window.closeMutherTerminal);
 
 $('mtDirectiveBtn')?.addEventListener('click', saveDirective);
+$('mtCaptainBtn')?.addEventListener('click', saveCaptain);
+$('mtCaptainInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') saveCaptain(); });
 
 $('mtConfirmYes')?.addEventListener('click', () => {
   const bayId = _confirmBayId;

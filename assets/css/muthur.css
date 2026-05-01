@@ -169,6 +169,27 @@
   border-top: 1px dashed rgba(245,166,35,.15); padding-top: 10px;
 }
 
+/* ── Captain ── */
+.mt-captain {
+  border-top: 1px dashed rgba(245,166,35,.15); padding-top: 14px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.mt-captain-row { display: flex; gap: 6px; }
+#mtCaptainInput {
+  flex: 1; background: rgba(245,166,35,.04); border: 1px solid rgba(245,166,35,.2);
+  color: rgba(245,166,35,.85); font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: .18em; padding: 5px 8px; outline: none;
+}
+#mtCaptainInput::placeholder { color: rgba(245,166,35,.2); }
+#mtCaptainInput:focus { border-color: rgba(245,166,35,.5); }
+#mtCaptainBtn {
+  padding: 5px 10px; border: 1px solid rgba(245,166,35,.3);
+  background: rgba(245,166,35,.05); color: rgba(245,166,35,.7);
+  font-family: 'Share Tech Mono', monospace; font-size: 8px;
+  letter-spacing: .25em; cursor: pointer; white-space: nowrap;
+}
+#mtCaptainBtn:hover { background: rgba(245,166,35,.12); color: #f5a623; }
+
 /* ── GM Directive ── */
 .mt-directive {
   border-top: 1px dashed rgba(57,255,20,.15); padding-top: 14px; display: flex;

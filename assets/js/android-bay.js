@@ -35,6 +35,24 @@ function renderPod(bayId) {
   const p = pods[bayId];
   const state = p ? (p.state || 'occupied') : 'empty';
 
+  if (state === 'scanning') {
+    return `<div class="ab-pod" data-state="scanning" data-bay="${bayId}" tabindex="-1">
+      <div class="ab-photo"></div><div class="ab-tint"></div>
+      <div class="ab-scan-flash"></div>
+      <div class="ab-hud">
+        <div class="ab-hud-top">
+          <span class="ab-id"><span class="ab-led"></span>${bayId}</span>
+          <span class="ab-state" style="color:var(--ab-amber)">SCANNING</span>
+        </div>
+        <div class="ab-hud-mid"></div>
+        <div class="ab-hud-bot">
+          <div class="ab-name-row"><span class="ab-name">— IDENTIFYING —</span><span class="ab-cls-tag">INTAKE</span></div>
+          <div class="ab-chips"><span class="ab-chip ab-warn">SCAN<span class="ab-dot"></span></span></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   if (state === 'empty') {
     return `<div class="ab-pod" data-state="empty" data-bay="${bayId}" tabindex="0">
       <div class="ab-photo"></div><div class="ab-tint"></div>
@@ -270,27 +288,32 @@ function confirmAssign() {
   const cond = pickedCond;
   closeAssignModal();
 
-  // Immediate local update — grid responds instantly regardless of Firebase
-  pods[bayId] = { state: 'sealing', desig: android.desig, cls: android.cls, cond };
+  // Phase 1: scan animation (local only, not written to Firebase)
+  pods[bayId] = { state: 'scanning', desig: android.desig, cls: android.cls, cond };
   renderGrid();
 
-  // Sync to Firebase — wait for auth to guarantee write permission
-  window._authReadyPromise.then(() => {
-    const bayRef = ref(window.db, `android-bay/pods/${bayId}`);
-    set(bayRef, pods[bayId])
-      .then(() => console.log('[AndroidBay] sealing write OK:', bayId))
-      .catch(err => console.error('[AndroidBay] sealing write FAILED:', bayId, err.code, err.message));
+  setTimeout(() => {
+    // Phase 2: sealing
+    pods[bayId] = { state: 'sealing', desig: android.desig, cls: android.cls, cond };
+    renderGrid();
 
-    if (sealTimers[bayId]) clearTimeout(sealTimers[bayId]);
-    sealTimers[bayId] = setTimeout(() => {
-      pods[bayId] = { state: 'occupied', desig: android.desig, cls: android.cls, cond };
-      renderGrid();
+    window._authReadyPromise.then(() => {
+      const bayRef = ref(window.db, `android-bay/pods/${bayId}`);
       set(bayRef, pods[bayId])
-        .then(() => console.log('[AndroidBay] occupied write OK:', bayId))
-        .catch(err => console.error('[AndroidBay] occupied write FAILED:', bayId, err.code, err.message));
-      delete sealTimers[bayId];
-    }, 4000);
-  });
+        .then(() => console.log('[AndroidBay] sealing write OK:', bayId))
+        .catch(err => console.error('[AndroidBay] sealing write FAILED:', bayId, err.code, err.message));
+
+      if (sealTimers[bayId]) clearTimeout(sealTimers[bayId]);
+      sealTimers[bayId] = setTimeout(() => {
+        pods[bayId] = { state: 'occupied', desig: android.desig, cls: android.cls, cond };
+        renderGrid();
+        set(bayRef, pods[bayId])
+          .then(() => console.log('[AndroidBay] occupied write OK:', bayId))
+          .catch(err => console.error('[AndroidBay] occupied write FAILED:', bayId, err.code, err.message));
+        delete sealTimers[bayId];
+      }, 4000);
+    });
+  }, 700);
 }
 
 // ── CRT Canvas (scanlines + vignette, drawn once on open) ────────────────────
@@ -370,7 +393,14 @@ window._authReadyPromise.then(() => {
   onValue(ref(window.db, 'android-bay/pods'), snap => {
     const raw = snap.val() || {};
     console.log('[AndroidBay] onValue fired — Firebase data:', JSON.stringify(raw));
-    // Heal pods stuck in sealing state after a page reload (local timer was lost)
+    // Preserve local in-transition states (scanning is local-only; sealing has an active timer)
+    BAY_IDS.forEach(id => {
+      const local = pods[id];
+      if (local?.state === 'scanning' || (local?.state === 'sealing' && sealTimers[id])) {
+        raw[id] = local;
+      }
+    });
+    // Heal sealing pods where the local timer was lost (e.g. page reload)
     Object.entries(raw).forEach(([bayId, pod]) => {
       if (pod?.state === 'sealing' && !sealTimers[bayId]) {
         const healed = { ...pod, state: 'occupied' };

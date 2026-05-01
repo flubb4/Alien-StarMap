@@ -203,6 +203,7 @@
   background-size: cover; background-position: center; background-repeat: no-repeat;
 }
 #androidBayOverlay .ab-pod[data-state="empty"]    .ab-photo { background-image: url("../images/pod-empty.jpg"); }
+#androidBayOverlay .ab-pod[data-state="scanning"] .ab-photo { background-image: url("../images/pod-empty.jpg"); }
 #androidBayOverlay .ab-pod[data-state="occupied"] .ab-photo { background-image: url("../images/pod-occupied.jpg"); }
 #androidBayOverlay .ab-pod[data-state="sealing"]  .ab-photo { background-image: url("../images/pod-sealing.jpg"); }
 #androidBayOverlay .ab-pod[data-state="occupied"][data-cond="damaged"] .ab-photo { background-image: url("../images/pod-damaged.jpg"); }
@@ -210,6 +211,7 @@
 /* Tint overlay */
 #androidBayOverlay .ab-pod .ab-tint { position: absolute; inset: 0; pointer-events: none; }
 #androidBayOverlay .ab-pod[data-state="empty"]    .ab-tint { background: radial-gradient(ellipse at 50% 40%, rgba(110,140,170,.12), transparent 70%); }
+#androidBayOverlay .ab-pod[data-state="scanning"] .ab-tint { background: radial-gradient(ellipse at 50% 40%, rgba(245,166,35,.22), transparent 70%); animation: ab-tintPulse .35s ease-in-out 2; }
 #androidBayOverlay .ab-pod[data-state="occupied"] .ab-tint { background: radial-gradient(ellipse at 50% 35%, rgba(245,166,35,.16), transparent 70%); }
 #androidBayOverlay .ab-pod[data-state="sealing"]  .ab-tint { background: radial-gradient(ellipse at 50% 35%, rgba(245,166,35,.28), transparent 70%); animation: ab-tintPulse 2.4s ease-in-out infinite; }
 #androidBayOverlay .ab-pod[data-state="occupied"][data-cond="damaged"] .ab-tint { background: radial-gradient(ellipse at 50% 35%, rgba(255,59,59,.28), transparent 70%); animation: ab-tintPulse 1.4s ease-in-out infinite; }
@@ -433,6 +435,21 @@
 }
 #androidBayOverlay .ab-assign-foot .ab-foot-info { font-size: 9px; letter-spacing: .3em; color: var(--ab-ink-dim); }
 #androidBayOverlay .ab-assign-foot .ab-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Scan flash — single amber sweep, one-shot, GPU-composited */
+#androidBayOverlay .ab-scan-flash {
+  position: absolute; left: 0; right: 0; top: 0; height: 4px;
+  background: linear-gradient(90deg, transparent 5%, rgba(245,166,35,.95) 50%, transparent 95%);
+  box-shadow: 0 0 14px rgba(245,166,35,.8), 0 0 28px rgba(245,166,35,.3);
+  pointer-events: none; z-index: 10;
+  animation: ab-scan-flash .65s cubic-bezier(.4,0,.8,1) 1 forwards;
+  will-change: transform;
+}
+@keyframes ab-scan-flash {
+  0%   { transform: translateY(0);    opacity: 1; }
+  85%  { opacity: .7; }
+  100% { transform: translateY(900px); opacity: 0; }
+}
 
 /* ===== Keyframes ===== */
 @keyframes ab-blink       { 0%,60%{opacity:1}80%,100%{opacity:.3} }

@@ -29,6 +29,18 @@ let manageBay = null;
 let manageCond = null;
 const sealTimers = {};
 
+// Per-pod render signature; lets us patch only changed pods on Firebase update
+const _lastSig = {};
+let _gridDelegated = false;
+let _bayUnsub = null;
+
+const log = (...a) => { if (window.DEBUG) console.log(...a); };
+
+function podSig(p) {
+  if (!p) return 'empty';
+  return `${p.state || 'occupied'}|${p.desig || ''}|${p.cls || ''}|${p.cond || ''}`;
+}
+
 // ── Pod rendering ─────────────────────────────────────────────────────────────
 
 function renderPod(bayId) {
@@ -129,50 +141,86 @@ function renderPod(bayId) {
   </div>`;
 }
 
-function renderGrid() {
+function fullRenderGrid() {
   const grid = document.getElementById('abGrid');
   if (!grid) return;
   grid.innerHTML = BAY_IDS.map(renderPod).join('');
-  bindEmptyClicks();
-  bindOccupiedClicks();
+  BAY_IDS.forEach(id => {
+    _lastSig[id] = podSig(pods[id]);
+    bindPodHover(grid.querySelector(`.ab-pod[data-bay="${id}"]`));
+  });
+  if (!_gridDelegated) {
+    bindGridDelegation(grid);
+    _gridDelegated = true;
+  }
   updateCounter();
 }
 
+// Public name kept; now patches only changed pods instead of replacing the whole grid
+function renderGrid() {
+  const grid = document.getElementById('abGrid');
+  if (!grid) return;
+  if (grid.childElementCount === 0) { fullRenderGrid(); return; }
+
+  let changed = false;
+  for (const id of BAY_IDS) {
+    const sig = podSig(pods[id]);
+    if (sig === _lastSig[id]) continue;
+    _lastSig[id] = sig;
+    changed = true;
+    const oldEl = grid.querySelector(`.ab-pod[data-bay="${id}"]`);
+    if (!oldEl) continue;
+    const tmp = document.createElement('template');
+    tmp.innerHTML = renderPod(id).trim();
+    const newEl = tmp.content.firstElementChild;
+    oldEl.replaceWith(newEl);
+    bindPodHover(newEl);
+  }
+  if (changed) updateCounter();
+}
+
 function updateCounter() {
-  const n = BAY_IDS.filter(id => pods[id] && pods[id] !== null).length;
+  const n = BAY_IDS.filter(id => pods[id]).length;
   const valEl = document.querySelector('#androidBayOverlay .ab-val');
   if (valEl) valEl.textContent = String(n).padStart(2, '0');
   const sealEl = document.getElementById('abSealReadout');
   if (sealEl) sealEl.textContent = `${n} / 10 LOCKED`;
 }
 
-function bindEmptyClicks() {
-  document.querySelectorAll('#abGrid .ab-pod[data-state="empty"]').forEach(el => {
-    const glow   = el.querySelector('.ab-hover-glow');
-    const prompt = el.querySelector('.ab-hover-prompt');
-    el.addEventListener('click',      () => openAssignModal(el.dataset.bay));
-    el.addEventListener('keydown',    e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAssignModal(el.dataset.bay); } });
-    el.addEventListener('mouseenter', () => { if (glow) glow.style.opacity = '1'; if (prompt) prompt.style.opacity = '1'; });
-    el.addEventListener('mouseleave', () => { if (glow) glow.style.opacity = '0'; if (prompt) prompt.style.opacity = '0'; });
+function bindPodHover(el) {
+  if (!el) return;
+  const glow = el.querySelector('.ab-hover-glow');
+  const prompt = el.querySelector('.ab-hover-prompt');
+  if (!glow && !prompt) return;
+  el.addEventListener('mouseenter', () => {
+    if (glow) glow.style.opacity = '1';
+    if (prompt) prompt.style.opacity = '1';
+  });
+  el.addEventListener('mouseleave', () => {
+    if (glow) glow.style.opacity = '0';
+    if (prompt) prompt.style.opacity = '0';
   });
 }
 
-function bindOccupiedClicks() {
-  document.querySelectorAll('#abGrid .ab-pod[data-state="occupied"]').forEach(el => {
-    const glow   = el.querySelector('.ab-hover-glow');
-    const prompt = el.querySelector('.ab-hover-prompt');
-    const handleClick = () => {
-      const bayId = el.dataset.bay;
-      if (window.isGM) {
-        openManageModal(bayId);
-      } else {
-        window.openMutherConfirm?.(bayId, pods[bayId]);
-      }
-    };
-    el.addEventListener('click',      handleClick);
-    el.addEventListener('keydown',    e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } });
-    el.addEventListener('mouseenter', () => { if (glow) glow.style.opacity = '1'; if (prompt) prompt.style.opacity = '1'; });
-    el.addEventListener('mouseleave', () => { if (glow) glow.style.opacity = '0'; if (prompt) prompt.style.opacity = '0'; });
+function bindGridDelegation(grid) {
+  grid.addEventListener('click', e => {
+    const pod = e.target.closest('.ab-pod');
+    if (!pod || !grid.contains(pod)) return;
+    const state = pod.dataset.state;
+    const bayId = pod.dataset.bay;
+    if (state === 'empty') {
+      openAssignModal(bayId);
+    } else if (state === 'occupied') {
+      if (window.isGM) openManageModal(bayId);
+      else window.openMutherConfirm?.(bayId, pods[bayId]);
+    }
+  });
+  grid.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const pod = e.target.closest('.ab-pod');
+    if (!pod || !grid.contains(pod)) return;
+    e.preventDefault();
+    pod.click();
   });
 }
 
@@ -273,7 +321,7 @@ function confirmManage() {
   renderGrid();
   window._authReadyPromise.then(() => {
     set(ref(window.db, `android-bay/pods/${bayId}`), updated)
-      .then(() => console.log('[AndroidBay] manage write OK:', bayId))
+      .then(() => log('[AndroidBay] manage write OK:', bayId))
       .catch(err => console.error('[AndroidBay] manage write FAILED:', bayId, err.code, err.message));
   });
 }
@@ -286,7 +334,7 @@ function releaseUnit() {
   renderGrid();
   window._authReadyPromise.then(() => {
     set(ref(window.db, `android-bay/pods/${bayId}`), null)
-      .then(() => console.log('[AndroidBay] release write OK:', bayId))
+      .then(() => log('[AndroidBay] release write OK:', bayId))
       .catch(err => console.error('[AndroidBay] release write FAILED:', bayId, err.code, err.message));
   });
 }
@@ -316,7 +364,7 @@ function confirmAssign() {
     window._authReadyPromise.then(() => {
       const bayRef = ref(window.db, `android-bay/pods/${bayId}`);
       set(bayRef, pods[bayId])
-        .then(() => console.log('[AndroidBay] sealing write OK:', bayId))
+        .then(() => log('[AndroidBay] sealing write OK:', bayId))
         .catch(err => console.error('[AndroidBay] sealing write FAILED:', bayId, err.code, err.message));
 
       if (sealTimers[bayId]) clearTimeout(sealTimers[bayId]);
@@ -325,7 +373,7 @@ function confirmAssign() {
         renderGrid();
         set(bayRef, pods[bayId])
           .then(() => {
-            console.log('[AndroidBay] occupied write OK:', bayId);
+            log('[AndroidBay] occupied write OK:', bayId);
             // Terminal automatisch öffnen sobald Android versiegelt ist
             window.openMutherTerminal?.(bayId, pods[bayId]);
           })
@@ -404,37 +452,42 @@ function placeRivets() {
   });
 }
 
-// ── Firebase listener ─────────────────────────────────────────────────────────
+// ── Firebase listener (attached on open, detached on close) ──────────────────
 
-// Render immediately with empty pods so the grid is never blank on open
-renderGrid();
-
-window._authReadyPromise.then(() => {
-  onValue(ref(window.db, 'android-bay/pods'), snap => {
-    const raw = snap.val() || {};
-    console.log('[AndroidBay] onValue fired — Firebase data:', JSON.stringify(raw));
-    // Preserve local in-transition states (scanning is local-only; sealing has an active timer)
-    BAY_IDS.forEach(id => {
-      const local = pods[id];
-      if (local?.state === 'scanning' || (local?.state === 'sealing' && sealTimers[id])) {
-        raw[id] = local;
-      }
+function attachBayListener() {
+  if (_bayUnsub) return;
+  window._authReadyPromise.then(() => {
+    if (_bayUnsub) return; // open/close raced
+    _bayUnsub = onValue(ref(window.db, 'android-bay/pods'), snap => {
+      const raw = snap.val() || {};
+      log('[AndroidBay] onValue fired — Firebase data:', raw);
+      // Preserve local in-transition states (scanning is local-only; sealing has an active timer)
+      BAY_IDS.forEach(id => {
+        const local = pods[id];
+        if (local?.state === 'scanning' || (local?.state === 'sealing' && sealTimers[id])) {
+          raw[id] = local;
+        }
+      });
+      // Heal sealing pods where the local timer was lost (e.g. page reload)
+      Object.entries(raw).forEach(([bayId, pod]) => {
+        if (pod?.state === 'sealing' && !sealTimers[bayId]) {
+          const healed = { ...pod, state: 'occupied' };
+          raw[bayId] = healed;
+          log('[AndroidBay] healing stuck sealing pod:', bayId);
+          set(ref(window.db, `android-bay/pods/${bayId}`), healed)
+            .catch(err => console.error('[AndroidBay] heal write FAILED:', bayId, err.code, err.message));
+        }
+      });
+      pods = raw;
+      renderGrid();
     });
-    // Heal sealing pods where the local timer was lost (e.g. page reload)
-    Object.entries(raw).forEach(([bayId, pod]) => {
-      if (pod?.state === 'sealing' && !sealTimers[bayId]) {
-        const healed = { ...pod, state: 'occupied' };
-        raw[bayId] = healed;
-        console.log('[AndroidBay] healing stuck sealing pod:', bayId);
-        set(ref(window.db, `android-bay/pods/${bayId}`), healed)
-          .then(() => console.log('[AndroidBay] heal write OK:', bayId))
-          .catch(err => console.error('[AndroidBay] heal write FAILED:', bayId, err.code, err.message));
-      }
-    });
-    pods = raw;
-    renderGrid();
   });
-});
+}
+
+function detachBayListener() {
+  if (typeof _bayUnsub === 'function') _bayUnsub();
+  _bayUnsub = null;
+}
 
 // ── Event listeners ───────────────────────────────────────────────────────────
 
@@ -516,11 +569,13 @@ window.openAndroidBay = function () {
   overlay.querySelectorAll('*').forEach(el => el.style.animationPlayState = '');
   placeRivets();
   startClock();
-  renderGrid();
+  fullRenderGrid();
   initCRTCanvas();
+  attachBayListener();
 };
 
 window.closeAndroidBay = function () {
+  detachBayListener();
   const overlay = document.getElementById('androidBayOverlay');
   overlay.querySelectorAll('*').forEach(el => el.style.animationPlayState = 'paused');
   overlay.style.display = 'none';

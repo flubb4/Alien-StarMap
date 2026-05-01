@@ -71,6 +71,25 @@
   overflow: hidden; color: var(--ab-ink);
 }
 
+/* Scan beam — GPU-composited (transform only), clipped by panel overflow:hidden */
+#androidBayOverlay .ab-panel::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0;
+  height: 220px; pointer-events: none; z-index: 29;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(57,255,20,.018) 30%,
+    rgba(57,255,20,.052) 50%,
+    rgba(57,255,20,.018) 70%,
+    transparent 100%
+  );
+  animation: ab-scan-beam 10s linear infinite;
+  will-change: transform;
+}
+@keyframes ab-scan-beam {
+  0%   { transform: translateY(-220px); }
+  100% { transform: translateY(1100px); }
+}
+
 /* Warning stripes + rivets */
 #androidBayOverlay .ab-stripe {
   position: absolute; left: 0; right: 0; height: 14px;

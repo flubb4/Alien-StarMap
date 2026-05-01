@@ -113,39 +113,39 @@
 
 /* ── Side Panel (Protokoll immer sichtbar + GM-Bereich darunter) ── */
 .mt-side-panel {
-  width: clamp(180px, 22vw, 240px); flex-shrink: 0;
-  border-left: 1px solid rgba(57,255,20,.12);
+  width: clamp(220px, 26vw, 300px); flex-shrink: 0;
+  border-left: 1px solid rgba(57,255,20,.15);
   display: flex; flex-direction: column; overflow-y: auto;
 }
 
 /* ── Protokoll-Status (für alle sichtbar) ── */
 .mt-protocol {
   flex-shrink: 0; padding: 16px 14px;
-  display: flex; flex-direction: column; gap: 10px;
-  border-bottom: 1px dashed rgba(57,255,20,.12);
+  display: flex; flex-direction: column; gap: 8px;
+  border-bottom: 1px dashed rgba(57,255,20,.15);
 }
 .mt-protocol-title {
-  font-size: 8px; letter-spacing: .42em; color: rgba(57,255,20,.45);
-  padding-bottom: 8px; border-bottom: 1px dashed rgba(57,255,20,.12);
+  font-size: 9px; letter-spacing: .28em; color: rgba(57,255,20,.65);
+  padding-bottom: 10px; border-bottom: 1px dashed rgba(57,255,20,.15);
 }
 .mt-proto-item {
-  display: flex; flex-direction: column; gap: 3px;
-  padding: 5px 6px;
-  border-left: 2px solid rgba(255,255,255,.05);
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 6px 8px;
+  border-left: 2px solid rgba(255,255,255,.06);
   transition: border-color .4s;
 }
 .mt-proto-item.mt-proto-active {
-  border-left-color: rgba(57,255,20,.5);
-  background: rgba(57,255,20,.03);
+  border-left-color: rgba(57,255,20,.6);
+  background: rgba(57,255,20,.04);
 }
 .mt-proto-label {
-  font-size: 7px; letter-spacing: .32em; color: rgba(255,255,255,.25);
+  font-size: 9px; letter-spacing: .18em; color: rgba(255,255,255,.4);
 }
 .mt-proto-status {
-  font-size: 9px; letter-spacing: .16em;
+  font-size: 10px; letter-spacing: .1em;
   transition: color .4s, text-shadow .4s;
 }
-.mt-proto-pending  { color: rgba(255,255,255,.18); }
+.mt-proto-pending  { color: rgba(255,255,255,.3); }
 .mt-proto-ok       { color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.4); }
 .mt-proto-warn     { color: #f5a623; text-shadow: 0 0 6px rgba(245,166,35,.4); }
 .mt-proto-critical { color: #ff3b3b; text-shadow: 0 0 6px rgba(255,59,59,.5); animation: mt-blink .9s step-end infinite; }
@@ -153,24 +153,24 @@
 /* ── GM Panel (nur GM sichtbar) ── */
 .mt-gm-panel {
   display: none;
-  flex-direction: column; gap: 18px;
+  flex-direction: column; gap: 16px;
   padding: 16px 14px; overflow-y: auto;
-  background: linear-gradient(180deg, rgba(245,166,35,.025), transparent 40%);
+  background: linear-gradient(180deg, rgba(245,166,35,.03), transparent 40%);
 }
 #mutherOverlay.mt-is-gm .mt-gm-panel { display: flex; }
 
 .mt-gm-title {
-  font-size: 8px; letter-spacing: .42em; color: #f5a623;
+  font-size: 9px; letter-spacing: .3em; color: #f5a623;
   text-shadow: 0 0 6px rgba(245,166,35,.4);
-  border-bottom: 1px dashed rgba(245,166,35,.2); padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(245,166,35,.25); padding-bottom: 10px;
 }
 .mt-gm-label {
-  font-size: 8px; letter-spacing: .36em; color: rgba(245,166,35,.4); margin-bottom: 6px;
+  font-size: 9px; letter-spacing: .22em; color: rgba(245,166,35,.65); margin-bottom: 7px;
 }
 
 /* Trust score */
 .mt-score-val {
-  font-size: clamp(28px, 3.5vw, 40px); letter-spacing: .06em;
+  font-size: clamp(30px, 3.8vw, 44px); letter-spacing: .06em;
   color: #f5a623; text-shadow: 0 0 12px rgba(245,166,35,.5);
   transition: color .5s ease, text-shadow .5s ease;
 }
@@ -180,10 +180,11 @@
 .mt-score-val.mt-score-clear    { color: #39ff14; text-shadow: 0 0 12px rgba(57,255,20,.6); }
 
 .mt-score-bar-wrap {
-  height: 3px; background: rgba(255,255,255,.07); margin-top: 8px;
+  height: 4px; background: rgba(255,255,255,.09); margin-top: 8px; border-radius: 2px;
 }
 .mt-score-bar {
-  height: 100%; width: 0; transition: width .6s ease, background .6s ease, box-shadow .6s ease;
+  height: 100%; width: 0; border-radius: 2px;
+  transition: width .6s ease, background .6s ease, box-shadow .6s ease;
 }
 .mt-score-bar.mt-score-clear    { background: #39ff14; box-shadow: 0 0 8px rgba(57,255,20,.7); }
 .mt-score-bar.mt-score-nominal  { background: #f5a623; box-shadow: 0 0 8px rgba(245,166,35,.6); }
@@ -193,62 +194,62 @@
 /* Flags */
 .mt-flags { display: flex; flex-direction: column; gap: 5px; }
 .mt-flag {
-  font-size: 8px; letter-spacing: .22em; padding: 4px 8px;
-  border: 1px solid rgba(255,59,59,.35); color: rgba(255,59,59,.85);
-  background: rgba(255,59,59,.05);
+  font-size: 9px; letter-spacing: .12em; padding: 5px 9px; line-height: 1.4;
+  border: 1px solid rgba(255,59,59,.4); color: rgba(255,80,80,.95);
+  background: rgba(255,59,59,.07);
 }
-.mt-no-flags { font-size: 8px; letter-spacing: .28em; color: rgba(57,255,20,.35); }
+.mt-no-flags { font-size: 9px; letter-spacing: .2em; color: rgba(57,255,20,.45); }
 
 /* Assessment note */
 #mtAssessment {
-  font-size: 9px; letter-spacing: .15em; line-height: 1.55;
-  color: rgba(245,166,35,.55);
-  border-top: 1px dashed rgba(245,166,35,.15); padding-top: 10px;
+  font-size: 10px; letter-spacing: .08em; line-height: 1.65;
+  color: rgba(245,166,35,.8);
+  border-top: 1px dashed rgba(245,166,35,.2); padding-top: 10px;
 }
 
 /* ── Captain ── */
 .mt-captain {
-  border-top: 1px dashed rgba(245,166,35,.15); padding-top: 14px;
+  border-top: 1px dashed rgba(245,166,35,.2); padding-top: 14px;
   display: flex; flex-direction: column; gap: 6px;
 }
 .mt-captain-row { display: flex; gap: 6px; }
 #mtCaptainInput {
-  flex: 1; background: rgba(245,166,35,.04); border: 1px solid rgba(245,166,35,.2);
-  color: rgba(245,166,35,.85); font-family: 'Share Tech Mono', monospace;
-  font-size: 9px; letter-spacing: .18em; padding: 5px 8px; outline: none;
+  flex: 1; background: rgba(245,166,35,.05); border: 1px solid rgba(245,166,35,.25);
+  color: rgba(245,166,35,.95); font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; letter-spacing: .1em; padding: 6px 9px; outline: none;
 }
-#mtCaptainInput::placeholder { color: rgba(245,166,35,.2); }
-#mtCaptainInput:focus { border-color: rgba(245,166,35,.5); }
+#mtCaptainInput::placeholder { color: rgba(245,166,35,.3); }
+#mtCaptainInput:focus { border-color: rgba(245,166,35,.6); }
 #mtCaptainBtn {
-  padding: 5px 10px; border: 1px solid rgba(245,166,35,.3);
-  background: rgba(245,166,35,.05); color: rgba(245,166,35,.7);
-  font-family: 'Share Tech Mono', monospace; font-size: 8px;
-  letter-spacing: .25em; cursor: pointer; white-space: nowrap;
+  padding: 6px 10px; border: 1px solid rgba(245,166,35,.35);
+  background: rgba(245,166,35,.06); color: rgba(245,166,35,.8);
+  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  letter-spacing: .16em; cursor: pointer; white-space: nowrap;
 }
-#mtCaptainBtn:hover { background: rgba(245,166,35,.12); color: #f5a623; }
+#mtCaptainBtn:hover { background: rgba(245,166,35,.14); color: #f5a623; }
 
 /* ── GM Directive ── */
 .mt-directive {
-  border-top: 1px dashed rgba(57,255,20,.15); padding-top: 14px; display: flex;
+  border-top: 1px dashed rgba(57,255,20,.18); padding-top: 14px; display: flex;
   flex-direction: column; gap: 6px;
 }
 #mtDirective {
-  background: rgba(57,255,20,.04); border: 1px solid rgba(57,255,20,.2);
-  color: rgba(57,255,20,.8); font-family: 'Share Tech Mono', monospace;
-  font-size: 9px; letter-spacing: .12em; line-height: 1.5;
-  padding: 7px 9px; resize: none; outline: none; height: 64px;
+  background: rgba(57,255,20,.05); border: 1px solid rgba(57,255,20,.25);
+  color: rgba(57,255,20,.9); font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; letter-spacing: .06em; line-height: 1.6;
+  padding: 8px 10px; resize: none; outline: none; height: 72px;
 }
-#mtDirective::placeholder { color: rgba(57,255,20,.2); }
-#mtDirective:focus { border-color: rgba(57,255,20,.5); }
+#mtDirective::placeholder { color: rgba(57,255,20,.3); }
+#mtDirective:focus { border-color: rgba(57,255,20,.6); }
 #mtDirectiveBtn {
-  padding: 5px 10px; border: 1px solid rgba(57,255,20,.3);
-  background: rgba(57,255,20,.05); color: rgba(57,255,20,.7);
-  font-family: 'Share Tech Mono', monospace; font-size: 8px;
-  letter-spacing: .3em; cursor: pointer; align-self: flex-end;
+  padding: 6px 12px; border: 1px solid rgba(57,255,20,.35);
+  background: rgba(57,255,20,.06); color: rgba(57,255,20,.8);
+  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  letter-spacing: .22em; cursor: pointer; align-self: flex-end;
 }
-#mtDirectiveBtn:hover { background: rgba(57,255,20,.12); color: #39ff14; }
+#mtDirectiveBtn:hover { background: rgba(57,255,20,.14); color: #39ff14; }
 .mt-directive-active {
-  display: none; font-size: 8px; letter-spacing: .3em;
+  display: none; font-size: 9px; letter-spacing: .22em;
   color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.5);
   animation: mt-blink .9s step-end infinite;
 }

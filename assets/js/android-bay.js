@@ -243,10 +243,11 @@ function confirmManage() {
   closeManageModal();
   pods[bayId] = updated;
   renderGrid();
-  if (window.db) {
+  window._authReadyPromise.then(() => {
     set(ref(window.db, `android-bay/pods/${bayId}`), updated)
-      .catch(err => console.error('[AndroidBay] write error:', err));
-  }
+      .then(() => console.log('[AndroidBay] manage write OK:', bayId))
+      .catch(err => console.error('[AndroidBay] manage write FAILED:', bayId, err.code, err.message));
+  });
 }
 
 function releaseUnit() {
@@ -255,10 +256,11 @@ function releaseUnit() {
   closeManageModal();
   pods[bayId] = null;
   renderGrid();
-  if (window.db) {
+  window._authReadyPromise.then(() => {
     set(ref(window.db, `android-bay/pods/${bayId}`), null)
-      .catch(err => console.error('[AndroidBay] write error:', err));
-  }
+      .then(() => console.log('[AndroidBay] release write OK:', bayId))
+      .catch(err => console.error('[AndroidBay] release write FAILED:', bayId, err.code, err.message));
+  });
 }
 
 function confirmAssign() {
@@ -272,19 +274,23 @@ function confirmAssign() {
   pods[bayId] = { state: 'sealing', desig: android.desig, cls: android.cls, cond };
   renderGrid();
 
-  // Sync to Firebase (best-effort — other players see it too)
-  if (window.db) {
+  // Sync to Firebase — wait for auth to guarantee write permission
+  window._authReadyPromise.then(() => {
     const bayRef = ref(window.db, `android-bay/pods/${bayId}`);
-    set(bayRef, pods[bayId]).catch(err => console.error('[AndroidBay] write error:', err));
+    set(bayRef, pods[bayId])
+      .then(() => console.log('[AndroidBay] sealing write OK:', bayId))
+      .catch(err => console.error('[AndroidBay] sealing write FAILED:', bayId, err.code, err.message));
 
     if (sealTimers[bayId]) clearTimeout(sealTimers[bayId]);
     sealTimers[bayId] = setTimeout(() => {
       pods[bayId] = { state: 'occupied', desig: android.desig, cls: android.cls, cond };
       renderGrid();
-      set(bayRef, pods[bayId]).catch(err => console.error('[AndroidBay] write error:', err));
+      set(bayRef, pods[bayId])
+        .then(() => console.log('[AndroidBay] occupied write OK:', bayId))
+        .catch(err => console.error('[AndroidBay] occupied write FAILED:', bayId, err.code, err.message));
       delete sealTimers[bayId];
     }, 4000);
-  }
+  });
 }
 
 // ── CRT Canvas (scanlines + vignette, drawn once on open) ────────────────────
@@ -363,13 +369,16 @@ renderGrid();
 window._authReadyPromise.then(() => {
   onValue(ref(window.db, 'android-bay/pods'), snap => {
     const raw = snap.val() || {};
+    console.log('[AndroidBay] onValue fired — Firebase data:', JSON.stringify(raw));
     // Heal pods stuck in sealing state after a page reload (local timer was lost)
     Object.entries(raw).forEach(([bayId, pod]) => {
       if (pod?.state === 'sealing' && !sealTimers[bayId]) {
         const healed = { ...pod, state: 'occupied' };
         raw[bayId] = healed;
+        console.log('[AndroidBay] healing stuck sealing pod:', bayId);
         set(ref(window.db, `android-bay/pods/${bayId}`), healed)
-          .catch(err => console.error('[AndroidBay] heal error:', err));
+          .then(() => console.log('[AndroidBay] heal write OK:', bayId))
+          .catch(err => console.error('[AndroidBay] heal write FAILED:', bayId, err.code, err.message));
       }
     });
     pods = raw;

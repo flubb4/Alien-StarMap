@@ -111,13 +111,50 @@
 #mtSendBtn:hover:not(:disabled) { background: rgba(57,255,20,.13); }
 #mtSendBtn:disabled { opacity: .35; cursor: not-allowed; }
 
-/* ── GM Panel ── */
+/* ── Side Panel (Protokoll immer sichtbar + GM-Bereich darunter) ── */
+.mt-side-panel {
+  width: clamp(180px, 22vw, 240px); flex-shrink: 0;
+  border-left: 1px solid rgba(57,255,20,.12);
+  display: flex; flex-direction: column; overflow-y: auto;
+}
+
+/* ── Protokoll-Status (für alle sichtbar) ── */
+.mt-protocol {
+  flex-shrink: 0; padding: 16px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+  border-bottom: 1px dashed rgba(57,255,20,.12);
+}
+.mt-protocol-title {
+  font-size: 8px; letter-spacing: .42em; color: rgba(57,255,20,.45);
+  padding-bottom: 8px; border-bottom: 1px dashed rgba(57,255,20,.12);
+}
+.mt-proto-item {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 5px 6px;
+  border-left: 2px solid rgba(255,255,255,.05);
+  transition: border-color .4s;
+}
+.mt-proto-item.mt-proto-active {
+  border-left-color: rgba(57,255,20,.5);
+  background: rgba(57,255,20,.03);
+}
+.mt-proto-label {
+  font-size: 7px; letter-spacing: .32em; color: rgba(255,255,255,.25);
+}
+.mt-proto-status {
+  font-size: 9px; letter-spacing: .16em;
+  transition: color .4s, text-shadow .4s;
+}
+.mt-proto-pending  { color: rgba(255,255,255,.18); }
+.mt-proto-ok       { color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.4); }
+.mt-proto-warn     { color: #f5a623; text-shadow: 0 0 6px rgba(245,166,35,.4); }
+.mt-proto-critical { color: #ff3b3b; text-shadow: 0 0 6px rgba(255,59,59,.5); animation: mt-blink .9s step-end infinite; }
+
+/* ── GM Panel (nur GM sichtbar) ── */
 .mt-gm-panel {
   display: none;
-  width: clamp(180px, 22vw, 240px); flex-shrink: 0;
   flex-direction: column; gap: 18px;
-  padding: 18px 16px; overflow-y: auto;
-  border-left: 1px solid rgba(245,166,35,.15);
+  padding: 16px 14px; overflow-y: auto;
   background: linear-gradient(180deg, rgba(245,166,35,.025), transparent 40%);
 }
 #mutherOverlay.mt-is-gm .mt-gm-panel { display: flex; }

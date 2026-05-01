@@ -6,26 +6,37 @@ const CFG          = window.APP_CONFIG || {};
 const WORKER_URL   = CFG.mutherWorkerUrl   || 'https://muthur-proxy.alienmuthur.workers.dev';
 const WORKER_TOKEN = CFG.mutherWorkerToken || 'Alien_muthur';
 
-let _bayId    = null;
-let _ctx      = null;
-let _messages = [];    // {role, text, ts} sorted by ts
-let _unsubMsgs    = null;
-let _unsubGm      = null;
-let _unsubCaptain = null;
-let _busy         = false;
-let _directive    = '';
-let _captainName  = '';
+const PROTOCOL_STEPS = [
+  { key: 'versiegelung',   label: 'VERSIEGELUNG'   },
+  { key: 'datenfragment',  label: 'DATENFRAGMENT'  },
+  { key: 'kopierstatus',   label: 'KOPIER-STATUS'  },
+  { key: 'komplikationen', label: 'KOMPLIKATIONEN' },
+  { key: 'sonstiges',      label: 'SONSTIGES'      },
+];
+
+let _bayId         = null;
+let _ctx           = null;
+let _messages      = [];
+let _unsubMsgs     = null;
+let _unsubGm       = null;
+let _unsubCaptain  = null;
+let _unsubProtocol = null;
+let _busy          = false;
+let _directive     = '';
+let _captainName   = '';
+let _protocolStep  = 0;
+let _protocolItems = {};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const $  = id => document.getElementById(id);
+const $   = id => document.getElementById(id);
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-// ── Public API ─────────────────────────────────────────────────────────────────
+// ── Public API ────────────────────────────────────────────────────────────────
 
 window.openMutherTerminal = function (bayId, ctx) {
-  _bayId = bayId;
-  _ctx   = ctx;
+  _bayId    = bayId;
+  _ctx      = ctx;
   _messages = [];
 
   const overlay = $('mutherOverlay');
@@ -35,9 +46,9 @@ window.openMutherTerminal = function (bayId, ctx) {
 
   const sub = overlay.querySelector('.mt-subtitle');
   if (sub) sub.textContent =
-    `UNIT: ${ctx.desig || '—'}  ·  CONTAINER: ${bayId}  ·  CLASS: ${ctx.cls || '—'}`;
+    `EINHEIT: ${ctx.desig || '—'}  ·  CONTAINER: ${bayId}  ·  KLASSE: ${ctx.cls || '—'}`;
 
-  initGmPanel();
+  initPanel();
   overlay.style.display = 'flex';
   $('mtInput')?.focus();
 
@@ -46,15 +57,18 @@ window.openMutherTerminal = function (bayId, ctx) {
 
 window.closeMutherTerminal = function () {
   $('mutherOverlay').style.display = 'none';
-  if (_unsubMsgs)    { _unsubMsgs();    _unsubMsgs    = null; }
-  if (_unsubGm)      { _unsubGm();      _unsubGm      = null; }
-  if (_unsubCaptain) { _unsubCaptain(); _unsubCaptain = null; }
-  _bayId       = null;
-  _ctx         = null;
-  _messages    = [];
-  _busy        = false;
-  _directive   = '';
-  _captainName = '';
+  if (_unsubMsgs)     { _unsubMsgs();     _unsubMsgs     = null; }
+  if (_unsubGm)       { _unsubGm();       _unsubGm       = null; }
+  if (_unsubCaptain)  { _unsubCaptain();  _unsubCaptain  = null; }
+  if (_unsubProtocol) { _unsubProtocol(); _unsubProtocol = null; }
+  _bayId         = null;
+  _ctx           = null;
+  _messages      = [];
+  _busy          = false;
+  _directive     = '';
+  _captainName   = '';
+  _protocolStep  = 0;
+  _protocolItems = {};
 };
 
 // ── Player confirm overlay ────────────────────────────────────────────────────
@@ -68,7 +82,7 @@ window.openMutherConfirm = function (bayId, ctx) {
   _confirmCtx   = ctx;
   const unitEl = $('mtConfirmUnit');
   if (unitEl) unitEl.textContent =
-    `${ctx.desig || 'UNIT'}  ·  CLASS: ${ctx.cls || '—'}  ·  BAY ${bayId}`;
+    `${ctx.desig || 'UNIT'}  ·  KLASSE: ${ctx.cls || '—'}  ·  BAY ${bayId}`;
   $('mtConfirmOverlay').style.display = 'flex';
 };
 
@@ -81,9 +95,10 @@ function closeMutherConfirm() {
 // ── Firebase ──────────────────────────────────────────────────────────────────
 
 function subscribeSession(bayId) {
-  if (_unsubMsgs)    { _unsubMsgs();    _unsubMsgs    = null; }
-  if (_unsubGm)      { _unsubGm();      _unsubGm      = null; }
-  if (_unsubCaptain) { _unsubCaptain(); _unsubCaptain = null; }
+  if (_unsubMsgs)     { _unsubMsgs();     _unsubMsgs     = null; }
+  if (_unsubGm)       { _unsubGm();       _unsubGm       = null; }
+  if (_unsubCaptain)  { _unsubCaptain();  _unsubCaptain  = null; }
+  if (_unsubProtocol) { _unsubProtocol(); _unsubProtocol = null; }
 
   _unsubMsgs = onValue(ref(window.db, `muthur/sessions/${bayId}/messages`), snap => {
     const raw = snap.val() || {};
@@ -91,7 +106,6 @@ function subscribeSession(bayId) {
     renderLog(_messages);
   });
 
-  // Captain-Subscription: steuert wer schreiben darf
   _unsubCaptain = onValue(ref(window.db, `muthur/sessions/${bayId}/captainName`), snap => {
     _captainName = (snap.val() || '').toUpperCase();
     updateInputVisibility();
@@ -101,7 +115,14 @@ function subscribeSession(bayId) {
     }
   });
 
-  // Einmalig: Eröffnungsnachricht schreiben wenn Session neu ist
+  _unsubProtocol = onValue(ref(window.db, `muthur/sessions/${bayId}/protocolData`), snap => {
+    const d = snap.val() || {};
+    _protocolStep  = d.step  || 0;
+    _protocolItems = d.items || {};
+    updateProtocolUI();
+  });
+
+  // Einmalig: Session initialisieren wenn neu
   get(ref(window.db, `muthur/sessions/${bayId}/initialized`)).then(snap => {
     if (!snap.exists()) {
       set(ref(window.db, `muthur/sessions/${bayId}/initialized`), true);
@@ -124,24 +145,20 @@ function subscribeSession(bayId) {
 }
 
 function writeInitMessage(bayId) {
-  const cond      = (_ctx?.cond || 'intact').toUpperCase();
-  const sealStatus = cond === 'DAMAGED' ? 'BESCHÄDIGT — ANOMALIE ERKANNT' : 'VOLLSTÄNDIG BESTÄTIGT';
   const text =
 `SCHNITTSTELLE AKTIVIERT
 EINHEIT: ${_ctx?.desig || '—'}  ·  CONTAINER: ${bayId}  ·  KLASSE: ${_ctx?.cls || '—'}
 
-SYSTEMDIAGNOSE ──────────────────────────────────
-  VERSIEGELUNGSSTATUS ......... ${sealStatus}
-  DATENFRAGMENT-INTEGRITÄT .... VOLLSTÄNDIG / UNGELESEN
-  BIOSIGNATUR ................. SUPPRIMIERT
-  LOYALITÄTSPROFIL ............ AUSSTEHEND
-  VERHALTENSMARKER ............ INITIIERUNG LÄUFT
-
 WEYLAND-YUTANI CORP. — LOYALITÄTSANALYSE v6.0
+STANDARDVERHÖR-SEQUENZ INITIIERT.
 ─────────────────────────────────────────────────
-ANFRAGEN KÖNNEN JETZT GESTELLT WERDEN.`;
+FRAGE 1/5 — Wurde der Android vollständig versiegelt?`;
+
   push(ref(window.db, `muthur/sessions/${bayId}/messages`), {
     role: 'muthur', text, ts: Date.now(),
+  });
+  set(ref(window.db, `muthur/sessions/${bayId}/protocolData`), {
+    step: 1, items: {},
   });
 }
 
@@ -183,23 +200,45 @@ async function saveCaptain() {
   await set(ref(window.db, `muthur/sessions/${_bayId}/captainName`), name);
 }
 
-// ── Render ─────────────────────────────────────────────────────────────────────
+// ── Protocol UI ───────────────────────────────────────────────────────────────
+
+function updateProtocolUI() {
+  const list = $('mtProtocolList');
+  if (!list) return;
+
+  list.innerHTML = PROTOCOL_STEPS.map((step, i) => {
+    const item       = _protocolItems[step.key];
+    const status     = item?.status    || 'AUSSTEHEND';
+    const suspicious = item?.suspicious || false;
+    const isCurrent  = _protocolStep > 0 && i + 1 === _protocolStep;
+
+    let cls = 'mt-proto-pending';
+    if (item) {
+      if      (status === 'BESTÄTIGT')                          cls = suspicious ? 'mt-proto-warn' : 'mt-proto-ok';
+      else if (status === 'FRAGLICH')                           cls = 'mt-proto-warn';
+      else if (status === 'ANOMALIE' || status === 'VERWEIGERT') cls = 'mt-proto-critical';
+    }
+
+    return `<div class="mt-proto-item${isCurrent ? ' mt-proto-active' : ''}">
+  <div class="mt-proto-label">${i + 1}. ${step.label}</div>
+  <div class="mt-proto-status ${cls}">${status}${suspicious ? ' ⚠' : ''}</div>
+</div>`;
+  }).join('');
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
 
 function renderLog(msgs) {
   const log = $('mtLog');
   if (!log) return;
 
-  // Preserve loading indicator if present
   const loadingLine = log.querySelector('.mt-loading-line');
-
   log.innerHTML = '';
-  appendLine(log, 'system', 'MU/TH/UR',
-    `SESSION INITIATED  ·  UNIT: ${_ctx?.desig || '—'}  ·  CONTAINER: ${_bayId || '—'}`);
 
   msgs.forEach(m => {
-    if (m.role === 'operator') appendLine(log, 'op', 'OPERATOR', m.text);
-    else if (m.role === 'muthur') appendLine(log, 'mu', 'MU/TH/UR', m.text);
-    else appendLine(log, 'system', 'SYS', m.text);
+    if      (m.role === 'operator') appendLine(log, 'op', 'OPERATOR', m.text);
+    else if (m.role === 'muthur')   appendLine(log, 'mu', 'MU/TH/UR', m.text);
+    else                            appendLine(log, 'system', 'SYS', m.text);
   });
 
   if (loadingLine) log.appendChild(loadingLine);
@@ -224,7 +263,7 @@ function appendLoading() {
   div.innerHTML =
     `<span class="mt-who">MU/TH/UR</span>` +
     `<span class="mt-sep">›</span>` +
-    `<span class="mt-text">PROCESSING<span class="mt-cursor">_</span></span>`;
+    `<span class="mt-text">VERARBEITUNG<span class="mt-cursor">_</span></span>`;
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
 }
@@ -233,17 +272,20 @@ function removeLoading() {
   $('mtLog')?.querySelector('.mt-loading-line')?.remove();
 }
 
-// ── GM Panel ──────────────────────────────────────────────────────────────────
+// ── Panel init ────────────────────────────────────────────────────────────────
 
-function initGmPanel() {
+function initPanel() {
   const val = $('mtTrustVal');
   const bar = $('mtTrustBar');
   const flg = $('mtFlagList');
   const ass = $('mtAssessment');
   if (val) { val.textContent = '—'; val.className = 'mt-score-val'; }
   if (bar) { bar.style.width = '0'; bar.className = 'mt-score-bar'; }
-  if (flg) flg.innerHTML = `<span class="mt-no-flags">// AWAITING ANALYSIS</span>`;
+  if (flg) flg.innerHTML = `<span class="mt-no-flags">// AUSSTEHEND</span>`;
   if (ass) ass.textContent = '';
+  _protocolItems = {};
+  _protocolStep  = 0;
+  updateProtocolUI();
 }
 
 function updateGmPanel(score, flags, assessment) {
@@ -253,7 +295,7 @@ function updateGmPanel(score, flags, assessment) {
   const ass = $('mtAssessment');
 
   let cls;
-  if (score >= 85)      cls = 'mt-score-clear';
+  if      (score >= 85) cls = 'mt-score-clear';
   else if (score >= 60) cls = 'mt-score-nominal';
   else if (score >= 35) cls = 'mt-score-warn';
   else                  cls = 'mt-score-critical';
@@ -261,9 +303,9 @@ function updateGmPanel(score, flags, assessment) {
   if (val) { val.textContent = score; val.className = `mt-score-val ${cls}`; }
   if (bar) { bar.style.width = `${score}%`; bar.className = `mt-score-bar ${cls}`; }
   if (flg) {
-    flg.innerHTML = (flags?.length)
+    flg.innerHTML = flags?.length
       ? flags.map(f => `<div class="mt-flag">${esc(f)}</div>`).join('')
-      : `<span class="mt-no-flags">// NO FLAGS</span>`;
+      : `<span class="mt-no-flags">// KEINE FLAGS</span>`;
   }
   if (ass) ass.textContent = assessment || '';
 }
@@ -280,7 +322,6 @@ async function sendQuery() {
   input.value = '';
   if (btn) btn.disabled = true;
 
-  // Snapshot messages NOW before Firebase updates land
   const apiMessages = [
     ..._messages.map(m => ({
       role:    m.role === 'muthur' ? 'assistant' : 'user',
@@ -289,12 +330,11 @@ async function sendQuery() {
     { role: 'user', content: text },
   ];
 
-  await window._authReadyPromise;
-  await writeMsg(_bayId, 'operator', text);
-
-  appendLoading();
-
   try {
+    await window._authReadyPromise;
+    await writeMsg(_bayId, 'operator', text);
+    appendLoading();
+
     const sentDirective = _directive;
     if (sentDirective) {
       _directive = '';
@@ -306,12 +346,13 @@ async function sendQuery() {
     const res = await fetch(WORKER_URL, {
       method: 'POST',
       headers: {
-        'Content-Type':  'application/json',
+        'Content-Type':   'application/json',
         'X-Worker-Token': WORKER_TOKEN,
       },
       body: JSON.stringify({
-        messages:  apiMessages,
-        directive: sentDirective,
+        messages:     apiMessages,
+        directive:    sentDirective,
+        protocolStep: _protocolStep,
         context: {
           desig: _ctx?.desig || '—',
           cls:   _ctx?.cls   || '—',
@@ -321,19 +362,31 @@ async function sendQuery() {
       }),
     });
 
-    if (!res.ok) throw new Error(`Worker responded ${res.status}`);
+    if (!res.ok) throw new Error(`Worker ${res.status}`);
     const data = await res.json();
     removeLoading();
 
-    await writeMsg(_bayId, 'muthur', data.response || 'NO RESPONSE RECEIVED.');
+    await writeMsg(_bayId, 'muthur', data.response || 'KEINE ANTWORT EMPFANGEN.');
+
+    // Protokoll-Schritt abschließen (Schritte 1–5)
+    if (data.protocolStatus && _protocolStep >= 1 && _protocolStep <= 5) {
+      const stepKey  = PROTOCOL_STEPS[_protocolStep - 1].key;
+      const newItems = {
+        ..._protocolItems,
+        [stepKey]: { status: data.protocolStatus, suspicious: !!data.protocolSuspicious },
+      };
+      await set(ref(window.db, `muthur/sessions/${_bayId}/protocolData`), {
+        step: _protocolStep + 1, items: newItems,
+      });
+    }
 
     if (data.trustScore !== undefined) {
       await writeGmData(_bayId, data.trustScore, data.flags || [], data.assessment || '');
     }
   } catch (err) {
     removeLoading();
-    console.error('[MU/TH/UR] Worker error:', err);
-    await writeMsg(_bayId, 'muthur', 'COMMUNICATION FAULT. RETRY QUERY.');
+    console.error('[MU/TH/UR]', err);
+    await writeMsg(_bayId, 'muthur', 'KOMMUNIKATIONSFEHLER. ANFRAGE WIEDERHOLEN.');
   }
 
   _busy = false;
@@ -344,13 +397,10 @@ async function sendQuery() {
 // ── Event wiring ──────────────────────────────────────────────────────────────
 
 $('mtSendBtn')?.addEventListener('click', sendQuery);
-
 $('mtInput')?.addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); sendQuery(); }
 });
-
 $('mtCloseBtn')?.addEventListener('click', window.closeMutherTerminal);
-
 $('mtDirectiveBtn')?.addEventListener('click', saveDirective);
 $('mtCaptainBtn')?.addEventListener('click', saveCaptain);
 $('mtCaptainInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') saveCaptain(); });
@@ -361,12 +411,11 @@ $('mtConfirmYes')?.addEventListener('click', () => {
   closeMutherConfirm();
   window.openMutherTerminal(bayId, ctx);
 });
-
 $('mtConfirmNo')?.addEventListener('click', closeMutherConfirm);
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    if ($('mutherOverlay')?.style.display !== 'none') { window.closeMutherTerminal(); return; }
-    if ($('mtConfirmOverlay')?.style.display !== 'none') { closeMutherConfirm(); return; }
+    if ($('mutherOverlay')?.style.display    !== 'none') { window.closeMutherTerminal(); return; }
+    if ($('mtConfirmOverlay')?.style.display !== 'none') { closeMutherConfirm();         return; }
   }
 });

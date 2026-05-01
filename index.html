@@ -1031,38 +1031,44 @@
         <div class="mt-log" id="mtLog"></div>
         <div class="mt-input-row">
           <span class="mt-prompt">OPERATOR ›</span>
-          <input id="mtInput" type="text" placeholder="ENTER QUERY..." autocomplete="off" spellcheck="false">
-          <button id="mtSendBtn" type="button">[ SEND ]</button>
+          <input id="mtInput" type="text" placeholder="ANFRAGE EINGEBEN..." autocomplete="off" spellcheck="false">
+          <button id="mtSendBtn" type="button">[ SENDEN ]</button>
         </div>
       </div>
-      <div class="mt-gm-panel">
-        <div class="mt-gm-title">// GM ANALYSIS</div>
-        <div>
-          <div class="mt-gm-label">W-Y TRUST INDEX</div>
-          <div class="mt-score-val" id="mtTrustVal">—</div>
-          <div class="mt-score-bar-wrap">
-            <div class="mt-score-bar" id="mtTrustBar"></div>
-          </div>
+      <div class="mt-side-panel">
+        <div class="mt-protocol">
+          <div class="mt-protocol-title">// PROTOKOLL-STATUS</div>
+          <div id="mtProtocolList"></div>
         </div>
-        <div>
-          <div class="mt-gm-label">FLAGS</div>
-          <div class="mt-flags" id="mtFlagList">
-            <span class="mt-no-flags">// AWAITING ANALYSIS</span>
+        <div class="mt-gm-panel">
+          <div class="mt-gm-title">// GM ANALYSE</div>
+          <div>
+            <div class="mt-gm-label">W-Y VERTRAUENSINDEX</div>
+            <div class="mt-score-val" id="mtTrustVal">—</div>
+            <div class="mt-score-bar-wrap">
+              <div class="mt-score-bar" id="mtTrustBar"></div>
+            </div>
           </div>
-        </div>
-        <div id="mtAssessment"></div>
-        <div class="mt-captain">
-          <div class="mt-gm-label">CAPTAIN</div>
-          <div class="mt-captain-row">
-            <input id="mtCaptainInput" type="text" placeholder="CALLSIGN...">
-            <button id="mtCaptainBtn" type="button">[ SET ]</button>
+          <div>
+            <div class="mt-gm-label">FLAGS</div>
+            <div class="mt-flags" id="mtFlagList">
+              <span class="mt-no-flags">// AUSSTEHEND</span>
+            </div>
           </div>
-        </div>
-        <div class="mt-directive">
-          <div class="mt-gm-label">GM DIREKTIVE</div>
-          <textarea id="mtDirective" placeholder="// inject directive for next response..."></textarea>
-          <button id="mtDirectiveBtn" type="button">[ INJECT ]</button>
-          <div class="mt-directive-active" id="mtDirectiveActive">// DIRECTIVE ACTIVE</div>
+          <div id="mtAssessment"></div>
+          <div class="mt-captain">
+            <div class="mt-gm-label">CAPTAIN</div>
+            <div class="mt-captain-row">
+              <input id="mtCaptainInput" type="text" placeholder="CALLSIGN...">
+              <button id="mtCaptainBtn" type="button">[ SET ]</button>
+            </div>
+          </div>
+          <div class="mt-directive">
+            <div class="mt-gm-label">GM DIREKTIVE</div>
+            <textarea id="mtDirective" placeholder="// Direktive für nächste Antwort..."></textarea>
+            <button id="mtDirectiveBtn" type="button">[ INJIZIEREN ]</button>
+            <div class="mt-directive-active" id="mtDirectiveActive">// DIREKTIVE AKTIV</div>
+          </div>
         </div>
       </div>
     </div>

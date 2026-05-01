@@ -252,6 +252,7 @@
 
 /* Empty hover */
 #androidBayOverlay .ab-pod[data-state="empty"] { cursor: pointer; }
+#androidBayOverlay .ab-pod[data-state="empty"] .ab-photo { will-change: opacity; transition: opacity .15s ease; }
 #androidBayOverlay .ab-pod[data-state="empty"]:hover .ab-photo { opacity: .75; }
 #androidBayOverlay .ab-hover-prompt {
   position: absolute; left: 0; right: 0; top: 50%; text-align: center;
@@ -350,6 +351,7 @@
 /* CRT effects — scanlines+vignette merged into one layer */
 #androidBayOverlay .ab-scanlines {
   position: absolute; inset: 0; pointer-events: none; z-index: 30;
+  will-change: transform;
   background:
     radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%),
     repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px);

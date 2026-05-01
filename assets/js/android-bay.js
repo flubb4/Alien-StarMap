@@ -298,6 +298,12 @@ function confirmAssign() {
   const cond = pickedCond;
   closeAssignModal();
 
+  // Alte MU/TH/UR-Session für diesen Bay löschen
+  window._authReadyPromise.then(() => {
+    set(ref(window.db, `muthur/sessions/${bayId}`), null);
+    set(ref(window.db, `muthur/gm/${bayId}`), null);
+  });
+
   // Phase 1: scan animation (local only, not written to Firebase)
   pods[bayId] = { state: 'scanning', desig: android.desig, cls: android.cls, cond };
   renderGrid();
@@ -318,7 +324,11 @@ function confirmAssign() {
         pods[bayId] = { state: 'occupied', desig: android.desig, cls: android.cls, cond };
         renderGrid();
         set(bayRef, pods[bayId])
-          .then(() => console.log('[AndroidBay] occupied write OK:', bayId))
+          .then(() => {
+            console.log('[AndroidBay] occupied write OK:', bayId);
+            // Terminal automatisch öffnen sobald Android versiegelt ist
+            window.openMutherTerminal?.(bayId, pods[bayId]);
+          })
           .catch(err => console.error('[AndroidBay] occupied write FAILED:', bayId, err.code, err.message));
         delete sealTimers[bayId];
       }, 4000);

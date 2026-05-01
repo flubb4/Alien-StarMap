@@ -207,6 +207,28 @@
   border-top: 1px dashed rgba(245,166,35,.2); padding-top: 10px;
 }
 
+/* ── GM Ask (als MU/TH/UR fragen) ── */
+.mt-gm-ask {
+  border-top: 1px dashed rgba(57,255,20,.18); padding-top: 14px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+#mtGmAskInput {
+  background: rgba(57,255,20,.05); border: 1px solid rgba(57,255,20,.25);
+  color: rgba(57,255,20,.9); font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; letter-spacing: .06em; line-height: 1.6;
+  padding: 8px 10px; resize: none; outline: none; height: 72px;
+}
+#mtGmAskInput::placeholder { color: rgba(57,255,20,.3); }
+#mtGmAskInput:focus { border-color: rgba(57,255,20,.6); }
+#mtGmAskBtn {
+  padding: 6px 12px; border: 1px solid rgba(57,255,20,.5);
+  background: rgba(57,255,20,.08); color: #39ff14;
+  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  letter-spacing: .22em; cursor: pointer; align-self: flex-end;
+  text-shadow: 0 0 6px rgba(57,255,20,.4);
+}
+#mtGmAskBtn:hover { background: rgba(57,255,20,.16); box-shadow: 0 0 10px rgba(57,255,20,.15); }
+
 /* ── Captain ── */
 .mt-captain {
   border-top: 1px dashed rgba(245,166,35,.2); padding-top: 14px;

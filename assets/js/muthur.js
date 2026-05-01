@@ -202,6 +202,17 @@ function updateInputVisibility() {
   row.style.display = canWrite ? 'flex' : 'none';
 }
 
+async function sendGmQuestion() {
+  if (!_bayId) return;
+  const ta   = $('mtGmAskInput');
+  const text = ta?.value.trim();
+  if (!text) return;
+  ta.value = '';
+  await push(ref(window.db, `muthur/sessions/${_bayId}/messages`), {
+    role: 'muthur', text, ts: Date.now(),
+  });
+}
+
 async function saveCaptain() {
   if (!_bayId) return;
   const name = ($('mtCaptainInput')?.value.trim() || '').toUpperCase();
@@ -419,6 +430,10 @@ $('mtInput')?.addEventListener('keydown', e => {
 });
 $('mtCloseBtn')?.addEventListener('click', window.closeMutherTerminal);
 $('mtDirectiveBtn')?.addEventListener('click', saveDirective);
+$('mtGmAskBtn')?.addEventListener('click', sendGmQuestion);
+$('mtGmAskInput')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendGmQuestion(); }
+});
 $('mtCaptainBtn')?.addEventListener('click', saveCaptain);
 $('mtCaptainInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') saveCaptain(); });
 

@@ -125,10 +125,12 @@ function updateCounter() {
 
 function bindEmptyClicks() {
   document.querySelectorAll('#abGrid .ab-pod[data-state="empty"]').forEach(el => {
-    el.addEventListener('click', () => openAssignModal(el.dataset.bay));
-    el.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAssignModal(el.dataset.bay); }
-    });
+    const glow   = el.querySelector('.ab-hover-glow');
+    const prompt = el.querySelector('.ab-hover-prompt');
+    el.addEventListener('click',      () => openAssignModal(el.dataset.bay));
+    el.addEventListener('keydown',    e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAssignModal(el.dataset.bay); } });
+    el.addEventListener('mouseenter', () => { if (glow)   glow.style.opacity   = '1'; if (prompt) prompt.style.opacity = '1'; });
+    el.addEventListener('mouseleave', () => { if (glow)   glow.style.opacity   = '0'; if (prompt) prompt.style.opacity = '0'; });
   });
 }
 

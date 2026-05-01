@@ -479,10 +479,11 @@ document.getElementById('abManageCancelBtn')?.addEventListener('click', closeMan
 document.getElementById('abReleaseBtn')?.addEventListener('click', releaseUnit);
 document.getElementById('abInterrogateBtn')?.addEventListener('click', () => {
   if (!manageBay) return;
-  const p = pods[manageBay];
+  const bayId = manageBay;
+  const p = pods[bayId];
   if (!p) return;
   closeManageModal();
-  window.openMutherTerminal?.(manageBay, p);
+  window.openMutherTerminal?.(bayId, p);
 });
 document.getElementById('abManageOverlay')?.addEventListener('click', e => {
   if (e.target === document.getElementById('abManageOverlay')) closeManageModal();

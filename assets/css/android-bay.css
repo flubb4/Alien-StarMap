@@ -56,7 +56,6 @@
   position: relative; z-index: 1;
   width: 90vw; height: 90vh;
   max-width: 1760px; max-height: 1000px;
-  min-width: 1100px; min-height: 780px;
   background:
     radial-gradient(ellipse at 50% 0%, #1a1505 0%, transparent 55%),
     linear-gradient(180deg, #0d0e0a 0%, #07080a 100%);
@@ -87,7 +86,7 @@
 }
 @keyframes ab-scan-beam {
   0%   { transform: translateY(-220px); }
-  100% { transform: translateY(1100px); }
+  100% { transform: translateY(100vh); }
 }
 
 /* Warning stripes + rivets */
@@ -111,33 +110,35 @@
 /* ── Header ── */
 #androidBayOverlay .ab-bay-header {
   position: relative; display: grid; grid-template-columns: auto 1fr auto;
-  align-items: center; gap: 24px; padding: 34px 40px 18px 40px;
+  align-items: center; gap: clamp(10px,1.5vw,24px);
+  padding: clamp(14px,2.5vh,34px) clamp(18px,2.5vw,40px) clamp(8px,1.5vh,18px);
   border-bottom: 1px dashed rgba(245,166,35,.25);
 }
-#androidBayOverlay .ab-corp { display: flex; align-items: center; gap: 14px; }
+#androidBayOverlay .ab-corp { display: flex; align-items: center; gap: clamp(8px,1vw,14px); }
 #androidBayOverlay .ab-corp-mark {
-  width: 54px; height: 54px; display: grid; place-items: center;
+  width: clamp(36px,3.8vw,54px); height: clamp(36px,3.8vw,54px); display: grid; place-items: center;
   border: 1.5px solid var(--ab-amber);
   background: radial-gradient(circle at 50% 50%, rgba(245,166,35,.22), transparent 65%), #0a0905;
   box-shadow: inset 0 0 18px rgba(245,166,35,.25), 0 0 12px rgba(245,166,35,.1);
 }
+#androidBayOverlay .ab-corp-mark svg { width: clamp(22px,2.4vw,36px); height: clamp(22px,2.4vw,36px); }
 #androidBayOverlay .ab-corp-text { line-height: 1.05; }
-#androidBayOverlay .ab-corp-text .ab-l1 { font-size: 11px; letter-spacing: .32em; color: var(--ab-amber); text-shadow: 0 0 6px rgba(245,166,35,.6); }
-#androidBayOverlay .ab-corp-text .ab-l2 { font-size: 9px; letter-spacing: .28em; color: var(--ab-ink-dim); margin-top: 4px; }
-#androidBayOverlay .ab-corp-text .ab-l3 { font-size: 9px; letter-spacing: .28em; color: var(--ab-ink-dim); }
+#androidBayOverlay .ab-corp-text .ab-l1 { font-size: clamp(8px,0.85vw,11px); letter-spacing: .32em; color: var(--ab-amber); text-shadow: 0 0 6px rgba(245,166,35,.6); }
+#androidBayOverlay .ab-corp-text .ab-l2 { font-size: clamp(7px,0.72vw,9px); letter-spacing: .28em; color: var(--ab-ink-dim); margin-top: 4px; }
+#androidBayOverlay .ab-corp-text .ab-l3 { font-size: clamp(7px,0.72vw,9px); letter-spacing: .28em; color: var(--ab-ink-dim); }
 #androidBayOverlay .ab-title-block { text-align: center; }
 #androidBayOverlay .ab-title {
-  font-size: 28px; letter-spacing: .42em; color: var(--ab-amber);
+  font-size: clamp(14px,1.7vw,28px); letter-spacing: .42em; color: var(--ab-amber);
   text-shadow: 0 0 8px rgba(245,166,35,.55), 0 0 22px rgba(245,166,35,.18);
 }
-#androidBayOverlay .ab-subtitle { margin-top: 6px; font-size: 11px; letter-spacing: .5em; color: var(--ab-ink-dim); }
+#androidBayOverlay .ab-subtitle { margin-top: 6px; font-size: clamp(8px,0.85vw,11px); letter-spacing: .5em; color: var(--ab-ink-dim); }
 #androidBayOverlay .ab-subtitle .ab-sep { color: var(--ab-amber-soft); margin: 0 10px; }
 #androidBayOverlay .ab-hdr-right {
   display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
-  font-size: 11px; letter-spacing: .22em; color: var(--ab-ink-dim);
+  font-size: clamp(8px,0.85vw,11px); letter-spacing: .22em; color: var(--ab-ink-dim);
 }
 #androidBayOverlay .ab-clock {
-  color: var(--ab-amber); font-size: 14px; letter-spacing: .28em;
+  color: var(--ab-amber); font-size: clamp(10px,1.1vw,14px); letter-spacing: .28em;
   text-shadow: 0 0 6px rgba(245,166,35,.5);
 }
 #androidBayOverlay .ab-pill {
@@ -158,19 +159,19 @@
   background: linear-gradient(180deg, rgba(245,166,35,.04), transparent);
 }
 #androidBayOverlay .ab-ro {
-  padding: 10px 18px; border-right: 1px dashed rgba(245,166,35,.15);
+  padding: clamp(6px,0.9vh,10px) clamp(8px,1.2vw,18px); border-right: 1px dashed rgba(245,166,35,.15);
   display: flex; flex-direction: column; gap: 3px;
 }
 #androidBayOverlay .ab-ro:last-child { border-right: 0; }
-#androidBayOverlay .ab-ro .ab-k { font-size: 9px; letter-spacing: .34em; color: var(--ab-ink-dim); }
-#androidBayOverlay .ab-ro .ab-v { font-size: 14px; letter-spacing: .18em; color: var(--ab-ink); }
+#androidBayOverlay .ab-ro .ab-k { font-size: clamp(7px,0.72vw,9px); letter-spacing: .34em; color: var(--ab-ink-dim); }
+#androidBayOverlay .ab-ro .ab-v { font-size: clamp(10px,1.1vw,14px); letter-spacing: .18em; color: var(--ab-ink); }
 #androidBayOverlay .ab-ro .ab-v.ab-amber { color: var(--ab-amber); text-shadow: 0 0 6px rgba(245,166,35,.4); }
 #androidBayOverlay .ab-ro .ab-v.ab-green { color: var(--ab-green); text-shadow: 0 0 6px rgba(57,255,20,.4); }
 #androidBayOverlay .ab-ro .ab-v.ab-red   { color: var(--ab-red);   text-shadow: 0 0 6px rgba(255,59,59,.4); }
 
 /* ── Bay grid area ── */
 #androidBayOverlay .ab-bay {
-  position: relative; padding: 22px 40px; overflow: hidden;
+  position: relative; padding: clamp(10px,1.8vh,22px) clamp(14px,2.5vw,40px); overflow: hidden;
   min-height: 0; display: flex; flex-direction: column;
 }
 #androidBayOverlay .ab-bay-frame {
@@ -180,7 +181,7 @@
     linear-gradient(180deg, rgba(245,166,35,.025), transparent 30%),
     repeating-linear-gradient(0deg,  transparent 0 40px, rgba(245,166,35,.04) 40px 41px),
     repeating-linear-gradient(90deg, transparent 0 40px, rgba(245,166,35,.04) 40px 41px);
-  padding: 22px; display: flex; flex-direction: column; gap: 14px;
+  padding: clamp(10px,1.5vw,22px); display: flex; flex-direction: column; gap: clamp(6px,0.9vw,14px);
 }
 #androidBayOverlay .ab-bay-label-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -190,7 +191,7 @@
 #androidBayOverlay .ab-bay-label-row .ab-center { color: var(--ab-amber); letter-spacing: .5em; text-shadow: 0 0 6px rgba(245,166,35,.4); }
 #androidBayOverlay .ab-grid {
   display: grid; grid-template-columns: repeat(5,1fr); grid-template-rows: repeat(2,1fr);
-  gap: 18px; flex: 1 1 auto; min-height: 0;
+  gap: clamp(6px,1.2vw,18px); flex: 1 1 auto; min-height: 0;
 }
 
 /* ── Pod ── */
@@ -338,7 +339,7 @@
 /* ── Footer ── */
 #androidBayOverlay .ab-bay-footer {
   position: relative; z-index: 35; display: grid; grid-template-columns: 1fr auto 1fr;
-  align-items: center; gap: 24px; padding: 14px 40px 22px 40px;
+  align-items: center; gap: clamp(10px,1.5vw,24px); padding: clamp(8px,1.2vh,14px) clamp(14px,2.5vw,40px) clamp(10px,1.8vh,22px);
   border-top: 1px dashed rgba(245,166,35,.25);
   font-size: 11px; letter-spacing: .28em; color: var(--ab-ink-dim);
 }

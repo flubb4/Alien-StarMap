@@ -196,11 +196,19 @@
 #androidBayOverlay .ab-pod[data-state="occupied"][data-cond="damaged"] .ab-tint { background: radial-gradient(ellipse at 50% 35%, rgba(255,59,59,.28), transparent 70%); animation: ab-tintPulse 1.4s ease-in-out infinite; }
 
 /* State border glow */
-#androidBayOverlay .ab-pod::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 6; transition: box-shadow .25s ease; }
+#androidBayOverlay .ab-pod::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 6; }
 #androidBayOverlay .ab-pod[data-state="empty"]::after    { box-shadow: inset 0 0 0 1px rgba(120,140,160,.18); }
 #androidBayOverlay .ab-pod[data-state="occupied"]::after { box-shadow: inset 0 0 0 1px rgba(245,166,35,.4), inset 0 0 22px rgba(245,166,35,.18); }
 #androidBayOverlay .ab-pod[data-state="sealing"]::after  { box-shadow: inset 0 0 0 1px rgba(245,166,35,.95), inset 0 0 38px rgba(245,166,35,.5); animation: ab-sealGlow 2.4s ease-in-out infinite; will-change: opacity; }
 #androidBayOverlay .ab-pod[data-state="occupied"][data-cond="damaged"]::after { box-shadow: inset 0 0 0 1px rgba(255,59,59,.85), inset 0 0 30px rgba(255,59,59,.45); animation: ab-dmgGlow 1.8s ease-in-out infinite; will-change: opacity; }
+
+/* Hover glow — separate layer so transition runs on opacity (GPU), not box-shadow (repaint) */
+#androidBayOverlay .ab-hover-glow {
+  position: absolute; inset: 0; z-index: 7; pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(245,166,35,.7), inset 0 0 28px rgba(245,166,35,.35);
+  opacity: 0; transition: opacity .2s ease; will-change: opacity;
+}
+#androidBayOverlay .ab-pod[data-state="empty"]:hover .ab-hover-glow { opacity: 1; }
 
 /* HUD */
 #androidBayOverlay .ab-hud { position: absolute; inset: 0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; }
@@ -245,7 +253,6 @@
 /* Empty hover */
 #androidBayOverlay .ab-pod[data-state="empty"] { cursor: pointer; }
 #androidBayOverlay .ab-pod[data-state="empty"]:hover .ab-photo { opacity: .75; }
-#androidBayOverlay .ab-pod[data-state="empty"]:hover::after { box-shadow: inset 0 0 0 1px rgba(245,166,35,.7), inset 0 0 28px rgba(245,166,35,.35); }
 #androidBayOverlay .ab-hover-prompt {
   position: absolute; left: 0; right: 0; top: 50%; text-align: center;
   transform: translateY(-50%);

@@ -36,6 +36,7 @@ function renderPod(bayId) {
   if (state === 'empty') {
     return `<div class="ab-pod" data-state="empty" data-bay="${bayId}" tabindex="0">
       <div class="ab-photo"></div><div class="ab-tint"></div>
+      <div class="ab-hover-glow"></div>
       <div class="ab-hover-prompt">▸ SLOT AVAILABLE ◂<small>CLICK TO ASSIGN UNIT</small></div>
       <div class="ab-hud">
         <div class="ab-hud-top">

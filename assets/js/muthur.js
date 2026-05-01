@@ -203,14 +203,21 @@ function updateInputVisibility() {
 }
 
 async function sendGmQuestion() {
+  console.log('[MU/TH/UR] sendGmQuestion called, _bayId=', _bayId);
   if (!_bayId) return;
   const ta   = $('mtGmAskInput');
   const text = ta?.value.trim();
   if (!text) return;
   ta.value = '';
-  await push(ref(window.db, `muthur/sessions/${_bayId}/messages`), {
-    role: 'muthur', text, ts: Date.now(),
-  });
+  try {
+    await window._authReadyPromise;
+    await push(ref(window.db, `muthur/sessions/${_bayId}/messages`), {
+      role: 'muthur', text, ts: Date.now(),
+    });
+  } catch (err) {
+    console.error('[MU/TH/UR] sendGmQuestion error:', err);
+    if (ta) ta.value = text;
+  }
 }
 
 async function saveCaptain() {

@@ -3,8 +3,8 @@ import { ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.1
 // ── MU/TH/UR 6000 — Loyalty Analysis Terminal ────────────────────────────────
 
 const CFG          = window.APP_CONFIG || {};
-const WORKER_URL   = CFG.mutherWorkerUrl   || '';
-const WORKER_TOKEN = CFG.mutherWorkerToken || '';
+const WORKER_URL   = CFG.mutherWorkerUrl   || 'https://muthur-proxy.alienmuthur.workers.dev';
+const WORKER_TOKEN = CFG.mutherWorkerToken || 'Alien_muthur';
 
 let _bayId    = null;
 let _ctx      = null;

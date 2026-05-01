@@ -12,6 +12,7 @@ let _messages = [];    // {role, text, ts} sorted by ts
 let _unsubMsgs = null;
 let _unsubGm   = null;
 let _busy      = false;
+let _directive = '';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -45,11 +46,33 @@ window.closeMutherTerminal = function () {
   $('mutherOverlay').style.display = 'none';
   if (_unsubMsgs) { _unsubMsgs(); _unsubMsgs = null; }
   if (_unsubGm)   { _unsubGm();   _unsubGm   = null; }
-  _bayId    = null;
-  _ctx      = null;
-  _messages = [];
-  _busy     = false;
+  _bayId     = null;
+  _ctx       = null;
+  _messages  = [];
+  _busy      = false;
+  _directive = '';
 };
+
+// ── Player confirm overlay ────────────────────────────────────────────────────
+
+let _confirmBayId = null;
+let _confirmCtx   = null;
+
+window.openMutherConfirm = function (bayId, ctx) {
+  if (!bayId || !ctx) return;
+  _confirmBayId = bayId;
+  _confirmCtx   = ctx;
+  const unitEl = $('mtConfirmUnit');
+  if (unitEl) unitEl.textContent =
+    `${ctx.desig || 'UNIT'}  ·  CLASS: ${ctx.cls || '—'}  ·  BAY ${bayId}`;
+  $('mtConfirmOverlay').style.display = 'flex';
+};
+
+function closeMutherConfirm() {
+  $('mtConfirmOverlay').style.display = 'none';
+  _confirmBayId = null;
+  _confirmCtx   = null;
+}
 
 // ── Firebase ──────────────────────────────────────────────────────────────────
 
@@ -66,7 +89,13 @@ function subscribeSession(bayId) {
   if (window.isGM) {
     _unsubGm = onValue(ref(window.db, `muthur/gm/${bayId}`), snap => {
       const d = snap.val();
-      if (d) updateGmPanel(d.trustScore, d.flags, d.assessment);
+      if (d) {
+        updateGmPanel(d.trustScore, d.flags, d.assessment);
+        _directive = d.directive || '';
+        const ta = $('mtDirective');
+        if (ta && document.activeElement !== ta) ta.value = _directive;
+        updateDirectiveUI();
+      }
     });
   }
 }
@@ -78,7 +107,22 @@ function writeMsg(bayId, role, text) {
 }
 
 function writeGmData(bayId, score, flags, assessment) {
-  return set(ref(window.db, `muthur/gm/${bayId}`), { trustScore: score, flags, assessment });
+  return set(ref(window.db, `muthur/gm/${bayId}`), {
+    trustScore: score, flags, assessment, directive: _directive,
+  });
+}
+
+async function saveDirective() {
+  if (!_bayId) return;
+  const text = $('mtDirective')?.value.trim() || '';
+  _directive = text;
+  await set(ref(window.db, `muthur/gm/${_bayId}/directive`), text);
+  updateDirectiveUI();
+}
+
+function updateDirectiveUI() {
+  const active = $('mtDirectiveActive');
+  if (active) active.style.display = _directive ? 'block' : 'none';
 }
 
 // ── Render ─────────────────────────────────────────────────────────────────────
@@ -193,6 +237,14 @@ async function sendQuery() {
   appendLoading();
 
   try {
+    const sentDirective = _directive;
+    if (sentDirective) {
+      _directive = '';
+      if ($('mtDirective')) $('mtDirective').value = '';
+      await set(ref(window.db, `muthur/gm/${_bayId}/directive`), '');
+      updateDirectiveUI();
+    }
+
     const res = await fetch(WORKER_URL, {
       method: 'POST',
       headers: {
@@ -200,7 +252,8 @@ async function sendQuery() {
         'X-Worker-Token': WORKER_TOKEN,
       },
       body: JSON.stringify({
-        messages: apiMessages,
+        messages:  apiMessages,
+        directive: sentDirective,
         context: {
           desig: _ctx?.desig || '—',
           cls:   _ctx?.cls   || '—',
@@ -240,8 +293,20 @@ $('mtInput')?.addEventListener('keydown', e => {
 
 $('mtCloseBtn')?.addEventListener('click', window.closeMutherTerminal);
 
+$('mtDirectiveBtn')?.addEventListener('click', saveDirective);
+
+$('mtConfirmYes')?.addEventListener('click', () => {
+  const bayId = _confirmBayId;
+  const ctx   = _confirmCtx;
+  closeMutherConfirm();
+  window.openMutherTerminal(bayId, ctx);
+});
+
+$('mtConfirmNo')?.addEventListener('click', closeMutherConfirm);
+
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && $('mutherOverlay')?.style.display !== 'none') {
-    window.closeMutherTerminal();
+  if (e.key === 'Escape') {
+    if ($('mutherOverlay')?.style.display !== 'none') { window.closeMutherTerminal(); return; }
+    if ($('mtConfirmOverlay')?.style.display !== 'none') { closeMutherConfirm(); return; }
   }
 });

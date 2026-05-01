@@ -169,6 +169,70 @@
   border-top: 1px dashed rgba(245,166,35,.15); padding-top: 10px;
 }
 
+/* ── GM Directive ── */
+.mt-directive {
+  border-top: 1px dashed rgba(57,255,20,.15); padding-top: 14px; display: flex;
+  flex-direction: column; gap: 6px;
+}
+#mtDirective {
+  background: rgba(57,255,20,.04); border: 1px solid rgba(57,255,20,.2);
+  color: rgba(57,255,20,.8); font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: .12em; line-height: 1.5;
+  padding: 7px 9px; resize: none; outline: none; height: 64px;
+}
+#mtDirective::placeholder { color: rgba(57,255,20,.2); }
+#mtDirective:focus { border-color: rgba(57,255,20,.5); }
+#mtDirectiveBtn {
+  padding: 5px 10px; border: 1px solid rgba(57,255,20,.3);
+  background: rgba(57,255,20,.05); color: rgba(57,255,20,.7);
+  font-family: 'Share Tech Mono', monospace; font-size: 8px;
+  letter-spacing: .3em; cursor: pointer; align-self: flex-end;
+}
+#mtDirectiveBtn:hover { background: rgba(57,255,20,.12); color: #39ff14; }
+.mt-directive-active {
+  display: none; font-size: 8px; letter-spacing: .3em;
+  color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.5);
+  animation: mt-blink .9s step-end infinite;
+}
+
+/* ── Player confirm overlay ── */
+#mtConfirmOverlay {
+  position: fixed; inset: 0; z-index: 940;
+  background: rgba(0,0,0,.85);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Share Tech Mono', monospace;
+}
+.mt-confirm-panel {
+  width: min(400px, 88vw);
+  background: #020403; border: 1px solid rgba(57,255,20,.35);
+  box-shadow: 0 0 50px rgba(57,255,20,.08);
+  padding: 32px 28px; display: flex; flex-direction: column; gap: 20px;
+}
+.mt-confirm-title {
+  font-size: 9px; letter-spacing: .4em; color: #39ff14;
+  text-shadow: 0 0 8px rgba(57,255,20,.5);
+}
+.mt-confirm-unit {
+  font-size: 11px; letter-spacing: .18em; color: rgba(57,255,20,.6);
+}
+.mt-confirm-foot {
+  display: flex; gap: 10px; justify-content: flex-end;
+}
+#mtConfirmYes {
+  padding: 8px 18px; border: 1px solid rgba(57,255,20,.4);
+  background: rgba(57,255,20,.06); color: #39ff14;
+  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  letter-spacing: .28em; cursor: pointer;
+}
+#mtConfirmYes:hover { background: rgba(57,255,20,.14); }
+#mtConfirmNo {
+  padding: 8px 18px; border: 1px solid rgba(255,255,255,.1);
+  background: transparent; color: rgba(255,255,255,.3);
+  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  letter-spacing: .28em; cursor: pointer;
+}
+#mtConfirmNo:hover { color: rgba(255,255,255,.6); border-color: rgba(255,255,255,.25); }
+
 /* Interrogate button in manage modal */
 #mtInterrogateRow {
   border-top: 1px dashed rgba(57,255,20,.2);

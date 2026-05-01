@@ -180,7 +180,7 @@
   contain: layout paint; background: #000;
 }
 #androidBayOverlay .ab-pod .ab-photo {
-  position: absolute; inset: 0;
+  position: absolute; inset: 0; pointer-events: none;
   background-size: cover; background-position: center; background-repeat: no-repeat;
 }
 #androidBayOverlay .ab-pod[data-state="empty"]    .ab-photo { background-image: url("../images/pod-empty.jpg"); }
@@ -212,7 +212,7 @@
 
 /* HUD */
 #androidBayOverlay .ab-hud { position: absolute; inset: 0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; }
-#androidBayOverlay .ab-hud > * { pointer-events: auto; }
+/* HUD-Kinder bleiben pointer-events:none — nur .ab-pod selbst ist hit-testbar */
 #androidBayOverlay .ab-hud-top {
   display: flex; align-items: center; justify-content: space-between; gap: 6px;
   padding: 6px 8px;

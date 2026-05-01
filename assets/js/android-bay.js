@@ -331,9 +331,9 @@ function confirmAssign() {
           })
           .catch(err => console.error('[AndroidBay] occupied write FAILED:', bayId, err.code, err.message));
         delete sealTimers[bayId];
-      }, 4000);
+      }, 1500);
     });
-  }, 700);
+  }, 400);
 }
 
 // ── CRT Canvas (scanlines + vignette, drawn once on open) ────────────────────

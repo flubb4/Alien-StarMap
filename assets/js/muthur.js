@@ -14,6 +14,14 @@ const PROTOCOL_STEPS = [
   { key: 'sonstiges',      label: 'SONSTIGES'      },
 ];
 
+const PROTOCOL_QUESTIONS = [
+  'Wurde der Android vollständig versiegelt?',
+  'Ist das Datenfragment unbeschädigt und vollständig?',
+  'Ist das Datenfragment ungelesen und wurde es nicht kopiert?',
+  'Gab es Komplikationen während der Einsiegelung?',
+  'Sonstige Angaben zur Einheit oder zur Übergabe?',
+];
+
 let _bayId         = null;
 let _ctx           = null;
 let _messages      = [];
@@ -370,14 +378,23 @@ async function sendQuery() {
 
     // Protokoll-Schritt abschließen (Schritte 1–5)
     if (data.protocolStatus && _protocolStep >= 1 && _protocolStep <= 5) {
-      const stepKey  = PROTOCOL_STEPS[_protocolStep - 1].key;
-      const newItems = {
+      const answeredStep = _protocolStep;
+      const stepKey      = PROTOCOL_STEPS[answeredStep - 1].key;
+      const newItems     = {
         ..._protocolItems,
         [stepKey]: { status: data.protocolStatus, suspicious: !!data.protocolSuspicious },
       };
       await set(ref(window.db, `muthur/sessions/${_bayId}/protocolData`), {
-        step: _protocolStep + 1, items: newItems,
+        step: answeredStep + 1, items: newItems,
       });
+      // Nächste Frage automatisch als MU/TH/UR-Nachricht injizieren
+      if (answeredStep < 5) {
+        await push(ref(window.db, `muthur/sessions/${_bayId}/messages`), {
+          role: 'muthur',
+          text: `FRAGE ${answeredStep + 1}/5 — ${PROTOCOL_QUESTIONS[answeredStep]}`,
+          ts:   Date.now() + 1,
+        });
+      }
     }
 
     if (data.trustScore !== undefined) {

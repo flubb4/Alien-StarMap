@@ -224,11 +224,11 @@
 #androidBayOverlay .ab-pod[data-state="sealing"]::after  { box-shadow: inset 0 0 0 1px rgba(245,166,35,.95), inset 0 0 38px rgba(245,166,35,.5); animation: ab-sealGlow 2.4s ease-in-out infinite; will-change: opacity; }
 #androidBayOverlay .ab-pod[data-state="occupied"][data-cond="damaged"]::after { box-shadow: inset 0 0 0 1px rgba(255,59,59,.85), inset 0 0 30px rgba(255,59,59,.45); animation: ab-dmgGlow 1.8s ease-in-out infinite; will-change: opacity; }
 
-/* Hover glow — separate layer so transition runs on opacity (GPU), not box-shadow (repaint) */
+/* Hover glow — no will-change: layer only needed on hover, not worth 10 pre-allocated GPU textures */
 #androidBayOverlay .ab-hover-glow {
   position: absolute; inset: 0; z-index: 7; pointer-events: none;
   box-shadow: inset 0 0 0 1px rgba(245,166,35,.7), inset 0 0 28px rgba(245,166,35,.35);
-  opacity: 0; transition: opacity .2s ease; will-change: opacity;
+  opacity: 0; transition: opacity .2s ease;
 }
 /* hover-glow opacity now set via JS mouseenter/mouseleave — no CSS :hover recalc */
 
@@ -247,9 +247,9 @@
 #androidBayOverlay .ab-pod[data-state="empty"] .ab-id    { color: #aab4c0; text-shadow: none; }
 #androidBayOverlay .ab-pod[data-state="empty"] .ab-state { color: #7e8b9a; }
 #androidBayOverlay .ab-pod[data-state="empty"] .ab-led   { background: #3a4250; }
-#androidBayOverlay .ab-pod[data-state="occupied"] .ab-led  { background: var(--ab-amber); box-shadow: 0 0 8px var(--ab-amber); animation: ab-blink 2.4s infinite; }
+#androidBayOverlay .ab-pod[data-state="occupied"] .ab-led  { background: var(--ab-amber); box-shadow: 0 0 8px var(--ab-amber); animation: ab-blink 2.4s infinite; will-change: opacity; }
 #androidBayOverlay .ab-pod[data-state="occupied"] .ab-state { color: var(--ab-green); text-shadow: 0 0 4px rgba(57,255,20,.5); border-color: var(--ab-green); }
-#androidBayOverlay .ab-pod[data-state="sealing"]  .ab-led  { background: var(--ab-amber); box-shadow: 0 0 10px var(--ab-amber); animation: ab-fastBlink .6s infinite; }
+#androidBayOverlay .ab-pod[data-state="sealing"]  .ab-led  { background: var(--ab-amber); box-shadow: 0 0 10px var(--ab-amber); animation: ab-fastBlink .6s infinite; will-change: opacity; }
 #androidBayOverlay .ab-pod[data-state="sealing"]  .ab-state { color: var(--ab-amber); text-shadow: 0 0 5px rgba(245,166,35,.6); border-color: var(--ab-amber); }
 #androidBayOverlay .ab-pod[data-state="occupied"][data-cond="damaged"] .ab-state { color: var(--ab-red); border-color: var(--ab-red); text-shadow: 0 0 4px rgba(255,59,59,.5); }
 #androidBayOverlay .ab-hud-mid { flex: 1 1 auto; position: relative; }
@@ -374,7 +374,7 @@
   position: absolute; inset: 0; pointer-events: none; z-index: 30;
   width: 100%; height: 100%;
 }
-#androidBayOverlay .ab-flicker   { position: absolute; inset: 0; pointer-events: none; background: rgba(245,166,35,.015); animation: ab-flick 4s steps(2) infinite; z-index: 32; will-change: opacity; }
+#androidBayOverlay .ab-flicker   { position: absolute; inset: 0; pointer-events: none; background: rgba(245,166,35,.015); animation: ab-flick 4s steps(2) infinite; z-index: 32; }
 
 /* ── Assign modal (inside overlay) ── */
 #androidBayOverlay .ab-assign-overlay {

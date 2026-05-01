@@ -413,7 +413,7 @@
   display: flex; justify-content: space-between; align-items: center; gap: 14px;
 }
 #androidBayOverlay .ab-assign-foot .ab-foot-info { font-size: 9px; letter-spacing: .3em; color: var(--ab-ink-dim); }
-#androidBayOverlay .ab-assign-foot .ab-actions { display: flex; gap: 10px; }
+#androidBayOverlay .ab-assign-foot .ab-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 /* ===== Keyframes ===== */
 @keyframes ab-blink       { 0%,60%{opacity:1}80%,100%{opacity:.3} }

@@ -188,7 +188,7 @@ function openAssignModal(bayId) {
   pickedCond = null;
   const targetEl = document.getElementById('abTargetBay');
   if (targetEl) targetEl.textContent = bayId;
-  document.querySelectorAll('#androidBayOverlay .ab-cond-opt').forEach(x => x.classList.remove('ab-sel'));
+  document.querySelectorAll('#abAssignOverlay .ab-cond-opt').forEach(x => x.classList.remove('ab-sel'));
   renderRoster();
   updateConfirmBtn();
   document.getElementById('abAssignOverlay')?.classList.add('open');
@@ -362,7 +362,17 @@ renderGrid();
 
 window._authReadyPromise.then(() => {
   onValue(ref(window.db, 'android-bay/pods'), snap => {
-    pods = snap.val() || {};
+    const raw = snap.val() || {};
+    // Heal pods stuck in sealing state after a page reload (local timer was lost)
+    Object.entries(raw).forEach(([bayId, pod]) => {
+      if (pod?.state === 'sealing' && !sealTimers[bayId]) {
+        const healed = { ...pod, state: 'occupied' };
+        raw[bayId] = healed;
+        set(ref(window.db, `android-bay/pods/${bayId}`), healed)
+          .catch(err => console.error('[AndroidBay] heal error:', err));
+      }
+    });
+    pods = raw;
     renderGrid();
   });
 });

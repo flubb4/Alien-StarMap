@@ -335,6 +335,7 @@ document.getElementById('abAssignOverlay')?.addEventListener('click', e => {
 // ── Public API ────────────────────────────────────────────────────────────────
 
 window.openAndroidBay = function () {
+  if (window.pauseAlienHuntLoop) window.pauseAlienHuntLoop();
   const overlay = document.getElementById('androidBayOverlay');
   overlay.style.display = 'flex';
   overlay.querySelectorAll('*').forEach(el => el.style.animationPlayState = '');
@@ -350,4 +351,5 @@ window.closeAndroidBay = function () {
   overlay.style.display = 'none';
   closeAssignModal();
   stopClock();
+  if (window.resumeAlienHuntLoop) window.resumeAlienHuntLoop();
 };

@@ -157,12 +157,23 @@ let pendingSwapName = null;    // player name currently in swap-selection mode
 let alienHuntAnimFrame  = null;
 let alienHuntMoveStates = [];
 let alienHuntSavedPos   = {};  // positions saved between re-renders so aliens don't jump
+let _alienHuntLoop      = null; // reference to current animLoop closure for pause/resume
 
 function stopAlienHunt() {
   if (alienHuntAnimFrame) { cancelAnimationFrame(alienHuntAnimFrame); alienHuntAnimFrame = null; }
   alienHuntMoveStates.forEach(s => { alienHuntSavedPos[s.id] = { x:s.x, y:s.y, vx:s.vx, vy:s.vy }; });
   alienHuntMoveStates = [];
 }
+
+// Pause/resume for external overlays (e.g. Android Bay) — cancels RAF without clearing state
+window.pauseAlienHuntLoop = function() {
+  if (alienHuntAnimFrame) { cancelAnimationFrame(alienHuntAnimFrame); alienHuntAnimFrame = null; }
+};
+window.resumeAlienHuntLoop = function() {
+  if (_alienHuntLoop && !alienHuntAnimFrame && alienHuntMoveStates.length > 0) {
+    alienHuntAnimFrame = requestAnimationFrame(_alienHuntLoop);
+  }
+};
 
 window.selectInitStyle = function(btn) {
   document.querySelectorAll('.init-style-btn').forEach(b => b.classList.remove('active'));
@@ -557,6 +568,7 @@ function renderAlienHunt(area, data, now) {
     }
     alienHuntAnimFrame = requestAnimationFrame(animLoop);
   }
+  _alienHuntLoop = animLoop;
   alienHuntAnimFrame = requestAnimationFrame(animLoop);
 
   // ── Final order (shown when all claimed) ─────────────────────────────────

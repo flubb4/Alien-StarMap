@@ -9,5 +9,7 @@
 // ============================================================
 window.APP_CONFIG = {
   playerPasswordHash: "PUT_SHA256_HEX_HERE",
-  gmPasswordHash:     "PUT_SHA256_HEX_HERE"
+  gmPasswordHash:     "PUT_SHA256_HEX_HERE",
+  mutherWorkerUrl:    "https://muthur-proxy.alienmuthur.workers.dev",
+  mutherWorkerToken:  "PUT_WORKER_TOKEN_HERE"
 };

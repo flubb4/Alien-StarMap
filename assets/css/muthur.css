@@ -1,0 +1,186 @@
+/* ── MU/TH/UR 6000 — LOYALTY ANALYSIS TERMINAL ─────────────────────────── */
+
+#mutherOverlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 950;
+  background: rgba(0,0,0,.97);
+  align-items: center; justify-content: center;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.mt-panel {
+  width: min(960px, 92vw);
+  height: min(680px, 88vh);
+  background: #020403;
+  border: 1px solid rgba(57,255,20,.35);
+  box-shadow:
+    0 0 0 1px #000,
+    0 0 0 3px #010201,
+    0 0 50px rgba(57,255,20,.1),
+    inset 0 0 80px rgba(57,255,20,.03);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.mt-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid rgba(57,255,20,.2);
+  background: rgba(57,255,20,.03);
+  flex-shrink: 0;
+}
+.mt-title {
+  font-size: 10px; letter-spacing: .4em; color: #39ff14;
+  text-shadow: 0 0 8px rgba(57,255,20,.65);
+}
+.mt-subtitle {
+  font-size: 9px; letter-spacing: .28em; color: rgba(57,255,20,.45); margin-top: 5px;
+}
+.mt-close-btn {
+  padding: 6px 14px; border: 1px solid rgba(57,255,20,.3); background: transparent;
+  color: rgba(57,255,20,.55); font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: .3em; cursor: pointer; flex-shrink: 0;
+}
+.mt-close-btn:hover { background: rgba(57,255,20,.08); color: #39ff14; }
+
+/* ── Body ── */
+.mt-body {
+  flex: 1 1 auto; display: flex; min-height: 0;
+}
+
+/* ── Terminal (chat area) ── */
+.mt-terminal {
+  flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0;
+}
+
+.mt-log {
+  flex: 1 1 auto; overflow-y: auto; padding: 18px 22px;
+  scrollbar-width: thin; scrollbar-color: rgba(57,255,20,.25) transparent;
+}
+.mt-log::-webkit-scrollbar { width: 4px; }
+.mt-log::-webkit-scrollbar-thumb { background: rgba(57,255,20,.25); }
+
+.mt-line {
+  display: grid; grid-template-columns: 76px 18px 1fr;
+  gap: 6px; margin-bottom: 14px; align-items: start; line-height: 1.6;
+}
+.mt-who { font-size: 8px; letter-spacing: .3em; padding-top: 2px; white-space: nowrap; }
+.mt-sep { color: rgba(255,255,255,.2); }
+.mt-text { font-size: 11px; letter-spacing: .06em; }
+
+/* Operator line */
+.mt-op .mt-who  { color: #f5a623; }
+.mt-op .mt-text { color: rgba(245,166,35,.8); }
+
+/* MU/TH/UR line */
+.mt-mu .mt-who  { color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.5); }
+.mt-mu .mt-text {
+  color: rgba(57,255,20,.9); text-shadow: 0 0 4px rgba(57,255,20,.25);
+  white-space: pre-wrap;
+}
+
+/* Blinking cursor on loading line */
+.mt-cursor { animation: mt-blink .8s step-end infinite; }
+@keyframes mt-blink { 50% { opacity: 0; } }
+
+/* System messages (session start etc.) */
+.mt-system .mt-who  { color: rgba(57,255,20,.3); }
+.mt-system .mt-text { color: rgba(57,255,20,.35); font-size: 9px; letter-spacing: .28em; }
+
+/* ── Input row ── */
+.mt-input-row {
+  flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+  padding: 12px 22px; border-top: 1px solid rgba(57,255,20,.15);
+  background: rgba(57,255,20,.02);
+}
+.mt-prompt {
+  font-size: 9px; letter-spacing: .28em; color: #f5a623; white-space: nowrap;
+}
+#mtInput {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: 'Share Tech Mono', monospace; font-size: 11px;
+  color: rgba(245,166,35,.9); letter-spacing: .08em; caret-color: #f5a623;
+}
+#mtInput::placeholder { color: rgba(245,166,35,.25); }
+#mtSendBtn {
+  flex-shrink: 0; padding: 6px 16px; border: 1px solid rgba(57,255,20,.35);
+  background: rgba(57,255,20,.05); color: #39ff14;
+  font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: .3em; cursor: pointer;
+}
+#mtSendBtn:hover:not(:disabled) { background: rgba(57,255,20,.13); }
+#mtSendBtn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ── GM Panel ── */
+.mt-gm-panel {
+  display: none;
+  width: clamp(180px, 22vw, 240px); flex-shrink: 0;
+  flex-direction: column; gap: 18px;
+  padding: 18px 16px; overflow-y: auto;
+  border-left: 1px solid rgba(245,166,35,.15);
+  background: linear-gradient(180deg, rgba(245,166,35,.025), transparent 40%);
+}
+#mutherOverlay.mt-is-gm .mt-gm-panel { display: flex; }
+
+.mt-gm-title {
+  font-size: 8px; letter-spacing: .42em; color: #f5a623;
+  text-shadow: 0 0 6px rgba(245,166,35,.4);
+  border-bottom: 1px dashed rgba(245,166,35,.2); padding-bottom: 10px;
+}
+.mt-gm-label {
+  font-size: 8px; letter-spacing: .36em; color: rgba(245,166,35,.4); margin-bottom: 6px;
+}
+
+/* Trust score */
+.mt-score-val {
+  font-size: clamp(28px, 3.5vw, 40px); letter-spacing: .06em;
+  color: #f5a623; text-shadow: 0 0 12px rgba(245,166,35,.5);
+  transition: color .5s ease, text-shadow .5s ease;
+}
+.mt-score-val.mt-score-critical { color: #ff3b3b; text-shadow: 0 0 12px rgba(255,59,59,.6); }
+.mt-score-val.mt-score-warn     { color: #ff8c00; text-shadow: 0 0 12px rgba(255,140,0,.5); }
+.mt-score-val.mt-score-nominal  { color: #f5a623; text-shadow: 0 0 12px rgba(245,166,35,.5); }
+.mt-score-val.mt-score-clear    { color: #39ff14; text-shadow: 0 0 12px rgba(57,255,20,.6); }
+
+.mt-score-bar-wrap {
+  height: 3px; background: rgba(255,255,255,.07); margin-top: 8px;
+}
+.mt-score-bar {
+  height: 100%; width: 0; transition: width .6s ease, background .6s ease, box-shadow .6s ease;
+}
+.mt-score-bar.mt-score-clear    { background: #39ff14; box-shadow: 0 0 8px rgba(57,255,20,.7); }
+.mt-score-bar.mt-score-nominal  { background: #f5a623; box-shadow: 0 0 8px rgba(245,166,35,.6); }
+.mt-score-bar.mt-score-warn     { background: #ff8c00; box-shadow: 0 0 8px rgba(255,140,0,.6); }
+.mt-score-bar.mt-score-critical { background: #ff3b3b; box-shadow: 0 0 8px rgba(255,59,59,.7); }
+
+/* Flags */
+.mt-flags { display: flex; flex-direction: column; gap: 5px; }
+.mt-flag {
+  font-size: 8px; letter-spacing: .22em; padding: 4px 8px;
+  border: 1px solid rgba(255,59,59,.35); color: rgba(255,59,59,.85);
+  background: rgba(255,59,59,.05);
+}
+.mt-no-flags { font-size: 8px; letter-spacing: .28em; color: rgba(57,255,20,.35); }
+
+/* Assessment note */
+#mtAssessment {
+  font-size: 9px; letter-spacing: .15em; line-height: 1.55;
+  color: rgba(245,166,35,.55);
+  border-top: 1px dashed rgba(245,166,35,.15); padding-top: 10px;
+}
+
+/* Interrogate button in manage modal */
+#mtInterrogateRow {
+  border-top: 1px dashed rgba(57,255,20,.2);
+  padding-top: 10px; margin-top: 4px;
+}
+#abInterrogateBtn {
+  width: 100%;
+  color: #39ff14 !important;
+  border-color: rgba(57,255,20,.4) !important;
+  background: rgba(57,255,20,.04) !important;
+}
+#abInterrogateBtn:hover {
+  background: rgba(57,255,20,.1) !important;
+  box-shadow: 0 0 12px rgba(57,255,20,.2) !important;
+}

@@ -236,6 +236,8 @@ function openManageModal(bayId) {
     x.classList.toggle('ab-sel', x.dataset.cond === manageCond);
   });
   updateManageConfirmBtn();
+  const interrogateRow = document.getElementById('mtInterrogateRow');
+  if (interrogateRow) interrogateRow.style.display = window.isGM ? 'block' : 'none';
   document.getElementById('abManageOverlay')?.classList.add('open');
   document.querySelectorAll('#abGrid *').forEach(el => el.style.animationPlayState = 'paused');
 }
@@ -440,6 +442,8 @@ document.addEventListener('click', e => {
 // ESC / Enter
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    // Let muthur.js handle ESC when its overlay is open
+    if (document.getElementById('mutherOverlay')?.style.display !== 'none') return;
     const mo = document.getElementById('abManageOverlay');
     if (mo?.classList.contains('open')) { closeManageModal(); return; }
     const ao = document.getElementById('abAssignOverlay');
@@ -473,6 +477,13 @@ document.getElementById('abAssignOverlay')?.addEventListener('click', e => {
 document.getElementById('abManageConfirmBtn')?.addEventListener('click', confirmManage);
 document.getElementById('abManageCancelBtn')?.addEventListener('click', closeManageModal);
 document.getElementById('abReleaseBtn')?.addEventListener('click', releaseUnit);
+document.getElementById('abInterrogateBtn')?.addEventListener('click', () => {
+  if (!manageBay) return;
+  const p = pods[manageBay];
+  if (!p) return;
+  closeManageModal();
+  window.openMutherTerminal?.(manageBay, p);
+});
 document.getElementById('abManageOverlay')?.addEventListener('click', e => {
   if (e.target === document.getElementById('abManageOverlay')) closeManageModal();
 });

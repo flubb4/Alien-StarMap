@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="assets/css/black-veil.css">
 <link rel="stylesheet" href="assets/css/youtube-player.css">
 <link rel="stylesheet" href="assets/css/android-bay.css">
+<link rel="stylesheet" href="assets/css/muthur.css">
 <link rel="preload" href="assets/images/pod-empty.jpg"    as="image">
 <link rel="preload" href="assets/images/pod-occupied.jpg" as="image">
 <link rel="preload" href="assets/images/pod-sealing.jpg"  as="image">
@@ -1000,6 +1001,9 @@
         </div>
         <div class="ab-assign-foot">
           <div class="ab-foot-info">PRESS [ESC] TO ABORT</div>
+          <div id="mtInterrogateRow" style="display:none">
+            <button class="ab-btn" id="abInterrogateBtn" type="button">[ MU/TH/UR ] INTERROGATE UNIT</button>
+          </div>
           <div class="ab-actions">
             <button class="ab-btn ab-danger" id="abReleaseBtn" type="button">[ DEL ] RELEASE UNIT</button>
             <button class="ab-btn ab-ghost" id="abManageCancelBtn" type="button">[ ESC ] CANCEL</button>
@@ -1010,6 +1014,46 @@
     </div>
   </div>
 
+</div>
+
+<!-- MU/TH/UR TERMINAL -->
+<div id="mutherOverlay" style="display:none">
+  <div class="mt-panel">
+    <div class="mt-header">
+      <div>
+        <div class="mt-title">MU/TH/UR 6000 // LOYALTY ANALYSIS TERMINAL</div>
+        <div class="mt-subtitle">UNIT: — · CONTAINER: — · CLASS: —</div>
+      </div>
+      <button class="mt-close-btn" id="mtCloseBtn" type="button">[ CLOSE ]</button>
+    </div>
+    <div class="mt-body">
+      <div class="mt-terminal">
+        <div class="mt-log" id="mtLog"></div>
+        <div class="mt-input-row">
+          <span class="mt-prompt">OPERATOR ›</span>
+          <input id="mtInput" type="text" placeholder="ENTER QUERY..." autocomplete="off" spellcheck="false">
+          <button id="mtSendBtn" type="button">[ SEND ]</button>
+        </div>
+      </div>
+      <div class="mt-gm-panel">
+        <div class="mt-gm-title">// GM ANALYSIS</div>
+        <div>
+          <div class="mt-gm-label">W-Y TRUST INDEX</div>
+          <div class="mt-score-val" id="mtTrustVal">—</div>
+          <div class="mt-score-bar-wrap">
+            <div class="mt-score-bar" id="mtTrustBar"></div>
+          </div>
+        </div>
+        <div>
+          <div class="mt-gm-label">FLAGS</div>
+          <div class="mt-flags" id="mtFlagList">
+            <span class="mt-no-flags">// AWAITING ANALYSIS</span>
+          </div>
+        </div>
+        <div id="mtAssessment"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- WÜRFEL DÜRFEL OVERLAY -->
@@ -1072,6 +1116,7 @@
 <script type="module" src="assets/js/youtube-player.js"></script>
 <script type="module" src="assets/js/gm-broadcast.js"></script>
 <script type="module" src="assets/js/android-bay.js"></script>
+<script type="module" src="assets/js/muthur.js"></script>
 <!-- GM Broadcast management panel -->
 <div id="gm-broadcast-panel">
   <button class="gm-bc-close" type="button" onclick="closeGMBroadcast()">×</button>

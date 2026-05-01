@@ -346,14 +346,11 @@
 #androidBayOverlay .ab-btn[disabled] { opacity: .4; cursor: not-allowed; }
 #androidBayOverlay .ab-btn[disabled]:hover { background: rgba(245,166,35,.04); box-shadow: none; }
 
-/* CRT effects — scanlines+vignette merged into one layer */
-#androidBayOverlay .ab-scanlines {
+/* CRT canvas — scanlines+vignette drawn once via JS, never repainted */
+#abCRTCanvas {
   position: absolute; inset: 0; pointer-events: none; z-index: 30;
-  background:
-    radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%),
-    repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px);
+  width: 100%; height: 100%;
 }
-#androidBayOverlay .ab-vignette  { display: none; }
 #androidBayOverlay .ab-flicker   { position: absolute; inset: 0; pointer-events: none; background: rgba(245,166,35,.015); animation: ab-flick 4s steps(2) infinite; z-index: 32; will-change: opacity; }
 
 /* ── Assign modal (inside overlay) ── */

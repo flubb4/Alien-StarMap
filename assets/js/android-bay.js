@@ -212,6 +212,33 @@ function confirmAssign() {
   }
 }
 
+// ── CRT Canvas (scanlines + vignette, drawn once on open) ────────────────────
+
+function initCRTCanvas() {
+  const canvas = document.getElementById('abCRTCanvas');
+  if (!canvas) return;
+  const w = canvas.offsetWidth;
+  const h = canvas.offsetHeight;
+  if (!w || !h) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Scanlines — one dark horizontal pixel every 3px
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  for (let y = 0; y < h; y += 3) ctx.fillRect(0, y, w, 1);
+
+  // Vignette — radial gradient from transparent centre to dark edges
+  const outerR = Math.sqrt(w * w + h * h) / 2;
+  const vg = ctx.createRadialGradient(w / 2, h / 2, outerR * 0.55, w / 2, h / 2, outerR);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, w, h);
+}
+
 // ── Clock ─────────────────────────────────────────────────────────────────────
 
 let _clockBase = 0;
@@ -312,6 +339,7 @@ window.openAndroidBay = function () {
   placeRivets();
   startClock();
   renderGrid();
+  initCRTCanvas();
 };
 
 window.closeAndroidBay = function () {

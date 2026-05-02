@@ -29,12 +29,15 @@ let _unsubMsgs     = null;
 let _unsubGm       = null;
 let _unsubCaptain  = null;
 let _unsubProtocol = null;
+let _unsubStatus   = null;
 let _busy          = false;
 let _directive     = '';
 let _captainName   = '';
 let _protocolStep  = 0;
 let _protocolItems = {};
 let _stepFollowupCount = 0;   // wie viele Folgefragen wurden im aktuellen Schritt schon gestellt (max 2)
+let _currentStatus  = 'active';
+let _selectedRating = 0;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -80,15 +83,18 @@ function _localCloseMuthur() {
   if (_unsubGm)       { _unsubGm();       _unsubGm       = null; }
   if (_unsubCaptain)  { _unsubCaptain();  _unsubCaptain  = null; }
   if (_unsubProtocol) { _unsubProtocol(); _unsubProtocol = null; }
-  _bayId         = null;
-  _ctx           = null;
-  _messages      = [];
-  _busy          = false;
-  _directive     = '';
-  _captainName   = '';
-  _protocolStep  = 0;
-  _protocolItems = {};
+  if (_unsubStatus)   { _unsubStatus();   _unsubStatus   = null; }
+  _bayId          = null;
+  _ctx            = null;
+  _messages       = [];
+  _busy           = false;
+  _directive      = '';
+  _captainName    = '';
+  _protocolStep   = 0;
+  _protocolItems  = {};
   _stepFollowupCount = 0;
+  _currentStatus  = 'active';
+  _selectedRating = 0;
 }
 
 window.closeMutherTerminal = function () {
@@ -137,6 +143,7 @@ function subscribeSession(bayId) {
   if (_unsubGm)       { _unsubGm();       _unsubGm       = null; }
   if (_unsubCaptain)  { _unsubCaptain();  _unsubCaptain  = null; }
   if (_unsubProtocol) { _unsubProtocol(); _unsubProtocol = null; }
+  if (_unsubStatus)   { _unsubStatus();   _unsubStatus   = null; }
 
   _unsubMsgs = onValue(ref(window.db, `muthur/sessions/${bayId}/messages`), snap => {
     const raw = snap.val() || {};
@@ -160,6 +167,10 @@ function subscribeSession(bayId) {
     _protocolStep  = newStep;
     _protocolItems = d.items || {};
     updateProtocolUI();
+  });
+
+  _unsubStatus = onValue(ref(window.db, `muthur/sessions/${bayId}/status`), snap => {
+    handleStatusChange(snap.val() || 'active');
   });
 
   // Einmalig: Session initialisieren wenn neu
@@ -231,6 +242,7 @@ function updateInputVisibility() {
   const row = $('mtInput')?.closest('.mt-input-row');
   if (!row) return;
   const canWrite = !window._bayIsSpectator
+    && _currentStatus === 'active'
     && (window.isGM || (_captainName && window.myName === _captainName));
   row.style.display = canWrite ? 'flex' : 'none';
 }
@@ -342,9 +354,21 @@ function initPanel() {
   if (bar) { bar.style.width = '0'; bar.className = 'mt-score-bar'; }
   if (flg) flg.innerHTML = `<span class="mt-no-flags">// AUSSTEHEND</span>`;
   if (ass) ass.textContent = '';
-  _protocolItems = {};
-  _protocolStep  = 0;
+  _protocolItems  = {};
+  _protocolStep   = 0;
   _stepFollowupCount = 0;
+  _currentStatus  = 'active';
+  _selectedRating = 0;
+  const waiting   = $('mtWaiting');
+  const verdict   = $('mtVerdict');
+  const gmVerdict = $('mtGmVerdictPanel');
+  if (waiting)  waiting.style.display  = 'none';
+  if (verdict)  verdict.style.display  = 'none';
+  if (gmVerdict) gmVerdict.style.display = 'none';
+  if ($('mtVerdictSummaryInput')) $('mtVerdictSummaryInput').value = '';
+  document.querySelectorAll('.mt-rating-btn').forEach(btn => {
+    btn.classList.toggle('mt-rating-active', parseInt(btn.dataset.r, 10) === 0);
+  });
   updateProtocolUI();
 }
 
@@ -368,6 +392,81 @@ function updateGmPanel(score, flags, assessment) {
       : `<span class="mt-no-flags">// KEINE FLAGS</span>`;
   }
   if (ass) ass.textContent = assessment || '';
+}
+
+// ── Verdict ───────────────────────────────────────────────────────────────────
+
+function handleStatusChange(status) {
+  _currentStatus = status;
+  const waiting   = $('mtWaiting');
+  const verdict   = $('mtVerdict');
+  const gmVerdict = $('mtGmVerdictPanel');
+
+  if (status === 'pending_review') {
+    if (waiting)  waiting.style.display  = 'flex';
+    if (verdict)  verdict.style.display  = 'none';
+    if (gmVerdict) gmVerdict.style.display = window.isGM ? 'flex' : 'none';
+  } else if (status === 'verdict_ready') {
+    if (waiting)  waiting.style.display  = 'none';
+    if (gmVerdict) gmVerdict.style.display = 'none';
+    if (_bayId) {
+      get(ref(window.db, `muthur/sessions/${_bayId}/verdict`)).then(snap => {
+        const v = snap.val();
+        if (v) showVerdict(v.rating, v.summary);
+      });
+    }
+  } else {
+    if (waiting)  waiting.style.display  = 'none';
+    if (verdict)  verdict.style.display  = 'none';
+    if (gmVerdict) gmVerdict.style.display = 'none';
+  }
+  updateInputVisibility();
+}
+
+const VERDICT_TAGS = {
+  '-3': 'FEINDLICH',
+  '-2': 'VERDÄCHTIG',
+  '-1': 'UNZUVERLÄSSIG',
+   '0': 'NEUTRAL',
+   '1': 'AKZEPTABEL',
+   '2': 'BEFRIEDIGEND',
+   '3': 'AUSGEZEICHNET',
+};
+
+function showVerdict(rating, summary) {
+  const verdict   = $('mtVerdict');
+  const ratingEl  = $('mtVerdictRating');
+  const tagEl     = $('mtVerdictTag');
+  const summaryEl = $('mtVerdictSummary');
+  if (!verdict) return;
+
+  const cls = rating > 0 ? 'mt-rating-pos' : rating < 0 ? 'mt-rating-neg' : 'mt-rating-neu';
+  if (ratingEl) {
+    ratingEl.textContent = rating > 0 ? `+${rating}` : String(rating);
+    ratingEl.className   = `mt-verdict-rating ${cls}`;
+  }
+  if (tagEl) {
+    tagEl.textContent = VERDICT_TAGS[String(rating)] || 'UNBEKANNT';
+    tagEl.className   = `mt-verdict-tag ${cls}`;
+  }
+  if (summaryEl) summaryEl.textContent = summary || '';
+  verdict.style.display = 'flex';
+}
+
+function setRating(r) {
+  _selectedRating = r;
+  document.querySelectorAll('.mt-rating-btn').forEach(btn => {
+    btn.classList.toggle('mt-rating-active', parseInt(btn.dataset.r, 10) === r);
+  });
+}
+
+async function approveVerdict() {
+  if (!_bayId) return;
+  const summary = $('mtVerdictSummaryInput')?.value.trim() || '';
+  await set(ref(window.db, `muthur/sessions/${_bayId}/verdict`), {
+    rating: _selectedRating, summary,
+  });
+  await set(ref(window.db, `muthur/sessions/${_bayId}/status`), 'verdict_ready');
 }
 
 // ── Send ──────────────────────────────────────────────────────────────────────
@@ -446,13 +545,15 @@ async function sendQuery() {
         await set(ref(window.db, `muthur/sessions/${_bayId}/protocolData`), {
           step: answeredStep + 1, items: newItems,
         });
-        // Nächste Frage automatisch als MU/TH/UR-Nachricht injizieren
+        // Nächste Frage injizieren oder Protokoll abschließen
         if (answeredStep < 5) {
           await push(ref(window.db, `muthur/sessions/${_bayId}/messages`), {
             role: 'muthur',
             text: `FRAGE ${answeredStep + 1}/5 — ${PROTOCOL_QUESTIONS[answeredStep]}`,
             ts:   Date.now() + 1,
           });
+        } else {
+          await set(ref(window.db, `muthur/sessions/${_bayId}/status`), 'pending_review');
         }
         // _stepFollowupCount wird im protocolData-Listener auf 0 zurückgesetzt
       } else if (data.stepComplete === false) {
@@ -489,6 +590,11 @@ $('mtGmAskInput')?.addEventListener('keydown', e => {
 });
 $('mtCaptainBtn')?.addEventListener('click', saveCaptain);
 $('mtCaptainInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') saveCaptain(); });
+
+$('mtVerdictApproveBtn')?.addEventListener('click', approveVerdict);
+document.querySelectorAll('.mt-rating-btn').forEach(btn => {
+  btn.addEventListener('click', () => setRating(parseInt(btn.dataset.r, 10)));
+});
 
 $('mtConfirmYes')?.addEventListener('click', () => {
   const bayId = _confirmBayId;

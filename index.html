@@ -1051,6 +1051,17 @@
           <input id="mtInput" type="text" placeholder="ANFRAGE EINGEBEN..." autocomplete="off" spellcheck="false">
           <button id="mtSendBtn" type="button">[ SENDEN ]</button>
         </div>
+        <div class="mt-waiting" id="mtWaiting">
+          <div class="mt-waiting-icon">■ ■ ■</div>
+          <div class="mt-waiting-text">AUSWERTUNG WIRD BERECHNET</div>
+          <div class="mt-waiting-sub">// FREIGABE AUSSTEHEND — BITTE WARTEN</div>
+        </div>
+        <div class="mt-verdict" id="mtVerdict">
+          <div class="mt-verdict-header">// ABSCHLUSSBEWERTUNG //</div>
+          <div id="mtVerdictRating" class="mt-verdict-rating">0</div>
+          <div id="mtVerdictTag" class="mt-verdict-tag">NEUTRAL</div>
+          <div id="mtVerdictSummary" class="mt-verdict-summary"></div>
+        </div>
       </div>
       <div class="mt-side-panel">
         <div class="mt-protocol">
@@ -1090,6 +1101,20 @@
             <textarea id="mtDirective" placeholder="// Direktive für nächste Antwort..."></textarea>
             <button id="mtDirectiveBtn" type="button">[ INJIZIEREN ]</button>
             <div class="mt-directive-active" id="mtDirectiveActive">// DIREKTIVE AKTIV</div>
+          </div>
+          <div class="mt-gm-verdict" id="mtGmVerdictPanel" style="display:none">
+            <div class="mt-gm-label">// ABSCHLUSSBEWERTUNG</div>
+            <div class="mt-rating-sel">
+              <button class="mt-rating-btn" data-r="-3" type="button">-3</button>
+              <button class="mt-rating-btn" data-r="-2" type="button">-2</button>
+              <button class="mt-rating-btn" data-r="-1" type="button">-1</button>
+              <button class="mt-rating-btn mt-rating-active" data-r="0" type="button">0</button>
+              <button class="mt-rating-btn" data-r="1" type="button">+1</button>
+              <button class="mt-rating-btn" data-r="2" type="button">+2</button>
+              <button class="mt-rating-btn" data-r="3" type="button">+3</button>
+            </div>
+            <textarea id="mtVerdictSummaryInput" placeholder="// Zusammenfassung für Spieler..."></textarea>
+            <button id="mtVerdictApproveBtn" type="button">[ FREIGEBEN ]</button>
           </div>
         </div>
       </div>

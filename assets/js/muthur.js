@@ -211,6 +211,7 @@ FRAGE 1/5 — Wurde der Android vollständig versiegelt?`;
   set(ref(window.db, `muthur/sessions/${bayId}/protocolData`), {
     step: 1, items: {},
   });
+  set(ref(window.db, `muthur/sessions/${bayId}/captainName`), 'MAE');
 }
 
 function writeMsg(bayId, role, text) {

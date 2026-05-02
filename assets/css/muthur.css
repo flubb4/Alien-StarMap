@@ -390,6 +390,35 @@
   white-space: pre-wrap;
 }
 
+/* ── AI suggestion block in GM verdict panel ── */
+.mt-ai-suggestion {
+  flex-direction: column; gap: 6px;
+  padding: 10px 11px;
+  border: 1px solid rgba(57,255,20,.22);
+  background: rgba(57,255,20,.04);
+  margin-bottom: 4px;
+}
+.mt-ai-sug-label {
+  font-size: 8px; letter-spacing: .35em; color: rgba(57,255,20,.5); margin-bottom: 4px;
+}
+.mt-ai-sug-row { display: flex; align-items: baseline; gap: 10px; }
+.mt-ai-sug-rating {
+  font-size: 28px; letter-spacing: .04em; line-height: 1;
+  color: #f5a623; text-shadow: 0 0 10px rgba(245,166,35,.4);
+}
+.mt-ai-sug-rating.mt-rating-pos { color: #39ff14; text-shadow: 0 0 10px rgba(57,255,20,.5); }
+.mt-ai-sug-rating.mt-rating-neg { color: #ff3b3b; text-shadow: 0 0 10px rgba(255,59,59,.5); }
+.mt-ai-sug-rating.mt-rating-neu { color: #f5a623; text-shadow: 0 0 10px rgba(245,166,35,.4); }
+.mt-ai-sug-tag {
+  font-size: 9px; letter-spacing: .3em; color: rgba(57,255,20,.65);
+}
+.mt-ai-sug-tag.mt-rating-pos { color: rgba(57,255,20,.75); }
+.mt-ai-sug-tag.mt-rating-neg { color: rgba(255,59,59,.75); }
+.mt-ai-sug-summary {
+  font-size: 9px; letter-spacing: .06em; line-height: 1.7;
+  color: rgba(255,255,255,.4); margin-top: 2px;
+}
+
 /* ── GM Verdict panel ── */
 .mt-gm-verdict {
   border-top: 1px dashed rgba(245,166,35,.3); padding-top: 14px;

@@ -366,6 +366,8 @@ function initPanel() {
   if (verdict)  verdict.style.display  = 'none';
   if (gmVerdict) gmVerdict.style.display = 'none';
   if ($('mtVerdictSummaryInput')) $('mtVerdictSummaryInput').value = '';
+  const sugBox = $('mtAiSuggestion');
+  if (sugBox) sugBox.style.display = 'none';
   document.querySelectorAll('.mt-rating-btn').forEach(btn => {
     btn.classList.toggle('mt-rating-active', parseInt(btn.dataset.r, 10) === 0);
   });
@@ -406,6 +408,12 @@ function handleStatusChange(status) {
     if (waiting)  waiting.style.display  = 'flex';
     if (verdict)  verdict.style.display  = 'none';
     if (gmVerdict) gmVerdict.style.display = window.isGM ? 'flex' : 'none';
+    if (window.isGM && _bayId) {
+      get(ref(window.db, `muthur/gm/${_bayId}/verdictSuggestion`)).then(snap => {
+        const s = snap.val();
+        if (s) prefillVerdictSuggestion(s.rating, s.summary);
+      });
+    }
   } else if (status === 'verdict_ready') {
     if (waiting)  waiting.style.display  = 'none';
     if (gmVerdict) gmVerdict.style.display = 'none';
@@ -458,6 +466,30 @@ function setRating(r) {
   document.querySelectorAll('.mt-rating-btn').forEach(btn => {
     btn.classList.toggle('mt-rating-active', parseInt(btn.dataset.r, 10) === r);
   });
+}
+
+function prefillVerdictSuggestion(rating, summary) {
+  const sugBox    = $('mtAiSuggestion');
+  const sugRating = $('mtAiSugRating');
+  const sugTag    = $('mtAiSugTag');
+  const sugSum    = $('mtAiSugSummary');
+
+  if (sugRating) {
+    sugRating.textContent = rating > 0 ? `+${rating}` : String(rating);
+    const cls = rating > 0 ? 'mt-rating-pos' : rating < 0 ? 'mt-rating-neg' : 'mt-rating-neu';
+    sugRating.className = `mt-ai-sug-rating ${cls}`;
+  }
+  if (sugTag) {
+    sugTag.textContent = VERDICT_TAGS[String(rating)] || 'UNBEKANNT';
+    const cls = rating > 0 ? 'mt-rating-pos' : rating < 0 ? 'mt-rating-neg' : 'mt-rating-neu';
+    sugTag.className = `mt-ai-sug-tag ${cls}`;
+  }
+  if (sugSum)  sugSum.textContent = summary || '';
+  if (sugBox)  sugBox.style.display = 'flex';
+
+  setRating(rating);
+  const ta = $('mtVerdictSummaryInput');
+  if (ta && !ta.value.trim()) ta.value = summary || '';
 }
 
 async function approveVerdict() {
@@ -553,6 +585,12 @@ async function sendQuery() {
             ts:   Date.now() + 1,
           });
         } else {
+          if (data.verdictRating !== undefined) {
+            await set(ref(window.db, `muthur/gm/${_bayId}/verdictSuggestion`), {
+              rating:  data.verdictRating,
+              summary: data.verdictSummary || '',
+            });
+          }
           await set(ref(window.db, `muthur/sessions/${_bayId}/status`), 'pending_review');
         }
         // _stepFollowupCount wird im protocolData-Listener auf 0 zurückgesetzt

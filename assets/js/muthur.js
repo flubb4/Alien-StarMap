@@ -446,9 +446,17 @@ function showVerdict(rating, summary) {
   const ratingEl  = $('mtVerdictRating');
   const tagEl     = $('mtVerdictTag');
   const summaryEl = $('mtVerdictSummary');
+  const unitLine  = $('mtVerdictUnitLine');
+  const bar       = $('mtVerdictBar');
+  const footer    = $('mtVerdictFooter');
   if (!verdict) return;
 
   const cls = rating > 0 ? 'mt-rating-pos' : rating < 0 ? 'mt-rating-neg' : 'mt-rating-neu';
+
+  if (unitLine && _ctx) {
+    unitLine.textContent =
+      `EINHEIT: ${_ctx.desig || '—'}  ·  CONTAINER: ${_bayId || '—'}  ·  KLASSE: ${_ctx.cls || '—'}`;
+  }
   if (ratingEl) {
     ratingEl.textContent = rating > 0 ? `+${rating}` : String(rating);
     ratingEl.className   = `mt-verdict-rating ${cls}`;
@@ -457,7 +465,25 @@ function showVerdict(rating, summary) {
     tagEl.textContent = VERDICT_TAGS[String(rating)] || 'UNBEKANNT';
     tagEl.className   = `mt-verdict-tag ${cls}`;
   }
+  if (bar) {
+    const pct = Math.round(((rating + 3) / 6) * 100);
+    bar.style.width    = `${pct}%`;
+    bar.className      = `mt-verdict-bar ${cls}`;
+  }
   if (summaryEl) summaryEl.textContent = summary || '';
+  if (footer) {
+    const FOOTER_LABELS = {
+      '-3': 'STATUS: FEINDLICH — EINSATZ ABGEBROCHEN',
+      '-2': 'STATUS: VERDÄCHTIG — WEITERE PRÜFUNG ERFORDERLICH',
+      '-1': 'STATUS: UNZUVERLÄSSIG — EINGESCHRÄNKTE FREIGABE',
+       '0': 'STATUS: NEUTRAL — BEDINGTE FREIGABE',
+       '1': 'STATUS: AKZEPTABEL — FREIGEGEBEN',
+       '2': 'STATUS: BEFRIEDIGEND — FREIGEGEBEN',
+       '3': 'STATUS: AUSGEZEICHNET — VOLLE FREIGABE',
+    };
+    footer.textContent = FOOTER_LABELS[String(rating)] || 'STATUS: AUSWERTUNG ABGESCHLOSSEN';
+    footer.className   = `mt-verdict-footer ${cls}`;
+  }
   verdict.style.display = 'flex';
 }
 

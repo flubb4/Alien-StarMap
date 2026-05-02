@@ -406,11 +406,13 @@ window.closeImageBoard = function() {
   ibRectStart     = null;
   ibLastPos       = null;
   ibCoverDataUrl  = null;
+  var cc = ibGetCoverCanvas();
+  if (cc) cc.style.opacity = '';
   var fogPanel = document.getElementById('ibFogPanel');
   if (fogPanel) fogPanel.style.display = 'none';
   var fogMenuBtn = document.getElementById('ibFogMenuBtn');
   if (fogMenuBtn) fogMenuBtn.classList.remove('active');
-  ['ibFogBrushBtn','ibRevealBrushBtn','ibFogRectBtn','ibRevealRectBtn'].forEach(function(id) {
+  ['ibFogBrushBtn','ibRevealBrushBtn','ibFogRectBtn','ibRevealRectBtn','ibFogPreviewBtn'].forEach(function(id) {
     document.getElementById(id)?.classList.remove('active');
   });
   ibAllCoverStrokes = [];
@@ -509,6 +511,15 @@ window.ibClearAllFog = function() {
   remove(window.ibFogCoverRef);
   ibAllCoverStrokes = []; ibLocalCoverStrokes.clear();
   ibRedrawFogLayer();
+};
+
+window.ibToggleFogPreview = function() {
+  if (!window.isGM) return;
+  var cc  = ibGetCoverCanvas();
+  var btn = document.getElementById('ibFogPreviewBtn');
+  var active = cc.style.opacity === '0.35';
+  cc.style.opacity = active ? '' : '0.35';
+  if (btn) btn.classList.toggle('active', !active);
 };
 
 window.ibFillFog = function() {

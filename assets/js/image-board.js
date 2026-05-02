@@ -9,9 +9,13 @@ var ibLocalStrokes = new Set();
 var ibIsOpen       = false;   // tracks whether overlay is currently visible
 var ibLastOpenTs   = 0;       // timestamp of last GM-triggered open
 var ibRevealMode   = false;
+var ibFogMode      = false;
 var ibCoverDataUrl = null;
 var ibLocalRevealStrokes = new Set();
 var ibAllRevealStrokes   = [];
+var ibLocalFogStrokes    = new Set();
+var ibAllFogStrokes      = [];
+var ibStaged             = false;
 var ibStressUnsub        = null;
 
 function ibGetOverlay()      { return document.getElementById('imageBoardOverlay'); }
@@ -32,9 +36,7 @@ function ibResizeCanvas() {
   cc.width  = wrap.clientWidth;
   cc.height = wrap.clientHeight;
   if (window.mtResize) window.mtResize();
-  ibDrawCoverImage(function() {
-    ibAllRevealStrokes.forEach(function(s) { ibDrawRevealStroke(s); });
-  });
+  ibRedrawFogLayer();
 }
 
 function ibDrawCoverImage(callback) {
@@ -47,6 +49,58 @@ function ibDrawCoverImage(callback) {
   var img = new Image();
   img.onload = function() { ctx.drawImage(img, r.x, r.y, r.w, r.h); if (callback) callback(); };
   img.src = ibCoverDataUrl;
+}
+
+function ibDrawFogStroke(stroke) {
+  if (!stroke) return;
+  var cc = ibGetCoverCanvas();
+  var ctx = ibGetCoverCtx();
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  if (stroke.fill) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, cc.width, cc.height);
+    ctx.restore();
+    return;
+  }
+  if (!stroke.points || stroke.points.length < 1) { ctx.restore(); return; }
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = stroke.size || 40;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  var first = ibToPix(stroke.points[0].nx, stroke.points[0].ny);
+  ctx.moveTo(first.px, first.py);
+  for (var i = 1; i < stroke.points.length; i++) {
+    var p = ibToPix(stroke.points[i].nx, stroke.points[i].ny);
+    ctx.lineTo(p.px, p.py);
+  }
+  if (stroke.points.length === 1) ctx.lineTo(first.px + 0.1, first.py);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function ibRedrawFogLayer(callback) {
+  var cc = ibGetCoverCanvas();
+  var ctx = ibGetCoverCtx();
+  ctx.clearRect(0, 0, cc.width, cc.height);
+  function afterCover() {
+    ibAllFogStrokes.forEach(function(s)    { ibDrawFogStroke(s);    });
+    ibAllRevealStrokes.forEach(function(s) { ibDrawRevealStroke(s); });
+    if (callback) callback();
+  }
+  if (ibCoverDataUrl) {
+    var r = ibImageRect();
+    if (!r) { afterCover(); return; }
+    var img = new Image();
+    img.onload = function() {
+      ctx.drawImage(img, r.x, r.y, r.w, r.h);
+      afterCover();
+    };
+    img.src = ibCoverDataUrl;
+  } else {
+    afterCover();
+  }
 }
 
 function ibDrawRevealStroke(stroke) {
@@ -125,11 +179,27 @@ function ibStopListeners() {
   ibListeners = [];
 }
 
+function ibUpdateStagedUI() {
+  var stagingOverlay = document.getElementById('ibStagingOverlay');
+  var stagingBanner  = document.getElementById('ibStagingBanner');
+  var releaseBtn     = document.getElementById('ibReleaseBtn');
+  if (window.isGM) {
+    if (stagingOverlay) stagingOverlay.style.display = 'none';
+    if (stagingBanner)  stagingBanner.style.display  = ibStaged ? 'flex' : 'none';
+    if (releaseBtn)     releaseBtn.style.display      = ibStaged ? ''     : 'none';
+  } else {
+    if (stagingOverlay) stagingOverlay.style.display = ibStaged ? 'flex' : 'none';
+    if (stagingBanner)  stagingBanner.style.display  = 'none';
+  }
+}
+
 function ibStartListeners() {
   ibStopListeners();
   ibLocalStrokes.clear();
   ibLocalRevealStrokes.clear();
+  ibLocalFogStrokes.clear();
   ibAllRevealStrokes = [];
+  ibAllFogStrokes    = [];
 
   // Image data
   ibListeners.push(onValue(ref(window.db, 'session/imageBoard/imageData'), function(snap) {
@@ -176,7 +246,7 @@ function ibStartListeners() {
     ibCoverDataUrl = data || null;
     ibAllRevealStrokes = [];
     ibLocalRevealStrokes.clear();
-    ibDrawCoverImage();
+    ibRedrawFogLayer();
   }));
 
   // Reveal strokes added
@@ -194,8 +264,34 @@ function ibStartListeners() {
     if (!snap.exists()) {
       ibAllRevealStrokes = [];
       ibLocalRevealStrokes.clear();
-      ibDrawCoverImage();
+      ibRedrawFogLayer();
     }
+  }));
+
+  // Fog strokes added
+  ibListeners.push(onChildAdded(window.ibFogStrokesRef, function(snap) {
+    if (!ibIsOpen) return;
+    var stroke = snap.val();
+    ibAllFogStrokes.push(stroke);
+    if (ibLocalFogStrokes.has(snap.key)) return;
+    ibRedrawFogLayer(); // full redraw to keep fog below reveals
+  }));
+
+  // Fog strokes cleared
+  ibListeners.push(onValue(window.ibFogStrokesRef, function(snap) {
+    if (!ibIsOpen) return;
+    if (!snap.exists()) {
+      ibAllFogStrokes = [];
+      ibLocalFogStrokes.clear();
+      ibRedrawFogLayer();
+    }
+  }));
+
+  // Staged flag
+  ibListeners.push(onValue(ref(window.db, 'session/imageBoard/staged'), function(snap) {
+    if (!ibIsOpen) return;
+    ibStaged = !!snap.val();
+    ibUpdateStagedUI();
   }));
 }
 
@@ -316,11 +412,21 @@ window.closeImageBoard = function() {
   ibDrawing = false;
   ibCurrentStroke = null;
   ibRevealMode = false;
+  ibFogMode    = false;
   ibCoverDataUrl = null;
   ibAllRevealStrokes = [];
   ibLocalRevealStrokes.clear();
+  ibAllFogStrokes = [];
+  ibLocalFogStrokes.clear();
+  ibStaged = false;
   var revBtn = document.getElementById('ibRevealBtn');
-  if (revBtn) { revBtn.classList.remove('active'); revBtn.textContent = '👁 Reveal'; }
+  if (revBtn) { revBtn.classList.remove('active'); revBtn.textContent = '👁 Aufdecken'; }
+  var fogBtn = document.getElementById('ibFogBtn');
+  if (fogBtn) { fogBtn.classList.remove('active'); }
+  var stagingOverlay = document.getElementById('ibStagingOverlay');
+  if (stagingOverlay) stagingOverlay.style.display = 'none';
+  var stagingBanner = document.getElementById('ibStagingBanner');
+  if (stagingBanner) stagingBanner.style.display = 'none';
   // GM closing resets the open flag so late-joining players don't auto-open
   if (window.isGM) set(ref(window.db, 'session/imageBoard/open'), 0);
 };
@@ -359,9 +465,15 @@ window.handleImageSelect = function(input) {
       off.width = w; off.height = h;
       off.getContext('2d').drawImage(srcImg, 0, 0, w, h);
       var compressed = off.toDataURL('image/jpeg', 0.92);
-      remove(window.ibStrokesRef).then(function() {
-        set(ref(window.db, 'session/imageBoard/imageData'), compressed);
-      });
+      remove(window.ibStrokesRef);
+      remove(window.ibFogStrokesRef);
+      remove(window.ibRevealStrokesRef);
+      ibAllFogStrokes = []; ibLocalFogStrokes.clear();
+      ibAllRevealStrokes = []; ibLocalRevealStrokes.clear();
+      set(ref(window.db, 'session/imageBoard/imageData'), compressed);
+      set(ref(window.db, 'session/imageBoard/staged'), true);
+      ibStaged = true;
+      ibUpdateStagedUI();
       if (window.mtClearAll) window.mtClearAll();
     };
     srcImg.src = e.target.result;
@@ -379,10 +491,49 @@ window.ibToggleEraser = function() {
 
 window.ibToggleRevealMode = function() {
   ibRevealMode = !ibRevealMode;
+  if (ibRevealMode) { ibFogMode = false; document.getElementById('ibFogBtn')?.classList.remove('active'); }
   var btn = document.getElementById('ibRevealBtn');
   btn.classList.toggle('active', ibRevealMode);
-  btn.textContent = ibRevealMode ? '✏ Draw' : '👁 Reveal';
+  btn.textContent = ibRevealMode ? '✏ Draw' : '👁 Aufdecken';
   ibGetCanvas().style.cursor = ibRevealMode ? 'cell' : (ibErasing ? 'cell' : 'crosshair');
+};
+
+window.ibToggleFogMode = function() {
+  ibFogMode = !ibFogMode;
+  if (ibFogMode) {
+    ibRevealMode = false;
+    var revBtn = document.getElementById('ibRevealBtn');
+    if (revBtn) { revBtn.classList.remove('active'); revBtn.textContent = '👁 Aufdecken'; }
+  }
+  var fogBtn = document.getElementById('ibFogBtn');
+  fogBtn?.classList.toggle('active', ibFogMode);
+  ibGetCanvas().style.cursor = ibFogMode ? 'crosshair' : (ibErasing ? 'cell' : 'crosshair');
+};
+
+window.ibFillFog = function() {
+  if (!window.isGM) return;
+  var cc = ibGetCoverCanvas();
+  var ctx = ibGetCoverCtx();
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, cc.width, cc.height);
+  ctx.restore();
+  var stroke = { fill: true };
+  var newRef = push(window.ibFogStrokesRef, stroke);
+  ibLocalFogStrokes.add(newRef.key);
+  ibAllFogStrokes.push(stroke);
+  // Full fog clears all reveal strokes
+  remove(window.ibRevealStrokesRef);
+  ibAllRevealStrokes = [];
+  ibLocalRevealStrokes.clear();
+};
+
+window.ibRelease = function() {
+  if (!window.isGM) return;
+  remove(ref(window.db, 'session/imageBoard/staged'));
+  ibStaged = false;
+  ibUpdateStagedUI();
 };
 
 window.handleCoverImageSelect = function(input) {
@@ -443,6 +594,15 @@ function ibPointerDown(e) {
     cctx.lineWidth = ibCurrentStroke.size; cctx.lineCap = 'round'; cctx.lineJoin = 'round';
     cctx.beginPath(); cctx.moveTo(pos.x, pos.y);
     cctx.restore();
+  } else if (ibFogMode) {
+    ibCurrentStroke = { size: size * 5, fog: true, points: [ibToNorm(pos.x, pos.y)] };
+    var fcctx = ibGetCoverCtx();
+    fcctx.save();
+    fcctx.globalCompositeOperation = 'source-over';
+    fcctx.strokeStyle = '#000';
+    fcctx.lineWidth = ibCurrentStroke.size; fcctx.lineCap = 'round'; fcctx.lineJoin = 'round';
+    fcctx.beginPath(); fcctx.moveTo(pos.x, pos.y);
+    fcctx.restore();
   } else {
     var color = document.getElementById('ibColorPicker').value;
     ibCurrentStroke = { color: color, size: size, erase: ibErasing, points: [ibToNorm(pos.x, pos.y)] };
@@ -472,6 +632,15 @@ function ibPointerMove(e) {
     cctx.beginPath(); cctx.moveTo(prev.px, prev.py); cctx.lineTo(pos.x, pos.y);
     cctx.stroke();
     cctx.restore();
+  } else if (ibCurrentStroke.fog) {
+    var fcctx = ibGetCoverCtx();
+    fcctx.save();
+    fcctx.globalCompositeOperation = 'source-over';
+    fcctx.strokeStyle = '#000';
+    fcctx.lineWidth = ibCurrentStroke.size; fcctx.lineCap = 'round'; fcctx.lineJoin = 'round';
+    fcctx.beginPath(); fcctx.moveTo(prev.px, prev.py); fcctx.lineTo(pos.x, pos.y);
+    fcctx.stroke();
+    fcctx.restore();
   } else {
     var ctx = ibGetCtx();
     ctx.save();
@@ -490,7 +659,11 @@ function ibPointerUp() {
   var stroke = ibCurrentStroke;
   ibCurrentStroke = null;
   if (stroke.points.length === 0) return;
-  if (stroke.reveal) {
+  if (stroke.fog) {
+    var newFogRef = push(window.ibFogStrokesRef, stroke);
+    ibLocalFogStrokes.add(newFogRef.key);
+    ibAllFogStrokes.push(stroke);
+  } else if (stroke.reveal) {
     var newRevRef = push(window.ibRevealStrokesRef, stroke);
     ibLocalRevealStrokes.add(newRevRef.key);
   } else {

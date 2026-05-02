@@ -815,7 +815,10 @@
       <button class="ib-tool-btn" id="ibEraserBtn" onclick="ibToggleEraser()">⬜ Eraser</button>
       <button class="ib-tool-btn ib-gm-only" onclick="document.getElementById('imageBoardFileInput').click()">📁 Load Image</button>
       <button class="ib-tool-btn ib-gm-only" onclick="document.getElementById('coverImageFileInput').click()">🗺 Load Cover</button>
-      <button class="ib-tool-btn ib-gm-only" id="ibRevealBtn" onclick="ibToggleRevealMode()">👁 Reveal</button>
+      <button class="ib-tool-btn ib-gm-only" id="ibFogBtn" onclick="ibToggleFogMode()">🌫 Fog</button>
+      <button class="ib-tool-btn ib-gm-only" id="ibRevealBtn" onclick="ibToggleRevealMode()">👁 Aufdecken</button>
+      <button class="ib-tool-btn ib-gm-only" onclick="ibFillFog()">⬛ Alles vernebeln</button>
+      <button class="ib-tool-btn ib-gm-only ib-release-btn" id="ibReleaseBtn" onclick="ibRelease()" style="display:none">✅ FREIGEBEN</button>
       <button class="ib-tool-btn" id="mtTrackerBtn" onclick="mtToggleTrackerPlacement()">📡 Motion Tracker</button>
       <button class="ib-tool-btn ib-gm-only" id="mtBlipBtn" onclick="mtToggleBlipMode()">🎯 Blip setzen</button>
       <button class="ib-tool-btn ib-gm-only" id="mtClearBtn" onclick="mtClearTrackers()" title="Rechtsklick auf einen Tracker löscht ihn einzeln">🗑 Tracker leeren</button>
@@ -837,6 +840,10 @@
       </div>
     </div>
   </div>
+  <div class="ib-staging-banner" id="ibStagingBanner" style="display:none">
+    ⚠ STAGING MODE — Spieler sehen das Bild noch nicht
+    <button class="ib-tool-btn ib-release-btn" onclick="ibRelease()">✅ FREIGEBEN</button>
+  </div>
   <div class="ib-canvas-wrap" id="ibCanvasWrap">
     <img id="ibImage" alt="">
     <canvas id="ibCoverCanvas"></canvas>
@@ -845,6 +852,11 @@
     <div id="mtHint"></div>
     <div class="ib-placeholder" id="ibPlaceholder">Waiting for GM to load an image...</div>
     <div id="ibStressPanel" class="ib-gm-only"></div>
+    <div class="ib-staging-overlay" id="ibStagingOverlay" style="display:none">
+      <div class="ib-staging-icon">■ ■ ■</div>
+      <div class="ib-staging-text">KARTE WIRD VORBEREITET</div>
+      <div class="ib-staging-sub">// FREIGABE AUSSTEHEND — BITTE WARTEN</div>
+    </div>
   </div>
 </div>
 

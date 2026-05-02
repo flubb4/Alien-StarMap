@@ -30,6 +30,7 @@ window.db = db;
 window.ibStrokesRef       = ref(db, 'session/imageBoard/strokes');
 window.ibRevealStrokesRef = ref(db, 'session/imageBoard/revealStrokes');
 window.ibCoverDataRef     = ref(db, 'session/imageBoard/coverImageData');
+window.ibFogStrokesRef    = ref(db, 'session/imageBoard/fogStrokes');
 window.mtTrackersRef      = ref(db, 'session/imageBoard/motionTrackers');
 window.mtBlipsRef         = ref(db, 'session/imageBoard/motionBlips');
 

@@ -143,3 +143,40 @@
   .ib-confirm-btns { display:flex; gap:12px; justify-content:center; }
   .ib-confirm-yes { border-color:var(--accent2) !important; color:var(--accent2) !important; }
   .ib-confirm-yes:hover { background:rgba(255,68,0,0.12) !important; }
+
+  /* ── Fog of War ── */
+  .ib-staging-banner {
+    flex-shrink: 0;
+    align-items: center; justify-content: center; gap: 14px;
+    padding: 7px 18px;
+    background: rgba(245,166,35,.1);
+    border-bottom: 1px solid rgba(245,166,35,.3);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: .22em; color: #f5a623;
+  }
+  .ib-staging-overlay {
+    position: absolute; inset: 0; z-index: 20;
+    background: rgba(0,0,0,.96);
+    flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .ib-staging-icon {
+    font-size: 18px; letter-spacing: .5em; color: rgba(57,255,20,.45);
+    animation: ib-fog-blink 1.1s step-end infinite;
+  }
+  .ib-staging-text {
+    font-size: 11px; letter-spacing: .42em; color: rgba(57,255,20,.75);
+    text-shadow: 0 0 12px rgba(57,255,20,.3);
+  }
+  .ib-staging-sub {
+    font-size: 9px; letter-spacing: .26em; color: rgba(57,255,20,.35);
+  }
+  @keyframes ib-fog-blink { 50% { opacity: 0; } }
+
+  .ib-release-btn {
+    border-color: rgba(57,255,20,.5) !important;
+    color: #39ff14 !important;
+    background: rgba(57,255,20,.08) !important;
+    text-shadow: 0 0 6px rgba(57,255,20,.4);
+  }
+  .ib-release-btn:hover { background: rgba(57,255,20,.16) !important; }

@@ -460,3 +460,106 @@
 @keyframes ab-rise        { 0%{transform:translateY(20%) scale(.9);opacity:0} 30%{opacity:.85} 100%{transform:translateY(-90%) scale(1.4);opacity:0} }
 @keyframes ab-sweep       { 0%{transform:translateY(0)}100%{transform:translateY(800px)} }
 @keyframes ab-scrub       { from{transform:translateX(-3px)}to{transform:translateX(8px)} }
+
+/* ── Spectator banner (top of bay overlay) ─────────────────────────────────── */
+#abDriverBanner {
+  position: absolute;
+  top: 18px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  padding: 8px 24px;
+  background: rgba(80,140,200,.18);
+  border: 1px solid rgba(122,184,212,.55);
+  box-shadow: 0 0 16px rgba(122,184,212,.25), inset 0 0 12px rgba(122,184,212,.12);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px; letter-spacing: .35em;
+  color: #a8d4e8;
+  text-shadow: 0 0 6px rgba(122,184,212,.5);
+  pointer-events: none;
+}
+
+/* ── Spectator pointer-event lockout ───────────────────────────────────────── */
+body.bay-spectator #abGrid,
+body.bay-spectator #abAssignOverlay .ab-assign-modal,
+body.bay-spectator #abManageOverlay .ab-manage-modal { pointer-events: none; }
+body.bay-spectator #abCloseBtn { pointer-events: auto; }
+body.bay-spectator #abGrid .ab-pod { cursor: default; }
+body.bay-spectator .ab-hover-prompt small { visibility: hidden; }
+
+/* ── Invite modal (full-screen, fires on map view) ─────────────────────────── */
+#abInviteOverlay {
+  position: fixed; inset: 0;
+  z-index: 1000;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,.85);
+  font-family: 'Share Tech Mono', monospace;
+}
+.ab-invite-modal {
+  position: relative;
+  width: min(560px, 90vw);
+  padding: 36px 40px;
+  background: linear-gradient(180deg, #0d0e0a, #07080a);
+  border: 1px solid #2a2410;
+  box-shadow:
+    0 0 0 6px #0a0a0a,
+    0 0 0 8px #1a1306,
+    0 30px 80px rgba(0,0,0,.85),
+    inset 0 0 80px rgba(245,166,35,.05);
+  color: #e8d6a8;
+  text-align: center;
+}
+.ab-invite-eyebrow {
+  font-size: 9px; letter-spacing: .4em;
+  color: rgba(245,166,35,.55);
+  border-bottom: 1px dashed rgba(245,166,35,.25);
+  padding-bottom: 12px;
+}
+.ab-invite-title {
+  margin-top: 16px;
+  font-size: 22px; letter-spacing: .42em;
+  color: #f5a623;
+  text-shadow: 0 0 10px rgba(245,166,35,.5), 0 0 24px rgba(245,166,35,.18);
+}
+.ab-invite-body {
+  margin: 22px 0 28px;
+  font-size: 13px; letter-spacing: .22em;
+  line-height: 1.8;
+  color: #c8b890;
+}
+.ab-invite-body #abInviteName {
+  color: #f5a623;
+  text-shadow: 0 0 6px rgba(245,166,35,.5);
+  letter-spacing: .35em;
+}
+.ab-invite-sub {
+  display: inline-block; margin-top: 8px;
+  font-size: 9px; letter-spacing: .35em;
+  color: rgba(232,214,168,.45);
+}
+.ab-invite-actions {
+  display: flex; justify-content: center; gap: 14px;
+  border-top: 1px dashed rgba(245,166,35,.25);
+  padding-top: 22px;
+}
+.ab-invite-actions .ab-btn {
+  padding: 10px 22px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px; letter-spacing: .32em;
+  border: 1px solid #b87a14;
+  background: rgba(245,166,35,.04);
+  color: #f5a623;
+  cursor: pointer;
+}
+.ab-invite-actions .ab-btn:hover {
+  background: rgba(245,166,35,.12);
+  box-shadow: 0 0 12px rgba(245,166,35,.25);
+}
+.ab-invite-actions .ab-btn-primary {
+  background: rgba(245,166,35,.16);
+  color: #fff5d6;
+  border-color: #f5a623;
+}
+.ab-invite-actions .ab-btn.ab-ghost {
+  color: rgba(232,214,168,.5);
+  border-color: #3a3422;
+}

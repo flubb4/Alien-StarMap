@@ -42,7 +42,8 @@ const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-window.openMutherTerminal = function (bayId, ctx) {
+window.openMutherTerminal = function (bayId, ctx, opts = {}) {
+  const asSpectator = !!opts.spectator;
   _bayId    = bayId;
   _ctx      = ctx;
   _messages = [];
@@ -51,6 +52,7 @@ window.openMutherTerminal = function (bayId, ctx) {
   if (!overlay) return;
 
   overlay.classList.toggle('mt-is-gm', !!window.isGM);
+  overlay.classList.toggle('mt-is-spectator', asSpectator);
 
   const sub = overlay.querySelector('.mt-subtitle');
   if (sub) sub.textContent =
@@ -58,13 +60,21 @@ window.openMutherTerminal = function (bayId, ctx) {
 
   initPanel();
   overlay.style.display = 'flex';
-  $('mtInput')?.focus();
+  if (!asSpectator) $('mtInput')?.focus();
 
   window._authReadyPromise.then(() => subscribeSession(bayId));
+
+  if (!asSpectator && window._isBayDriver?.()) {
+    window._writeBaySession?.('muthurOpen', { bay: bayId, ctx });
+  }
 };
 
-window.closeMutherTerminal = function () {
-  $('mutherOverlay').style.display = 'none';
+function _localCloseMuthur() {
+  const overlay = $('mutherOverlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+    overlay.classList.remove('mt-is-spectator');
+  }
   if (_unsubMsgs)     { _unsubMsgs();     _unsubMsgs     = null; }
   if (_unsubGm)       { _unsubGm();       _unsubGm       = null; }
   if (_unsubCaptain)  { _unsubCaptain();  _unsubCaptain  = null; }
@@ -77,6 +87,24 @@ window.closeMutherTerminal = function () {
   _captainName   = '';
   _protocolStep  = 0;
   _protocolItems = {};
+}
+
+window.closeMutherTerminal = function () {
+  const wasDriver = !!window._isBayDriver?.();
+  _localCloseMuthur();
+  if (wasDriver) window._writeBaySession?.('muthurOpen', null);
+};
+
+// Called by android-bay session listener to mirror driver's open/close
+window._bayMuthurSync = function (state) {
+  const overlay = $('mutherOverlay');
+  if (!overlay) return;
+  const isOpen = overlay.style.display !== 'none';
+  if (state && !isOpen) {
+    window.openMutherTerminal(state.bay, state.ctx, { spectator: true });
+  } else if (!state && isOpen) {
+    _localCloseMuthur();
+  }
 };
 
 // ── Player confirm overlay ────────────────────────────────────────────────────
@@ -198,7 +226,8 @@ function updateDirectiveUI() {
 function updateInputVisibility() {
   const row = $('mtInput')?.closest('.mt-input-row');
   if (!row) return;
-  const canWrite = window.isGM || (_captainName && window.myName === _captainName);
+  const canWrite = !window._bayIsSpectator
+    && (window.isGM || (_captainName && window.myName === _captainName));
   row.style.display = canWrite ? 'flex' : 'none';
 }
 

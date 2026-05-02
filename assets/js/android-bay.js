@@ -1,4 +1,4 @@
-import { ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, onValue, set, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ── Android Storage Bay ───────────────────────────────────────────────────────
 
@@ -33,6 +33,15 @@ const sealTimers = {};
 const _lastSig = {};
 let _gridDelegated = false;
 let _bayUnsub = null;
+
+// ── Session sync (everyone sees the same view) ───────────────────────────────
+const SESSION_PATH = 'android-bay/session';
+let _session       = null;     // last-seen session snapshot
+let _isDriver      = false;    // I opened this session
+let _isSpectator   = false;    // I joined someone else's session
+let _sessionUnsub  = null;
+let _dismissedTs   = 0;        // last invite-ts I declined
+let _onDisconnectRef = null;   // driver-only: pending Firebase cleanup if tab dies
 
 const log = (...a) => { if (window.DEBUG) console.log(...a); };
 
@@ -204,6 +213,7 @@ function bindPodHover(el) {
 
 function bindGridDelegation(grid) {
   grid.addEventListener('click', e => {
+    if (_isSpectator) return;
     const pod = e.target.closest('.ab-pod');
     if (!pod || !grid.contains(pod)) return;
     const state = pod.dataset.state;
@@ -216,6 +226,7 @@ function bindGridDelegation(grid) {
     }
   });
   grid.addEventListener('keydown', e => {
+    if (_isSpectator) return;
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const pod = e.target.closest('.ab-pod');
     if (!pod || !grid.contains(pod)) return;
@@ -243,10 +254,12 @@ function renderRoster() {
     </div>`).join('');
   listEl.querySelectorAll('.ab-android-opt').forEach(opt => {
     opt.addEventListener('click', () => {
+      if (_isSpectator) return;
       listEl.querySelectorAll('.ab-android-opt').forEach(x => x.classList.remove('ab-sel'));
       opt.classList.add('ab-sel');
       pickedAndroid = { desig: opt.dataset.desig, cls: opt.dataset.cls };
       updateConfirmBtn();
+      writeSessionField('assignModal/picked', pickedAndroid);
     });
   });
 }
@@ -257,6 +270,7 @@ function updateConfirmBtn() {
 }
 
 function openAssignModal(bayId) {
+  if (_isSpectator) return;
   openBay = bayId;
   pickedAndroid = null;
   pickedCond = null;
@@ -269,18 +283,22 @@ function openAssignModal(bayId) {
   // Freeze pod animations while modal is open
   document.getElementById('abGrid')?.style.setProperty('animation-play-state', 'paused');
   document.querySelectorAll('#abGrid *').forEach(el => el.style.animationPlayState = 'paused');
+  writeSessionField('assignModal', { bay: bayId, picked: null, cond: null });
 }
 
 function closeAssignModal() {
+  if (_isSpectator) return;
   document.getElementById('abAssignOverlay')?.classList.remove('open');
   openBay = null;
   // Resume pod animations
   document.querySelectorAll('#abGrid *').forEach(el => el.style.animationPlayState = '');
+  writeSessionField('assignModal', null);
 }
 
 // ── Manage modal ──────────────────────────────────────────────────────────────
 
 function openManageModal(bayId) {
+  if (_isSpectator) return;
   manageBay = bayId;
   const p = pods[bayId];
   manageCond = p?.cond || 'intact';
@@ -296,13 +314,16 @@ function openManageModal(bayId) {
   if (interrogateRow) interrogateRow.style.display = window.isGM ? 'block' : 'none';
   document.getElementById('abManageOverlay')?.classList.add('open');
   document.querySelectorAll('#abGrid *').forEach(el => el.style.animationPlayState = 'paused');
+  writeSessionField('manageModal', { bay: bayId, cond: manageCond });
 }
 
 function closeManageModal() {
+  if (_isSpectator) return;
   document.getElementById('abManageOverlay')?.classList.remove('open');
   manageBay = null;
   manageCond = null;
   document.querySelectorAll('#abGrid *').forEach(el => el.style.animationPlayState = '');
+  writeSessionField('manageModal', null);
 }
 
 function updateManageConfirmBtn() {
@@ -311,6 +332,7 @@ function updateManageConfirmBtn() {
 }
 
 function confirmManage() {
+  if (_isSpectator) return;
   if (!manageBay || !manageCond) return;
   const bayId = manageBay;
   const p = pods[bayId];
@@ -327,6 +349,7 @@ function confirmManage() {
 }
 
 function releaseUnit() {
+  if (_isSpectator) return;
   if (!manageBay) return;
   const bayId = manageBay;
   closeManageModal();
@@ -340,6 +363,7 @@ function releaseUnit() {
 }
 
 function confirmAssign() {
+  if (_isSpectator) return;
   if (!openBay || !pickedAndroid || !pickedCond) return;
   const bayId = openBay;
   const android = { ...pickedAndroid };
@@ -489,16 +513,198 @@ function detachBayListener() {
   _bayUnsub = null;
 }
 
+// ── Session sync helpers ─────────────────────────────────────────────────────
+
+function writeSessionField(field, val) {
+  if (!_isDriver) return Promise.resolve();
+  return window._authReadyPromise.then(() =>
+    set(ref(window.db, `${SESSION_PATH}/${field}`), val)
+  ).catch(err => console.error('[AndroidBay] session write failed:', field, err));
+}
+
+function writeFullSession(obj) {
+  if (!_isDriver) return Promise.resolve();
+  return window._authReadyPromise.then(() =>
+    set(ref(window.db, SESSION_PATH), obj)
+  ).then(armOnDisconnect)
+   .catch(err => console.error('[AndroidBay] session write failed:', err));
+}
+
+function armOnDisconnect() {
+  if (_onDisconnectRef) return;
+  _onDisconnectRef = onDisconnect(ref(window.db, SESSION_PATH));
+  _onDisconnectRef.remove().catch(err =>
+    console.error('[AndroidBay] onDisconnect arm failed:', err));
+}
+
+function disarmOnDisconnect() {
+  const handle = _onDisconnectRef;
+  _onDisconnectRef = null;
+  if (!handle) return Promise.resolve();
+  return handle.cancel().catch(err =>
+    console.error('[AndroidBay] onDisconnect cancel failed:', err));
+}
+
+function clearSession() {
+  return disarmOnDisconnect()
+    .then(() => window._authReadyPromise)
+    .then(() => set(ref(window.db, SESSION_PATH), null))
+    .catch(err => console.error('[AndroidBay] session clear failed:', err));
+}
+
+window._writeBaySession = writeSessionField;
+window._isBayDriver = () => _isDriver;
+
+function startSessionListener() {
+  if (_sessionUnsub) return;
+  window._authReadyPromise.then(() => {
+    if (_sessionUnsub) return;
+    _sessionUnsub = onValue(ref(window.db, SESSION_PATH), snap => {
+      const next = snap.val();
+      handleSessionChange(_session, next);
+      _session = next;
+    });
+  });
+}
+
+function handleSessionChange(prev, next) {
+  // Don't react until user is actually logged in (window.myId only valid post-login)
+  if (!window._loggedIn) return;
+  // Session ended (driver closed)
+  if (!next) {
+    hideInviteModal();
+    if (_isSpectator) {
+      _isSpectator = false;
+      window._bayIsSpectator = false;
+      document.body.classList.remove('bay-spectator');
+      doLocalClose();
+    }
+    return;
+  }
+  // Own session — no action needed (we're driving, UI is already in sync)
+  if (next.driverId === window.myId) return;
+
+  const isNew = !prev || prev.ts !== next.ts;
+
+  // New session, I'm not joined → offer invite (unless I dismissed this exact one)
+  if (isNew && !_isSpectator && next.ts > _dismissedTs) {
+    showInviteModal(next);
+  }
+
+  // Already joined → mirror remote UI changes
+  if (_isSpectator) applyRemoteSession(next);
+}
+
+function showInviteModal(s) {
+  const overlay = document.getElementById('abInviteOverlay');
+  const nameEl  = document.getElementById('abInviteName');
+  if (!overlay) return;
+  if (nameEl) nameEl.textContent = (s.driver || '—').toUpperCase();
+  overlay.style.display = 'flex';
+}
+
+function hideInviteModal() {
+  const overlay = document.getElementById('abInviteOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function acceptInvite() {
+  hideInviteModal();
+  window.openAndroidBay({ spectator: true });
+}
+
+function declineInvite() {
+  if (_session) _dismissedTs = _session.ts;
+  hideInviteModal();
+}
+
+function applyRemoteSession(s) {
+  if (!s) return;
+  // Mirror assign modal
+  if (s.assignModal) spectatorOpenAssign(s.assignModal);
+  else               spectatorCloseAssign();
+  // Mirror manage modal
+  if (s.manageModal) spectatorOpenManage(s.manageModal);
+  else               spectatorCloseManage();
+  // Muthur sync delegated to muthur.js
+  window._bayMuthurSync?.(s.muthurOpen || null);
+}
+
+function spectatorOpenAssign(state) {
+  const overlay = document.getElementById('abAssignOverlay');
+  if (!overlay) return;
+  const targetEl = document.getElementById('abTargetBay');
+  if (targetEl) targetEl.textContent = state.bay || '—';
+  // Render roster so we can highlight what driver picked
+  renderRoster();
+  document.querySelectorAll('#abAndroidList .ab-android-opt').forEach(el => {
+    el.classList.toggle('ab-sel', !!state.picked && el.dataset.desig === state.picked.desig);
+  });
+  document.querySelectorAll('#abAssignOverlay .ab-cond-opt').forEach(el => {
+    el.classList.toggle('ab-sel', el.dataset.cond === state.cond);
+  });
+  overlay.classList.add('open');
+}
+
+function spectatorCloseAssign() {
+  document.getElementById('abAssignOverlay')?.classList.remove('open');
+}
+
+function spectatorOpenManage(state) {
+  const overlay = document.getElementById('abManageOverlay');
+  if (!overlay) return;
+  const p = pods[state.bay];
+  const bayEl   = document.getElementById('abManageBay');
+  const desigEl = document.getElementById('abManageDesig');
+  if (bayEl)   bayEl.textContent   = state.bay;
+  if (desigEl) desigEl.textContent = p?.desig || '—';
+  document.querySelectorAll('#abManageOverlay .ab-cond-opt').forEach(el => {
+    el.classList.toggle('ab-sel', el.dataset.cond === state.cond);
+  });
+  // Spectators never see Interrogate row (GM-only)
+  const interrogateRow = document.getElementById('mtInterrogateRow');
+  if (interrogateRow) interrogateRow.style.display = 'none';
+  overlay.classList.add('open');
+}
+
+function spectatorCloseManage() {
+  document.getElementById('abManageOverlay')?.classList.remove('open');
+}
+
+// Pure local close (no Firebase write). Used by both driver-end and spectator-end paths.
+function doLocalClose() {
+  detachBayListener();
+  const overlay = document.getElementById('androidBayOverlay');
+  if (overlay) {
+    overlay.querySelectorAll('*').forEach(el => el.style.animationPlayState = 'paused');
+    overlay.style.display = 'none';
+  }
+  document.getElementById('abAssignOverlay')?.classList.remove('open');
+  document.getElementById('abManageOverlay')?.classList.remove('open');
+  openBay = null;
+  manageBay = null;
+  pickedAndroid = null;
+  pickedCond = null;
+  manageCond = null;
+  stopClock();
+  if (window.resumeAlienHuntLoop) window.resumeAlienHuntLoop();
+  if (document.getElementById('mutherOverlay')?.style.display !== 'none') {
+    window.closeMutherTerminal?.();
+  }
+}
+
 // ── Event listeners ───────────────────────────────────────────────────────────
 
 // Condition select
 document.addEventListener('click', e => {
+  if (_isSpectator) return;
   const aOpt = e.target.closest('#abAssignOverlay .ab-cond-opt');
   if (aOpt) {
     document.querySelectorAll('#abAssignOverlay .ab-cond-opt').forEach(x => x.classList.remove('ab-sel'));
     aOpt.classList.add('ab-sel');
     pickedCond = aOpt.dataset.cond;
     updateConfirmBtn();
+    writeSessionField('assignModal/cond', pickedCond);
     return;
   }
   const mOpt = e.target.closest('#abManageOverlay .ab-cond-opt');
@@ -507,6 +713,7 @@ document.addEventListener('click', e => {
     mOpt.classList.add('ab-sel');
     manageCond = mOpt.dataset.cond;
     updateManageConfirmBtn();
+    writeSessionField('manageModal/cond', manageCond);
   }
 });
 
@@ -515,6 +722,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     // Let muthur.js handle ESC when its overlay is open
     if (document.getElementById('mutherOverlay')?.style.display !== 'none') return;
+    if (_isSpectator) {
+      const overlay = document.getElementById('androidBayOverlay');
+      if (overlay?.style.display !== 'none') window.closeAndroidBay();
+      return;
+    }
     const mo = document.getElementById('abManageOverlay');
     if (mo?.classList.contains('open')) { closeManageModal(); return; }
     const ao = document.getElementById('abAssignOverlay');
@@ -524,6 +736,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.key === 'Enter') {
+    if (_isSpectator) return;
     const mo = document.getElementById('abManageOverlay');
     if (mo?.classList.contains('open')) {
       const btn = document.getElementById('abManageConfirmBtn');
@@ -562,7 +775,26 @@ document.getElementById('abManageOverlay')?.addEventListener('click', e => {
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-window.openAndroidBay = function () {
+window.openAndroidBay = function (opts = {}) {
+  // Auto-spectator: if another driver is already running a session, join as spectator
+  // instead of overwriting it. Prevents two-driver races on the header-button path.
+  let asSpectator = !!opts.spectator;
+  if (!asSpectator && _session && _session.driverId && _session.driverId !== window.myId) {
+    asSpectator = true;
+  }
+  _isDriver    = !asSpectator;
+  _isSpectator = asSpectator;
+  window._bayIsSpectator = _isSpectator;
+  document.body.classList.toggle('bay-spectator', _isSpectator);
+
+  const banner = document.getElementById('abDriverBanner');
+  if (banner) {
+    banner.textContent = asSpectator
+      ? `VIEWING ${(_session?.driver || 'GM').toUpperCase()}'S SESSION`
+      : '';
+    banner.style.display = asSpectator ? 'flex' : 'none';
+  }
+
   if (window.pauseAlienHuntLoop) window.pauseAlienHuntLoop();
   const overlay = document.getElementById('androidBayOverlay');
   overlay.style.display = 'flex';
@@ -572,15 +804,37 @@ window.openAndroidBay = function () {
   fullRenderGrid();
   initCRTCanvas();
   attachBayListener();
+
+  if (_isDriver) {
+    const newSession = {
+      driver:      window.myName || '—',
+      driverId:    window.myId   || '—',
+      ts:          Date.now(),
+      bayOpen:     true,
+      assignModal: null,
+      manageModal: null,
+      muthurOpen:  null,
+    };
+    _session = newSession;
+    writeFullSession(newSession);
+  } else if (_session) {
+    applyRemoteSession(_session);
+  }
 };
 
 window.closeAndroidBay = function () {
-  detachBayListener();
-  const overlay = document.getElementById('androidBayOverlay');
-  overlay.querySelectorAll('*').forEach(el => el.style.animationPlayState = 'paused');
-  overlay.style.display = 'none';
-  closeAssignModal();
-  closeManageModal();
-  stopClock();
-  if (window.resumeAlienHuntLoop) window.resumeAlienHuntLoop();
+  const wasDriver = _isDriver;
+  _isDriver    = false;
+  _isSpectator = false;
+  window._bayIsSpectator = false;
+  document.body.classList.remove('bay-spectator');
+
+  doLocalClose();
+
+  if (wasDriver) clearSession();
 };
+
+// Wire invite buttons + start global session listener
+document.getElementById('abInviteJoinBtn')?.addEventListener('click', acceptInvite);
+document.getElementById('abInviteDismissBtn')?.addEventListener('click', declineInvite);
+startSessionListener();

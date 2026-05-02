@@ -851,6 +851,8 @@
 <!-- ANDROID STORAGE BAY OVERLAY -->
 <div id="androidBayOverlay">
 
+  <div id="abDriverBanner" style="display:none"></div>
+
   <div class="ab-backdrop-text">WEYLAND-YUTANI CORP // SYNTHETIC LOGISTICS // CLEARANCE DELTA
 &gt; subsystem: HANGAR / DECK 4-C / ANDROID STORAGE
 &gt; rendering pod array...........[ OK ]
@@ -1013,6 +1015,22 @@
     </div>
   </div>
 
+</div>
+
+<!-- ANDROID BAY — JOIN INVITE -->
+<div id="abInviteOverlay" style="display:none">
+  <div class="ab-invite-modal">
+    <div class="ab-invite-eyebrow">// INCOMING REQUEST · WEYLAND-YUTANI INTERLINK</div>
+    <div class="ab-invite-title">SESSION JOIN REQUEST</div>
+    <div class="ab-invite-body">
+      <span id="abInviteName">—</span> HAT DEN ANDROID STORAGE BAY GEÖFFNET<br>
+      <span class="ab-invite-sub">VIEWING TERMINAL · READ-ONLY MODE</span>
+    </div>
+    <div class="ab-invite-actions">
+      <button class="ab-btn ab-btn-primary" id="abInviteJoinBtn"   type="button">[ BEITRETEN ]</button>
+      <button class="ab-btn ab-ghost"        id="abInviteDismissBtn" type="button">[ ABLEHNEN ]</button>
+    </div>
+  </div>
 </div>
 
 <!-- MU/TH/UR TERMINAL -->

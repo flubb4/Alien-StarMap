@@ -158,6 +158,9 @@
   background: linear-gradient(180deg, rgba(245,166,35,.03), transparent 40%);
 }
 #mutherOverlay.mt-is-gm .mt-gm-panel { display: flex; }
+/* Spectator: hide GM panel + write inputs even if user is GM */
+#mutherOverlay.mt-is-spectator .mt-gm-panel  { display: none !important; }
+#mutherOverlay.mt-is-spectator .mt-input-row { display: none !important; }
 
 .mt-gm-title {
   font-size: 9px; letter-spacing: .3em; color: #f5a623;

@@ -34,6 +34,7 @@ let _directive     = '';
 let _captainName   = '';
 let _protocolStep  = 0;
 let _protocolItems = {};
+let _stepFollowupCount = 0;   // wie viele Folgefragen wurden im aktuellen Schritt schon gestellt (max 2)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -87,6 +88,7 @@ function _localCloseMuthur() {
   _captainName   = '';
   _protocolStep  = 0;
   _protocolItems = {};
+  _stepFollowupCount = 0;
 }
 
 window.closeMutherTerminal = function () {
@@ -152,8 +154,10 @@ function subscribeSession(bayId) {
   });
 
   _unsubProtocol = onValue(ref(window.db, `muthur/sessions/${bayId}/protocolData`), snap => {
-    const d = snap.val() || {};
-    _protocolStep  = d.step  || 0;
+    const d       = snap.val() || {};
+    const newStep = d.step || 0;
+    if (newStep !== _protocolStep) _stepFollowupCount = 0;  // neuer Schritt → Folgefrage-Zähler reset
+    _protocolStep  = newStep;
     _protocolItems = d.items || {};
     updateProtocolUI();
   });
@@ -340,6 +344,7 @@ function initPanel() {
   if (ass) ass.textContent = '';
   _protocolItems = {};
   _protocolStep  = 0;
+  _stepFollowupCount = 0;
   updateProtocolUI();
 }
 
@@ -405,9 +410,10 @@ async function sendQuery() {
         'X-Worker-Token': WORKER_TOKEN,
       },
       body: JSON.stringify({
-        messages:     apiMessages,
-        directive:    sentDirective,
-        protocolStep: _protocolStep,
+        messages:          apiMessages,
+        directive:         sentDirective,
+        protocolStep:      _protocolStep,
+        stepFollowupCount: _stepFollowupCount,
         context: {
           desig: _ctx?.desig || '—',
           cls:   _ctx?.cls   || '—',
@@ -423,24 +429,35 @@ async function sendQuery() {
 
     await writeMsg(_bayId, 'muthur', data.response || 'KEINE ANTWORT EMPFANGEN.');
 
-    // Protokoll-Schritt abschließen (Schritte 1–5)
-    if (data.protocolStatus && _protocolStep >= 1 && _protocolStep <= 5) {
-      const answeredStep = _protocolStep;
-      const stepKey      = PROTOCOL_STEPS[answeredStep - 1].key;
-      const newItems     = {
-        ..._protocolItems,
-        [stepKey]: { status: data.protocolStatus, suspicious: !!data.protocolSuspicious },
-      };
-      await set(ref(window.db, `muthur/sessions/${_bayId}/protocolData`), {
-        step: answeredStep + 1, items: newItems,
-      });
-      // Nächste Frage automatisch als MU/TH/UR-Nachricht injizieren
-      if (answeredStep < 5) {
-        await push(ref(window.db, `muthur/sessions/${_bayId}/messages`), {
-          role: 'muthur',
-          text: `FRAGE ${answeredStep + 1}/5 — ${PROTOCOL_QUESTIONS[answeredStep]}`,
-          ts:   Date.now() + 1,
+    // Protokoll-Schritt-Logik (Schritte 1–5)
+    if (_protocolStep >= 1 && _protocolStep <= 5) {
+      const limitHit     = _stepFollowupCount >= 2;
+      const stepComplete = !!data.stepComplete || limitHit;
+      // Bei Limit-Hit ohne saubere Status-Lieferung Fallback auf FRAGLICH, damit der Step nicht hängt
+      const status       = data.protocolStatus || (limitHit ? 'FRAGLICH' : null);
+
+      if (stepComplete && status) {
+        const answeredStep = _protocolStep;
+        const stepKey      = PROTOCOL_STEPS[answeredStep - 1].key;
+        const newItems     = {
+          ..._protocolItems,
+          [stepKey]: { status, suspicious: !!data.protocolSuspicious },
+        };
+        await set(ref(window.db, `muthur/sessions/${_bayId}/protocolData`), {
+          step: answeredStep + 1, items: newItems,
         });
+        // Nächste Frage automatisch als MU/TH/UR-Nachricht injizieren
+        if (answeredStep < 5) {
+          await push(ref(window.db, `muthur/sessions/${_bayId}/messages`), {
+            role: 'muthur',
+            text: `FRAGE ${answeredStep + 1}/5 — ${PROTOCOL_QUESTIONS[answeredStep]}`,
+            ts:   Date.now() + 1,
+          });
+        }
+        // _stepFollowupCount wird im protocolData-Listener auf 0 zurückgesetzt
+      } else if (data.stepComplete === false) {
+        // MU/TH/UR hat eine Folgefrage gestellt → Schritt bleibt offen, Zähler hoch
+        _stepFollowupCount += 1;
       }
     }
 

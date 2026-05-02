@@ -28,9 +28,8 @@ window.db = db;
 
 // Most-used Refs exposed for other modules
 window.ibStrokesRef       = ref(db, 'session/imageBoard/strokes');
-window.ibRevealStrokesRef = ref(db, 'session/imageBoard/revealStrokes');
 window.ibCoverDataRef     = ref(db, 'session/imageBoard/coverImageData');
-window.ibFogStrokesRef    = ref(db, 'session/imageBoard/fogStrokes');
+window.ibFogCoverRef      = ref(db, 'session/imageBoard/fogCover'); // single ordered list of fog+reveal strokes
 window.mtTrackersRef      = ref(db, 'session/imageBoard/motionTrackers');
 window.mtBlipsRef         = ref(db, 'session/imageBoard/motionBlips');
 

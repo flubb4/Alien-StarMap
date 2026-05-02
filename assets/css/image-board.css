@@ -145,6 +145,53 @@
   .ib-confirm-yes:hover { background:rgba(255,68,0,0.12) !important; }
 
   /* ── Fog of War ── */
+  .ib-fog-panel {
+    flex-shrink: 0;
+    align-items: center; gap: 6px; flex-wrap: wrap;
+    padding: 6px 14px;
+    background: rgba(0,0,0,.75);
+    border-bottom: 1px solid rgba(57,255,20,.2);
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .ib-fog-panel-label {
+    font-size: 8px; letter-spacing: .3em; color: rgba(57,255,20,.4);
+    margin-right: 4px; white-space: nowrap;
+  }
+  .ib-fog-tool {
+    padding: 5px 11px;
+    border: 1px solid rgba(57,255,20,.25); background: transparent;
+    color: rgba(57,255,20,.65); font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: .1em; cursor: pointer; white-space: nowrap;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .ib-fog-tool:hover { background: rgba(57,255,20,.1); color: #39ff14; }
+  .ib-fog-tool.active {
+    background: rgba(57,255,20,.18); color: #39ff14;
+    border-color: rgba(57,255,20,.65);
+    box-shadow: 0 0 8px rgba(57,255,20,.2);
+  }
+  .ib-fog-tool.ib-fog-danger {
+    border-color: rgba(255,255,255,.15); color: rgba(255,255,255,.4);
+  }
+  .ib-fog-tool.ib-fog-danger:hover {
+    background: rgba(255,255,255,.07); color: rgba(255,255,255,.7);
+  }
+  .ib-fog-sep {
+    width: 1px; height: 22px; background: rgba(57,255,20,.2); margin: 0 4px;
+    align-self: center;
+  }
+  .ib-fog-rect-preview {
+    position: absolute; pointer-events: none; box-sizing: border-box;
+  }
+  .ib-fog-rect-preview.fogRect {
+    background: rgba(0,0,0,.45);
+    border: 2px dashed rgba(57,255,20,.7);
+  }
+  .ib-fog-rect-preview.revealRect {
+    background: rgba(57,255,20,.06);
+    border: 2px dashed rgba(57,255,20,.9);
+  }
+
   .ib-staging-banner {
     flex-shrink: 0;
     align-items: center; justify-content: center; gap: 14px;

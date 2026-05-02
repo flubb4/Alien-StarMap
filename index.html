@@ -815,9 +815,7 @@
       <button class="ib-tool-btn" id="ibEraserBtn" onclick="ibToggleEraser()">⬜ Eraser</button>
       <button class="ib-tool-btn ib-gm-only" onclick="document.getElementById('imageBoardFileInput').click()">📁 Load Image</button>
       <button class="ib-tool-btn ib-gm-only" onclick="document.getElementById('coverImageFileInput').click()">🗺 Load Cover</button>
-      <button class="ib-tool-btn ib-gm-only" id="ibFogBtn" onclick="ibToggleFogMode()">🌫 Fog</button>
-      <button class="ib-tool-btn ib-gm-only" id="ibRevealBtn" onclick="ibToggleRevealMode()">👁 Aufdecken</button>
-      <button class="ib-tool-btn ib-gm-only" onclick="ibFillFog()">⬛ Alles vernebeln</button>
+      <button class="ib-tool-btn ib-gm-only" id="ibFogMenuBtn" onclick="ibToggleFogPanel()">🌫 Fog ▾</button>
       <button class="ib-tool-btn ib-gm-only ib-release-btn" id="ibReleaseBtn" onclick="ibRelease()" style="display:none">✅ FREIGEBEN</button>
       <button class="ib-tool-btn" id="mtTrackerBtn" onclick="mtToggleTrackerPlacement()">📡 Motion Tracker</button>
       <button class="ib-tool-btn ib-gm-only" id="mtBlipBtn" onclick="mtToggleBlipMode()">🎯 Blip setzen</button>
@@ -840,6 +838,16 @@
       </div>
     </div>
   </div>
+  <div class="ib-fog-panel" id="ibFogPanel" style="display:none">
+    <span class="ib-fog-panel-label">// FOG OF WAR</span>
+    <button class="ib-fog-tool" id="ibFogBrushBtn" onclick="ibSetFogTool('fogBrush')">🌫 Fog Pinsel</button>
+    <button class="ib-fog-tool" id="ibRevealBrushBtn" onclick="ibSetFogTool('revealBrush')">👁 Aufdecken Pinsel</button>
+    <button class="ib-fog-tool" id="ibFogRectBtn" onclick="ibSetFogTool('fogRect')">▬ Fog Rechteck</button>
+    <button class="ib-fog-tool" id="ibRevealRectBtn" onclick="ibSetFogTool('revealRect')">▭ Aufdecken Rechteck</button>
+    <div class="ib-fog-sep"></div>
+    <button class="ib-fog-tool ib-fog-danger" onclick="ibFillFog()">⬛ Alles vernebeln</button>
+    <button class="ib-fog-tool ib-fog-danger" onclick="ibClearAllFog()">⬜ Alles aufdecken</button>
+  </div>
   <div class="ib-staging-banner" id="ibStagingBanner" style="display:none">
     ⚠ STAGING MODE — Spieler sehen das Bild noch nicht
     <button class="ib-tool-btn ib-release-btn" onclick="ibRelease()">✅ FREIGEBEN</button>
@@ -852,6 +860,7 @@
     <div id="mtHint"></div>
     <div class="ib-placeholder" id="ibPlaceholder">Waiting for GM to load an image...</div>
     <div id="ibStressPanel" class="ib-gm-only"></div>
+    <div id="ibFogRectPreview" style="display:none"></div>
     <div class="ib-staging-overlay" id="ibStagingOverlay" style="display:none">
       <div class="ib-staging-icon">■ ■ ■</div>
       <div class="ib-staging-text">KARTE WIRD VORBEREITET</div>

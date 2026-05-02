@@ -8,9 +8,13 @@ var ibErasing      = false;
 var ibLocalStrokes = new Set();
 var ibIsOpen       = false;   // tracks whether overlay is currently visible
 var ibLastOpenTs   = 0;       // timestamp of last GM-triggered open
-var ibRevealMode   = false;
-var ibFogMode      = false;
-var ibCoverDataUrl = null;
+var ibRevealMode     = false;
+var ibFogMode        = false;
+var ibActiveFogTool  = null;   // 'fogBrush' | 'revealBrush' | 'fogRect' | 'revealRect'
+var ibFogPanelOpen   = false;
+var ibRectStart      = null;
+var ibLastPos        = null;
+var ibCoverDataUrl   = null;
 var ibLocalRevealStrokes = new Set();
 var ibAllRevealStrokes   = [];
 var ibLocalFogStrokes    = new Set();
@@ -63,6 +67,15 @@ function ibDrawFogStroke(stroke) {
     ctx.restore();
     return;
   }
+  if (stroke.rect) {
+    var r = ibImageRect();
+    if (r) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(r.x + stroke.x * r.w, r.y + stroke.y * r.h, stroke.w * r.w, stroke.h * r.h);
+    }
+    ctx.restore();
+    return;
+  }
   if (!stroke.points || stroke.points.length < 1) { ctx.restore(); return; }
   ctx.strokeStyle = '#000';
   ctx.lineWidth = stroke.size || 40;
@@ -104,10 +117,20 @@ function ibRedrawFogLayer(callback) {
 }
 
 function ibDrawRevealStroke(stroke) {
-  if (!stroke || !stroke.points || stroke.points.length < 1) return;
+  if (!stroke) return;
   var ctx = ibGetCoverCtx();
   ctx.save();
   ctx.globalCompositeOperation = 'destination-out';
+  if (stroke.rect) {
+    var r = ibImageRect();
+    if (r) {
+      ctx.fillStyle = 'rgba(0,0,0,1)';
+      ctx.fillRect(r.x + stroke.x * r.w, r.y + stroke.y * r.h, stroke.w * r.w, stroke.h * r.h);
+    }
+    ctx.restore();
+    return;
+  }
+  if (!stroke.points || stroke.points.length < 1) { ctx.restore(); return; }
   ctx.strokeStyle = 'rgba(0,0,0,1)';
   ctx.lineWidth = stroke.size || 40;
   ctx.lineCap = 'round';
@@ -412,8 +435,19 @@ window.closeImageBoard = function() {
   ibDrawing = false;
   ibCurrentStroke = null;
   ibRevealMode = false;
-  ibFogMode    = false;
-  ibCoverDataUrl = null;
+  ibFogMode       = false;
+  ibActiveFogTool = null;
+  ibFogPanelOpen  = false;
+  ibRectStart     = null;
+  ibLastPos       = null;
+  ibCoverDataUrl  = null;
+  var fogPanel = document.getElementById('ibFogPanel');
+  if (fogPanel) fogPanel.style.display = 'none';
+  var fogMenuBtn = document.getElementById('ibFogMenuBtn');
+  if (fogMenuBtn) fogMenuBtn.classList.remove('active');
+  ['ibFogBrushBtn','ibRevealBrushBtn','ibFogRectBtn','ibRevealRectBtn'].forEach(function(id) {
+    document.getElementById(id)?.classList.remove('active');
+  });
   ibAllRevealStrokes = [];
   ibLocalRevealStrokes.clear();
   ibAllFogStrokes = [];
@@ -489,25 +523,33 @@ window.ibToggleEraser = function() {
   ibGetCanvas().style.cursor = ibErasing ? 'cell' : 'crosshair';
 };
 
-window.ibToggleRevealMode = function() {
-  ibRevealMode = !ibRevealMode;
-  if (ibRevealMode) { ibFogMode = false; document.getElementById('ibFogBtn')?.classList.remove('active'); }
-  var btn = document.getElementById('ibRevealBtn');
-  btn.classList.toggle('active', ibRevealMode);
-  btn.textContent = ibRevealMode ? '✏ Draw' : '👁 Aufdecken';
-  ibGetCanvas().style.cursor = ibRevealMode ? 'cell' : (ibErasing ? 'cell' : 'crosshair');
+window.ibToggleFogPanel = function() {
+  ibFogPanelOpen = !ibFogPanelOpen;
+  var panel = document.getElementById('ibFogPanel');
+  var btn   = document.getElementById('ibFogMenuBtn');
+  if (panel) panel.style.display = ibFogPanelOpen ? 'flex' : 'none';
+  if (btn)   btn.classList.toggle('active', ibFogPanelOpen);
 };
 
-window.ibToggleFogMode = function() {
-  ibFogMode = !ibFogMode;
-  if (ibFogMode) {
-    ibRevealMode = false;
-    var revBtn = document.getElementById('ibRevealBtn');
-    if (revBtn) { revBtn.classList.remove('active'); revBtn.textContent = '👁 Aufdecken'; }
-  }
-  var fogBtn = document.getElementById('ibFogBtn');
-  fogBtn?.classList.toggle('active', ibFogMode);
-  ibGetCanvas().style.cursor = ibFogMode ? 'crosshair' : (ibErasing ? 'cell' : 'crosshair');
+window.ibSetFogTool = function(tool) {
+  ibActiveFogTool = tool;
+  ibFogMode    = (tool === 'fogBrush');
+  ibRevealMode = (tool === 'revealBrush');
+  ibRectStart  = null;
+  ['ibFogBrushBtn','ibRevealBrushBtn','ibFogRectBtn','ibRevealRectBtn'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle('active', el.id === tool + 'Btn');
+  });
+  ibGetCanvas().style.cursor = 'crosshair';
+};
+
+window.ibClearAllFog = function() {
+  if (!window.isGM) return;
+  remove(window.ibFogStrokesRef);
+  remove(window.ibRevealStrokesRef);
+  ibAllFogStrokes = []; ibLocalFogStrokes.clear();
+  ibAllRevealStrokes = []; ibLocalRevealStrokes.clear();
+  ibRedrawFogLayer();
 };
 
 window.ibFillFog = function() {
@@ -584,8 +626,12 @@ function ibPointerDown(e) {
   }
   ibDrawing = true;
   var pos = ibEventPos(e);
+  ibLastPos = pos;
   var size = parseInt(document.getElementById('ibSizeSlider').value, 10);
-  if (ibRevealMode) {
+  if (ibActiveFogTool === 'fogRect' || ibActiveFogTool === 'revealRect') {
+    ibRectStart   = pos;
+    ibCurrentStroke = { rectMode: ibActiveFogTool, points: [] };
+  } else if (ibRevealMode) {
     ibCurrentStroke = { size: size * 5, reveal: true, points: [ibToNorm(pos.x, pos.y)] };
     var cctx = ibGetCoverCtx();
     cctx.save();
@@ -619,6 +665,18 @@ function ibPointerDown(e) {
 function ibPointerMove(e) {
   if (!ibDrawing || !ibCurrentStroke) return;
   var pos = ibEventPos(e);
+  ibLastPos = pos;
+  if (ibCurrentStroke.rectMode) {
+    var preview = document.getElementById('ibFogRectPreview');
+    if (preview && ibRectStart) {
+      var rx = Math.min(ibRectStart.x, pos.x), ry = Math.min(ibRectStart.y, pos.y);
+      var rw = Math.abs(pos.x - ibRectStart.x), rh = Math.abs(pos.y - ibRectStart.y);
+      preview.style.cssText = 'display:block;position:absolute;pointer-events:none;box-sizing:border-box;'
+        + 'left:' + rx + 'px;top:' + ry + 'px;width:' + rw + 'px;height:' + rh + 'px;';
+      preview.className = 'ib-fog-rect-preview ' + ibCurrentStroke.rectMode;
+    }
+    return;
+  }
   var norm = ibToNorm(pos.x, pos.y);
   ibCurrentStroke.points.push(norm);
   var pts = ibCurrentStroke.points;
@@ -658,6 +716,30 @@ function ibPointerUp() {
   ibDrawing = false;
   var stroke = ibCurrentStroke;
   ibCurrentStroke = null;
+  // Handle rectangle modes
+  if (stroke.rectMode) {
+    var preview = document.getElementById('ibFogRectPreview');
+    if (preview) preview.style.display = 'none';
+    if (!ibRectStart || !ibLastPos) { ibRectStart = null; return; }
+    var x1 = Math.min(ibRectStart.x, ibLastPos.x), y1 = Math.min(ibRectStart.y, ibLastPos.y);
+    var x2 = Math.max(ibRectStart.x, ibLastPos.x), y2 = Math.max(ibRectStart.y, ibLastPos.y);
+    ibRectStart = null;
+    if (x2 - x1 < 5 || y2 - y1 < 5) return;
+    var n1 = ibToNorm(x1, y1), n2 = ibToNorm(x2, y2);
+    var rectStroke = { rect: true, x: n1.nx, y: n1.ny, w: n2.nx - n1.nx, h: n2.ny - n1.ny };
+    if (stroke.rectMode === 'fogRect') {
+      ibDrawFogStroke(rectStroke);
+      ibAllFogStrokes.push(rectStroke);
+      var rFogRef = push(window.ibFogStrokesRef, rectStroke);
+      ibLocalFogStrokes.add(rFogRef.key);
+    } else {
+      ibDrawRevealStroke(rectStroke);
+      ibAllRevealStrokes.push(rectStroke);
+      var rRevRef = push(window.ibRevealStrokesRef, rectStroke);
+      ibLocalRevealStrokes.add(rRevRef.key);
+    }
+    return;
+  }
   if (stroke.points.length === 0) return;
   if (stroke.fog) {
     var newFogRef = push(window.ibFogStrokesRef, stroke);

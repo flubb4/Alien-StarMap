@@ -55,96 +55,83 @@ function ibDrawCoverImage(callback) {
   img.src = ibCoverDataUrl;
 }
 
-function ibDrawFogStroke(stroke) {
+// ── Low-level draw helpers (accept any 2D context) ─────────────────────────
+
+function _ibFogToCtx(ctx, cw, ch, stroke) {
   if (!stroke) return;
-  var cc = ibGetCoverCanvas();
-  var ctx = ibGetCoverCtx();
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';
   if (stroke.fill) {
     ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, cc.width, cc.height);
-    ctx.restore();
-    return;
-  }
-  if (stroke.rect) {
+    ctx.fillRect(0, 0, cw, ch);
+  } else if (stroke.rect) {
     var r = ibImageRect();
-    if (r) {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(r.x + stroke.x * r.w, r.y + stroke.y * r.h, stroke.w * r.w, stroke.h * r.h);
-    }
-    ctx.restore();
-    return;
+    if (r) { ctx.fillStyle = '#000'; ctx.fillRect(r.x + stroke.x*r.w, r.y + stroke.y*r.h, stroke.w*r.w, stroke.h*r.h); }
+  } else if (stroke.points && stroke.points.length > 0) {
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = stroke.size || 40; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    var f = ibToPix(stroke.points[0].nx, stroke.points[0].ny);
+    ctx.moveTo(f.px, f.py);
+    for (var i = 1; i < stroke.points.length; i++) { var p = ibToPix(stroke.points[i].nx, stroke.points[i].ny); ctx.lineTo(p.px, p.py); }
+    if (stroke.points.length === 1) ctx.lineTo(f.px + 0.1, f.py);
+    ctx.stroke();
   }
-  if (!stroke.points || stroke.points.length < 1) { ctx.restore(); return; }
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = stroke.size || 40;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  var first = ibToPix(stroke.points[0].nx, stroke.points[0].ny);
-  ctx.moveTo(first.px, first.py);
-  for (var i = 1; i < stroke.points.length; i++) {
-    var p = ibToPix(stroke.points[i].nx, stroke.points[i].ny);
-    ctx.lineTo(p.px, p.py);
-  }
-  if (stroke.points.length === 1) ctx.lineTo(first.px + 0.1, first.py);
-  ctx.stroke();
   ctx.restore();
 }
 
-function ibRedrawFogLayer(callback) {
-  var cc = ibGetCoverCanvas();
-  var ctx = ibGetCoverCtx();
-  ctx.clearRect(0, 0, cc.width, cc.height);
-  function afterCover() {
-    ibAllFogStrokes.forEach(function(s)    { ibDrawFogStroke(s);    });
-    ibAllRevealStrokes.forEach(function(s) { ibDrawRevealStroke(s); });
-    if (callback) callback();
-  }
-  if (ibCoverDataUrl) {
-    var r = ibImageRect();
-    if (!r) { afterCover(); return; }
-    var img = new Image();
-    img.onload = function() {
-      ctx.drawImage(img, r.x, r.y, r.w, r.h);
-      afterCover();
-    };
-    img.src = ibCoverDataUrl;
-  } else {
-    afterCover();
-  }
-}
-
-function ibDrawRevealStroke(stroke) {
+function _ibRevealToCtx(ctx, stroke) {
   if (!stroke) return;
-  var ctx = ibGetCoverCtx();
   ctx.save();
   ctx.globalCompositeOperation = 'destination-out';
   if (stroke.rect) {
     var r = ibImageRect();
-    if (r) {
-      ctx.fillStyle = 'rgba(0,0,0,1)';
-      ctx.fillRect(r.x + stroke.x * r.w, r.y + stroke.y * r.h, stroke.w * r.w, stroke.h * r.h);
-    }
-    ctx.restore();
-    return;
+    if (r) { ctx.fillStyle = 'rgba(0,0,0,1)'; ctx.fillRect(r.x + stroke.x*r.w, r.y + stroke.y*r.h, stroke.w*r.w, stroke.h*r.h); }
+  } else if (stroke.points && stroke.points.length > 0) {
+    ctx.strokeStyle = 'rgba(0,0,0,1)';
+    ctx.lineWidth = stroke.size || 40; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    var f = ibToPix(stroke.points[0].nx, stroke.points[0].ny);
+    ctx.moveTo(f.px, f.py);
+    for (var i = 1; i < stroke.points.length; i++) { var p = ibToPix(stroke.points[i].nx, stroke.points[i].ny); ctx.lineTo(p.px, p.py); }
+    if (stroke.points.length === 1) ctx.lineTo(f.px + 0.1, f.py);
+    ctx.stroke();
   }
-  if (!stroke.points || stroke.points.length < 1) { ctx.restore(); return; }
-  ctx.strokeStyle = 'rgba(0,0,0,1)';
-  ctx.lineWidth = stroke.size || 40;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  var first = ibToPix(stroke.points[0].nx, stroke.points[0].ny);
-  ctx.moveTo(first.px, first.py);
-  for (var i = 1; i < stroke.points.length; i++) {
-    var p = ibToPix(stroke.points[i].nx, stroke.points[i].ny);
-    ctx.lineTo(p.px, p.py);
-  }
-  if (stroke.points.length === 1) ctx.lineTo(first.px + 0.1, first.py);
-  ctx.stroke();
   ctx.restore();
+}
+
+// Live-drawing wrappers (used during pointer events — draw straight to cover canvas)
+function ibDrawFogStroke(stroke)    { var cc = ibGetCoverCanvas(); _ibFogToCtx(ibGetCoverCtx(), cc.width, cc.height, stroke); }
+function ibDrawRevealStroke(stroke) { _ibRevealToCtx(ibGetCoverCtx(), stroke); }
+
+// Full redraw using offscreen canvas as double-buffer — no visible transparent frame
+function ibRedrawFogLayer(callback) {
+  var cc  = ibGetCoverCanvas();
+  var off = document.createElement('canvas');
+  off.width  = cc.width;
+  off.height = cc.height;
+  var octx = off.getContext('2d');
+
+  function compose() {
+    ibAllFogStrokes.forEach(function(s)    { _ibFogToCtx(octx, off.width, off.height, s); });
+    ibAllRevealStrokes.forEach(function(s) { _ibRevealToCtx(octx, s); });
+    // Atomic swap: the visible canvas is only updated once, fully composed
+    var ctx = ibGetCoverCtx();
+    ctx.clearRect(0, 0, cc.width, cc.height);
+    ctx.drawImage(off, 0, 0);
+    if (callback) callback();
+  }
+
+  if (ibCoverDataUrl) {
+    var r = ibImageRect();
+    if (r) {
+      var img = new Image();
+      img.onload = function() { octx.drawImage(img, r.x, r.y, r.w, r.h); compose(); };
+      img.src = ibCoverDataUrl;
+      return;
+    }
+  }
+  compose();
 }
 
 function ibImageRect() {
@@ -276,8 +263,8 @@ function ibStartListeners() {
   ibListeners.push(onChildAdded(window.ibRevealStrokesRef, function(snap) {
     if (!ibIsOpen) return;
     var stroke = snap.val();
-    ibAllRevealStrokes.push(stroke);
     if (ibLocalRevealStrokes.has(snap.key)) return;
+    ibAllRevealStrokes.push(stroke);
     ibDrawRevealStroke(stroke);
   }));
 
@@ -295,8 +282,8 @@ function ibStartListeners() {
   ibListeners.push(onChildAdded(window.ibFogStrokesRef, function(snap) {
     if (!ibIsOpen) return;
     var stroke = snap.val();
-    ibAllFogStrokes.push(stroke);
     if (ibLocalFogStrokes.has(snap.key)) return;
+    ibAllFogStrokes.push(stroke);
     ibRedrawFogLayer(); // full redraw to keep fog below reveals
   }));
 

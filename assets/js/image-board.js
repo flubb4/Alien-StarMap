@@ -18,6 +18,7 @@ var ibCoverDataUrl   = null;
 var ibLocalCoverStrokes  = new Set();  // keys of strokes pushed by this client
 var ibAllCoverStrokes    = [];         // ordered fog+reveal stroke list for full replay
 var ibStaged             = false;
+var ibFogPreviewMode     = false;
 var ibStressUnsub        = null;
 
 function ibGetOverlay()      { return document.getElementById('imageBoardOverlay'); }
@@ -112,8 +113,13 @@ function ibRedrawFogLayer(callback) {
 
   function compose() {
     ibAllCoverStrokes.forEach(function(s) {
-      if (s.fog || s.fill) { _ibFogToCtx(octx, off.width, off.height, s); }
-      else                 { _ibRevealToCtx(octx, s); }
+      if (s.fog || s.fill) {
+        if (ibFogPreviewMode) octx.globalAlpha = 0.35;
+        _ibFogToCtx(octx, off.width, off.height, s);
+        octx.globalAlpha = 1;
+      } else {
+        _ibRevealToCtx(octx, s);
+      }
     });
     // Atomic swap: the visible canvas is only updated once, fully composed
     var ctx = ibGetCoverCtx();
@@ -406,8 +412,7 @@ window.closeImageBoard = function() {
   ibRectStart     = null;
   ibLastPos       = null;
   ibCoverDataUrl  = null;
-  var cc = ibGetCoverCanvas();
-  if (cc) cc.style.opacity = '';
+  ibFogPreviewMode = false;
   var fogPanel = document.getElementById('ibFogPanel');
   if (fogPanel) fogPanel.style.display = 'none';
   var fogMenuBtn = document.getElementById('ibFogMenuBtn');
@@ -515,11 +520,10 @@ window.ibClearAllFog = function() {
 
 window.ibToggleFogPreview = function() {
   if (!window.isGM) return;
-  var cc  = ibGetCoverCanvas();
+  ibFogPreviewMode = !ibFogPreviewMode;
   var btn = document.getElementById('ibFogPreviewBtn');
-  var active = cc.style.opacity === '0.35';
-  cc.style.opacity = active ? '' : '0.35';
-  if (btn) btn.classList.toggle('active', !active);
+  if (btn) btn.classList.toggle('active', ibFogPreviewMode);
+  ibRedrawFogLayer();
 };
 
 window.ibFillFog = function() {

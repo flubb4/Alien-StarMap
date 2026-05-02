@@ -212,6 +212,7 @@ function ibUpdateStagedUI() {
     if (stagingOverlay) stagingOverlay.style.display = ibStaged ? 'flex' : 'none';
     if (stagingBanner)  stagingBanner.style.display  = 'none';
   }
+  if (ibIsOpen) ibResizeCanvas();
 }
 
 window.ibToggleStaging = function() {

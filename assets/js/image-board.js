@@ -501,6 +501,10 @@ window.handleImageSelect = function(input) {
 };
 
 window.ibToggleEraser = function() {
+  ibActiveFogTool = null; ibFogMode = false; ibRevealMode = false;
+  ['ibFogBrushBtn','ibRevealBrushBtn','ibFogRectBtn','ibRevealRectBtn'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.classList.remove('active');
+  });
   ibErasing = !ibErasing;
   var btn = document.getElementById('ibEraserBtn');
   btn.classList.toggle('active', ibErasing);
@@ -517,13 +521,14 @@ window.ibToggleFogPanel = function() {
 };
 
 window.ibSetFogTool = function(tool) {
-  ibActiveFogTool = tool;
-  ibFogMode    = (tool === 'fogBrush');
-  ibRevealMode = (tool === 'revealBrush');
+  var newTool = (ibActiveFogTool === tool) ? null : tool;
+  ibActiveFogTool = newTool;
+  ibFogMode    = (newTool === 'fogBrush');
+  ibRevealMode = (newTool === 'revealBrush');
   ibRectStart  = null;
   ['ibFogBrushBtn','ibRevealBrushBtn','ibFogRectBtn','ibRevealRectBtn'].forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.classList.toggle('active', el.id === tool + 'Btn');
+    if (el) el.classList.toggle('active', el.id === newTool + 'Btn');
   });
   ibGetCanvas().style.cursor = 'crosshair';
 };

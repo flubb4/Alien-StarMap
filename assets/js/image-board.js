@@ -199,15 +199,31 @@ function ibUpdateStagedUI() {
   var stagingOverlay = document.getElementById('ibStagingOverlay');
   var stagingBanner  = document.getElementById('ibStagingBanner');
   var releaseBtn     = document.getElementById('ibReleaseBtn');
+  var stagingBtn     = document.getElementById('ibStagingBtn');
   if (window.isGM) {
     if (stagingOverlay) stagingOverlay.style.display = 'none';
     if (stagingBanner)  stagingBanner.style.display  = ibStaged ? 'flex' : 'none';
     if (releaseBtn)     releaseBtn.style.display      = ibStaged ? ''     : 'none';
+    if (stagingBtn) {
+      stagingBtn.textContent = ibStaged ? '✅ FREIGEBEN' : '🔒 Verbergen';
+      stagingBtn.classList.toggle('active', ibStaged);
+    }
   } else {
     if (stagingOverlay) stagingOverlay.style.display = ibStaged ? 'flex' : 'none';
     if (stagingBanner)  stagingBanner.style.display  = 'none';
   }
 }
+
+window.ibToggleStaging = function() {
+  if (!window.isGM) return;
+  if (ibStaged) {
+    ibRelease();
+  } else {
+    set(ref(window.db, 'session/imageBoard/staged'), true);
+    ibStaged = true;
+    ibUpdateStagedUI();
+  }
+};
 
 function ibStartListeners() {
   ibStopListeners();

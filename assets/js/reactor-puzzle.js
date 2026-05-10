@@ -127,6 +127,12 @@ const BAR_AFTER = [
   { blk: '░░░░░░░░░░', pct: ' 0%', st: 'SYSTEM OFFLINE',    prot: 'SURVIVAL RESOLVED' }
 ];
 
+const SUBSYS_DATA = [
+  { name: 'CORE TEMP',        proto: 'GUILT PROTOCOL',    final: 30 },
+  { name: 'COOLANT PRESSURE', proto: 'TRUST PROTOCOL',    final: 20 },
+  { name: 'FUSION OUTPUT',    proto: 'SURVIVAL PROTOCOL', final:  0 }
+];
+
 const RP_PATH = 'session/puzzle/reactor';
 const rpRef   = () => ref(window.db, RP_PATH);
 
@@ -140,6 +146,8 @@ let rpGMSelectedPuz  = -1;   // which puzzle index the selection belongs to
 let rpDismissed      = false; // player closed the overlay manually
 let rpLastPhase      = null;  // track phase changes to re-open after dismiss
 let rpResultCloseT   = null;  // timeout id: auto-close modal after correct result
+let rpFxScheduledT   = null;  // timeout id: scheduled FX trigger
+let rpFxPlayedKey    = null;  // 'p0' | 'p1' | 'p2' — prevents double-fire of FX
 
 // ─── GM PANEL ─────────────────────────────────────────────────────────────────
 window.openReactorGMPanel = function() {
@@ -289,9 +297,13 @@ window.startReactorWatcher = function() {
 function rpHandleState(data) {
   if (!data || !data.active || data.phase === 'idle') {
     rpDismissed = false; rpLastPhase = null;
+    rpFxPlayedKey = null;
     rpHideAll();
     return;
   }
+
+  // Reset FX tracker when GM advances to next puzzle (lastResult cleared)
+  if (!data.lastResult) rpFxPlayedKey = null;
 
   // Re-open automatically when GM changes phase (new puzzle, result, timeout, finale)
   const phase = data.phase;
@@ -301,10 +313,49 @@ function rpHandleState(data) {
   if (rpDismissed) return; // player closed it, stay hidden until next phase change
 
   if (phase === 'timeout') { rpShowMainOverlay(data); rpShowTimeout(); return; }
-  if (phase === 'finished') { rpShowMainOverlay(data); rpShowFinale(); return; }
+  if (phase === 'finished') {
+    rpShowMainOverlay(data);
+    if (data.lastResult && data.lastResult.correct) rpScheduleFx(data.lastResult.puzzleIdx, 1400);
+    rpShowFinale();
+    return;
+  }
   if (phase === 'result')   { rpShowMainOverlay(data); rpShowResult(data); return; }
   rpShowMainOverlay(data);
   rpShowVoting(data);
+}
+
+// Schedule the shutdown FX once per puzzle. Plays after delayMs over whatever
+// modal is currently open (result or finale).
+function rpScheduleFx(idx, delayMs) {
+  const key = 'p' + idx;
+  if (rpFxPlayedKey === key) return;
+  rpFxPlayedKey = key;
+  if (rpFxScheduledT) { clearTimeout(rpFxScheduledT); rpFxScheduledT = null; }
+  rpFxScheduledT = setTimeout(() => {
+    rpFxScheduledT = null;
+    rpPlayShutdownFx(idx);
+  }, delayMs);
+}
+
+function rpPlayShutdownFx(idx) {
+  const s = SUBSYS_DATA[idx];
+  const fx = document.getElementById('rpShutdownFx');
+  if (!s || !fx) return;
+  document.getElementById('rpSdName').textContent  = s.name;
+  document.getElementById('rpSdPct').textContent   = '100% → ' + s.final + '%';
+  document.getElementById('rpSdProto').textContent = s.proto + ' RESOLVED';
+  document.getElementById('rpSdStatus').textContent =
+    s.final === 0 ? 'SYSTEM OFFLINE' : 'SHUTDOWN COMPLETE';
+  const fill = document.getElementById('rpSdBarFill');
+  if (fill) fill.style.setProperty('--rp-sd-final', s.final + '%');
+
+  // Restart animation by toggling the class
+  fx.classList.remove('show');
+  // Force reflow so the animation restarts when re-added
+  // eslint-disable-next-line no-unused-expressions
+  void fx.offsetWidth;
+  fx.classList.add('show');
+  setTimeout(() => fx.classList.remove('show'), 4000);
 }
 
 window.rpPlayerClose = function() {
@@ -317,10 +368,13 @@ function rpHideAll() {
   document.getElementById('reactorPlayerOverlay').classList.remove('open');
   document.getElementById('rpPuzOverlay').classList.remove('open');
   document.getElementById('rpTimeoutOv').classList.remove('open');
+  const fx = document.getElementById('rpShutdownFx');
+  if (fx) fx.classList.remove('show');
   const cb = document.getElementById('rpCloseBtn');
   if (cb) cb.style.display = 'none';
   if (rpTimerRAF) { cancelAnimationFrame(rpTimerRAF); rpTimerRAF = null; }
   if (rpResultCloseT) { clearTimeout(rpResultCloseT); rpResultCloseT = null; }
+  if (rpFxScheduledT) { clearTimeout(rpFxScheduledT); rpFxScheduledT = null; }
 }
 
 function rpShowMainOverlay(data) {
@@ -472,11 +526,15 @@ function rpShowResult(data) {
 
   document.getElementById('rpPuzOverlay').classList.add('open');
 
-  // After a correct answer, briefly close the modal so the main reactor overlay
-  // becomes visible — players see the subsystem bar flip to .done and percentages
-  // drop. Modal re-opens automatically on the next phase change (next puzzle).
+  // After a correct answer, the flow is:
+  //   t=0    : modal shows result text (read time)
+  //   t=1.4s : SHUTDOWN FX overlay drops on top of the modal (4s long)
+  //   t=4.5s : modal auto-closes underneath the FX (no visible jump — FX covers it)
+  //   t=5.4s : FX fades, main reactor overlay visible with subsystem bar in .done state
+  // Modal re-opens automatically on the next phase change.
   if (rpResultCloseT) { clearTimeout(rpResultCloseT); rpResultCloseT = null; }
   if (lr.correct) {
+    rpScheduleFx(lr.puzzleIdx, 1400);
     rpResultCloseT = setTimeout(() => {
       if (rpState && rpState.phase === 'result'
           && rpState.lastResult && rpState.lastResult.correct) {
@@ -488,7 +546,7 @@ function rpShowResult(data) {
         }
       }
       rpResultCloseT = null;
-    }, 5500);
+    }, 4500);
   }
 }
 

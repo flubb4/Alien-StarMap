@@ -334,3 +334,127 @@ body.rp-gm-mode .rp-close-btn { right: 438px; }
   20%  { box-shadow: 0 0 60px 8px rgba(127,176,105,.55); border-left-color: var(--rp-green); }
   100% { box-shadow: 0 0 0 0 rgba(127,176,105,0); border-left-color: var(--rp-green); }
 }
+
+/* ══ Shutdown FX — overlay that drops over the puzzle modal after a correct answer ══ */
+.rp-shutdown-fx {
+  position: fixed;
+  inset: 0;
+  z-index: 3400;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5,16,12,.88);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+.rp-shutdown-fx.show {
+  display: flex;
+  animation: rpFxFade 4s ease-out forwards;
+}
+body.rp-gm-mode .rp-shutdown-fx { right: 420px; }
+
+@keyframes rpFxFade {
+  0%   { opacity: 0; }
+  8%   { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.rp-sd-frame {
+  text-align: center;
+  padding: 38px 60px;
+  border: 1px solid rgba(127,176,105,.55);
+  background: rgba(5,16,12,.95);
+  box-shadow: 0 0 90px rgba(127,176,105,.4), inset 0 0 60px rgba(127,176,105,.08);
+  position: relative;
+  animation: rpSdFrameIn .6s cubic-bezier(.22,1.4,.36,1);
+}
+.rp-sd-frame::before, .rp-sd-frame::after {
+  content: '';
+  position: absolute;
+  width: 22px; height: 22px;
+  border: 2px solid #7fb069;
+}
+.rp-sd-frame::before { top: -1px; left: -1px;  border-right: none; border-bottom: none; }
+.rp-sd-frame::after  { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+@keyframes rpSdFrameIn {
+  0%   { transform: scale(.85); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.rp-sd-corp {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: #82a494;
+  letter-spacing: 4px;
+  margin-bottom: 20px;
+}
+
+.rp-sd-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 9px;
+  color: #ff9a3c;
+  text-shadow: 0 0 30px rgba(255,154,60,.7);
+  margin-bottom: 14px;
+  animation: rpSdNameGlow 1.4s ease-in-out infinite;
+}
+@keyframes rpSdNameGlow {
+  0%, 100% { text-shadow: 0 0 30px rgba(255,154,60,.7); }
+  50%      { text-shadow: 0 0 60px rgba(255,154,60,1), 0 0 110px rgba(255,154,60,.45); }
+}
+
+.rp-sd-status {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  color: #c64225;
+  letter-spacing: 4px;
+  margin-bottom: 18px;
+  animation: rpSdStatusBlink .55s ease-in-out 4;
+}
+@keyframes rpSdStatusBlink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .25; }
+}
+
+.rp-sd-bar {
+  width: 420px;
+  height: 16px;
+  background: rgba(0,0,0,.5);
+  border: 1px solid rgba(127,176,105,.5);
+  margin: 0 auto 14px;
+  position: relative;
+  overflow: hidden;
+}
+.rp-sd-bar-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 100%;
+  background: linear-gradient(90deg, #c64225 0%, #ff9a3c 55%, #7fb069 100%);
+  box-shadow: 0 0 16px rgba(255,154,60,.6);
+  animation: rpSdDrain 2.6s cubic-bezier(.4,0,.2,1) forwards;
+  animation-delay: .5s;
+}
+@keyframes rpSdDrain {
+  0%   { width: 100%; }
+  100% { width: var(--rp-sd-final, 30%); }
+}
+
+.rp-sd-pct {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #7fb069;
+  letter-spacing: 5px;
+  margin-bottom: 14px;
+  text-shadow: 0 0 14px rgba(127,176,105,.6);
+}
+
+.rp-sd-proto {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: #7fb069;
+  letter-spacing: 3px;
+}

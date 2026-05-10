@@ -154,6 +154,7 @@ function _doLogin(nameUpper) {
       window.startRationsPanel?.();
       window.startXPChestWatcher?.();
       window.startAudioWatcher?.();
+      window.startReactorWatcher?.();
     }, 300);
   });
 }

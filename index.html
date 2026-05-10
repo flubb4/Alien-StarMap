@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="assets/css/youtube-player.css">
 <link rel="stylesheet" href="assets/css/android-bay.css">
 <link rel="stylesheet" href="assets/css/muthur.css">
+<link rel="stylesheet" href="assets/css/reactor-puzzle.css">
 <link rel="preload" href="assets/images/pod-empty.jpg"    as="image">
 <link rel="preload" href="assets/images/pod-occupied.jpg" as="image">
 <link rel="preload" href="assets/images/pod-sealing.jpg"  as="image">
@@ -80,6 +81,7 @@
         <button class="gm-xp-btn gm-dd-btn" onclick="openXPAward();closeGMTools()">XP Award</button>
         <button class="gm-session-btn gm-dd-btn" id="gmSessionBtn" onclick="toggleSession()">Session Active — Close Map</button>
         <button class="gm-dd-btn" onclick="openGMBroadcast();closeGMTools()">Login Screen Memories</button>
+        <button class="gm-dd-btn" onclick="openReactorGMPanel();closeGMTools()">⚛ Reactor Puzzle</button>
         <div class="gm-dropdown-divider"></div>
         <div class="gm-dropdown-title" style="color:var(--rust);">Clunkkynoost</div>
         <button class="gm-intercept-btn gm-dd-btn" id="gmInterceptBtn" onclick="triggerManualIntercept()">Trigger Interception</button>
@@ -1247,6 +1249,203 @@
 <script type="module" src="assets/js/gm-broadcast.js"></script>
 <script type="module" src="assets/js/android-bay.js"></script>
 <script type="module" src="assets/js/muthur.js"></script>
+<script type="module" src="assets/js/reactor-puzzle.js"></script>
+
+<!-- ══ REACTOR PUZZLE — Player Main Overlay ══ -->
+<div id="reactorPlayerOverlay">
+  <div class="rp-vignette"></div>
+  <div class="rp-frame"></div>
+  <div id="rpFlash"></div>
+  <div class="rp-app">
+    <div class="rp-hdr">
+      <div class="rp-hdr-corp">WEYLAND-YUTANI CORPORATION // EMERGENCY PROTOCOL</div>
+      <div class="rp-hdr-title">ATLAS STATION</div>
+      <div class="rp-hdr-sub">WY-REACTOR CONTROL // MANUAL SHUTDOWN INTERFACE</div>
+    </div>
+    <div class="rp-status-row">
+      <div class="rp-status-label">REACTOR STATUS</div>
+      <div class="rp-status-val" id="rpReactStatus">CRITICAL</div>
+    </div>
+    <div class="rp-meta-row">
+      <div class="rp-timer-box">
+        <div class="rp-timer-label">REACTOR OVERLOAD IN</div>
+        <div class="rp-timer-val" id="rpTimerDisp">05:00</div>
+      </div>
+      <div class="rp-stress-box">
+        <div class="rp-stress-label">STRESS LEVEL</div>
+        <div class="rp-stress-val" id="rpStressDisp">+0</div>
+      </div>
+    </div>
+    <div class="rp-blocked-banner">▸ MANUAL SHUTDOWN BLOCKED ◂ AX-44 COGNITIVE DEFENSE LAYER ACTIVE ▸</div>
+    <div class="rp-sec-div">SUBSYSTEM STATUS</div>
+    <div class="rp-bar" id="rpPanel0">
+      <div class="rp-bar-top">
+        <span class="rp-bar-name">CORE TEMP</span>
+        <span class="rp-bar-prot" id="rpProt0">GUILT PROTOCOL</span>
+        <span class="rp-bar-pct" id="rpPct0">100%</span>
+      </div>
+      <div class="rp-bar-blocks" id="rpBlk0">██████████</div>
+      <div class="rp-bar-status" id="rpBst0">AKTIV — ABSTIMMUNG LÄUFT</div>
+    </div>
+    <div class="rp-bar" id="rpPanel1">
+      <div class="rp-bar-top">
+        <span class="rp-bar-name">COOLANT PRESSURE</span>
+        <span class="rp-bar-prot" id="rpProt1">TRUST PROTOCOL</span>
+        <span class="rp-bar-pct" id="rpPct1">100%</span>
+      </div>
+      <div class="rp-bar-blocks" id="rpBlk1">██████████</div>
+      <div class="rp-bar-status" id="rpBst1">GESPERRT</div>
+    </div>
+    <div class="rp-bar" id="rpPanel2">
+      <div class="rp-bar-top">
+        <span class="rp-bar-name">FUSION OUTPUT</span>
+        <span class="rp-bar-prot" id="rpProt2">SURVIVAL PROTOCOL</span>
+        <span class="rp-bar-pct" id="rpPct2">100%</span>
+      </div>
+      <div class="rp-bar-blocks" id="rpBlk2">██████████</div>
+      <div class="rp-bar-status" id="rpBst2">GESPERRT</div>
+    </div>
+    <div class="rp-ax-box">
+      <div class="rp-ax-label">AX-44 // SYSTEM MESSAGE</div>
+      <div class="rp-ax-text" id="rpAxMsg">Cognitive defense layer initialized. Your failure is the expected outcome.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ REACTOR PUZZLE — Puzzle / Vote Modal ══ -->
+<div id="rpPuzOverlay">
+  <div class="rp-modal">
+    <div class="rp-m-corp" id="rpPuzCorp"></div>
+    <div class="rp-m-title" id="rpPuzTitle"></div>
+    <div class="rp-m-sub" id="rpPuzSub"></div>
+    <div class="rp-m-div"></div>
+    <div id="rpPuzAx" class="rp-ax44-blk" style="display:none">
+      <div class="rp-ax44-lbl">AX-44 //</div>
+      <span id="rpPuzAxT"></span>
+    </div>
+    <div id="rpPuzPrompt" class="rp-puz-prompt"></div>
+    <div id="rpPuzHint" class="rp-puz-hint" style="display:none">
+      <div class="rp-hint-lbl">TERMINAL HINT //</div>
+      <span id="rpPuzHintT"></span>
+    </div>
+    <div id="rpVoteStatus" class="rp-vote-status"></div>
+    <div id="rpPuzOpts" class="rp-opts"></div>
+    <div id="rpResultBlk" class="rp-result-blk">
+      <div id="rpResultOk" class="rp-result-ok" style="display:none"><span id="rpResultOkT"></span></div>
+      <div id="rpResultFail" class="rp-result-fail" style="display:none"><span id="rpResultFailT"></span></div>
+      <div id="rpResultAx" class="rp-result-ax"></div>
+      <div id="rpWaitingGM" class="rp-waiting-gm" style="display:none">WARTE AUF GM …</div>
+    </div>
+    <div id="rpFinal" class="rp-final">
+      <div class="rp-final-title">REACTOR SHUTDOWN ACCEPTED</div>
+      <div class="rp-m-div"></div>
+      <div class="rp-final-bars">
+        CORE TEMP &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ███░░░░░░░ 30%<br>
+        COOLANT PRESSURE ██░░░░░░░░ 20%<br>
+        FUSION OUTPUT &nbsp;&nbsp;&nbsp; ░░░░░░░░░░  0%
+      </div>
+      <div class="rp-final-ax">AX-44:
+
+"Choice outside predicted survival parameters.
+Recalculating.
+Recalculating.
+Recalculating."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ REACTOR PUZZLE — Timeout Overlay ══ -->
+<div id="rpTimeoutOv">
+  <div class="rp-modal" style="max-width:520px">
+    <div class="rp-m-corp">ATLAS STATION // CRITICAL FAILURE</div>
+    <div class="rp-m-title">REACTOR OVERLOAD</div>
+    <div class="rp-m-sub">COUNTDOWN ABGELAUFEN</div>
+    <div class="rp-m-div"></div>
+    <div class="rp-ax44-blk"><div class="rp-ax44-lbl">AX-44 //</div>"Time is not a resource you had."</div>
+    <div class="rp-puz-prompt" style="color:#82a494;font-size:11px;letter-spacing:2px">GM wählt Konsequenzen …</div>
+  </div>
+</div>
+
+<!-- ══ REACTOR PUZZLE — GM Panel ══ -->
+<div id="reactorGMPanel">
+  <div class="rp-gm-header">
+    <div class="rp-gm-title">REACTOR PUZZLE</div>
+    <button class="rp-gm-close" onclick="closeReactorGMPanel()">✕ CLOSE</button>
+  </div>
+  <div class="rp-gm-body">
+    <div class="rp-gm-section">
+      <div id="rpGMStatus" class="rp-gm-status idle">INAKTIV</div>
+    </div>
+
+    <!-- Setup (idle) -->
+    <div id="rpGMSetup" class="rp-gm-section">
+      <div class="rp-gm-sec-title">DIFFICULTY WÄHLEN + STARTEN</div>
+      <div class="rp-diff-btns">
+        <button class="rp-diff-btn" onclick="rpTrigger('easy')">
+          <div class="rp-dn">EASY</div>
+          <div class="rp-di">2+ Erfolge — Terminal Hints aktiv</div>
+        </button>
+        <button class="rp-diff-btn" onclick="rpTrigger('medium')">
+          <div class="rp-dn">MEDIUM</div>
+          <div class="rp-di">1 Erfolg — Kryptische Hints</div>
+        </button>
+        <button class="rp-diff-btn" onclick="rpTrigger('hard')">
+          <div class="rp-dn">HARD</div>
+          <div class="rp-di">0 Erfolge — Keine Hints // AX-44 aktiv</div>
+        </button>
+      </div>
+      <div class="rp-gm-info">Öffnet das Rätsel gleichzeitig für alle eingeloggten Spieler.</div>
+    </div>
+
+    <!-- Control (voting or result phase) -->
+    <div id="rpGMControl" class="rp-gm-section" style="display:none">
+      <div class="rp-gm-sec-title">ABSTIMMUNG — AKTUELLES PUZZLE</div>
+      <div id="rpGMTally" class="rp-vote-tally"></div>
+      <div id="rpGMVoteInfo" class="rp-gm-info" style="margin-bottom:8px"></div>
+      <div id="rpGMLastResult" style="font-size:10px;letter-spacing:2px;margin-bottom:10px"></div>
+      <button class="rp-gm-btn green" id="rpResolveBtn" onclick="rpResolve()" disabled>▶ ABSTIMMUNG AUSWERTEN</button>
+
+      <div class="rp-gm-sec-title" style="margin-top:16px">TIMER</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;color:#ff9a3c;margin-bottom:8px;letter-spacing:4px" id="rpGMTimerVal">05:00</div>
+      <div class="rp-timer-row" style="margin-bottom:7px">
+        <button class="rp-gm-btn amber" id="rpGMPauseBtn" onclick="rpToggleTimer()">⏸ PAUSE TIMER</button>
+      </div>
+      <div class="rp-timer-row">
+        <button class="rp-gm-btn amber" onclick="rpAdjustTimer(-60)">−1 MIN</button>
+        <button class="rp-gm-btn amber" onclick="rpAdjustTimer(60)">+1 MIN</button>
+      </div>
+
+      <div class="rp-gm-sec-title" style="margin-top:16px">GEFAHREN</div>
+      <button class="rp-gm-btn rust" onclick="rpTimeout()">⚠ TIMER ABGELAUFEN AUSLÖSEN</button>
+
+      <div class="rp-gm-sec-title" style="margin-top:16px">RESET</div>
+      <button class="rp-gm-btn rust" onclick="rpReset()">↺ PUZZLE ZURÜCKSETZEN</button>
+    </div>
+
+    <!-- Timeout section -->
+    <div id="rpGMTimeout" class="rp-gm-section" style="display:none">
+      <div class="rp-gm-sec-title">TIMEOUT — KONSEQUENZEN</div>
+      <div class="rp-cons-item" onclick="this.classList.toggle('selected')">BULKHEAD DOORS SEALED</div>
+      <div class="rp-cons-item" onclick="this.classList.toggle('selected')">SPECIMEN CONTAINMENT RELEASED</div>
+      <div class="rp-cons-item" onclick="this.classList.toggle('selected')">LIFE SUPPORT UNSTABLE</div>
+      <div class="rp-cons-item" onclick="this.classList.toggle('selected')">EMERGENCY POWER ONLY</div>
+      <div class="rp-cons-item" onclick="this.classList.toggle('selected')">AX-44 LOCATION UNKNOWN</div>
+      <div class="rp-cons-item" onclick="this.classList.toggle('selected')">LOWER DECK FLOODED WITH COOLANT GAS</div>
+      <div class="rp-cons-item" onclick="this.classList.toggle('selected')">ANDROID ACCESS RESTORED</div>
+      <div style="margin-top:12px">
+        <button class="rp-gm-btn amber" onclick="rpDismissTimeout()">▶ WEITER (30s RESTZEIT)</button>
+        <button class="rp-gm-btn rust" onclick="rpReset()">↺ RESET</button>
+      </div>
+    </div>
+
+    <!-- Finished section -->
+    <div id="rpGMFinished" class="rp-gm-section" style="display:none">
+      <div style="font-size:12px;color:#7fb069;letter-spacing:2px;margin-bottom:14px;line-height:1.7">REACTOR SHUTDOWN ERFOLGREICH<br>ALLE DREI PROTOKOLLE ÜBERWUNDEN</div>
+      <button class="rp-gm-btn rust" onclick="rpReset()">↺ PUZZLE ZURÜCKSETZEN</button>
+    </div>
+  </div>
+</div>
+
 <!-- GM Broadcast management panel -->
 <div id="gm-broadcast-panel">
   <button class="gm-bc-close" type="button" onclick="closeGMBroadcast()">×</button>

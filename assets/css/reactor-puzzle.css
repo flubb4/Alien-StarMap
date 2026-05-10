@@ -41,6 +41,23 @@
   z-index: 9;
 }
 
+.rp-close-btn {
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  z-index: 11;
+  background: transparent;
+  border: 1px solid var(--rp-border);
+  color: var(--rp-dim);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding: 5px 11px;
+  cursor: pointer;
+  transition: all .14s;
+}
+.rp-close-btn:hover { border-color: var(--rp-rust); color: var(--rp-rust); }
+
 .rp-vignette { position: fixed; inset: 0; background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.78) 100%); pointer-events: none; z-index: 8; }
 .rp-frame    { position: fixed; inset: 6px; border: 1px solid var(--rp-border); pointer-events: none; z-index: 7; }
 #rpFlash     { position: fixed; inset: 0; pointer-events: none; z-index: 6; background: rgba(198,66,37,0); transition: background .15s; }

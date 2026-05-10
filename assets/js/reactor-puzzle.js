@@ -137,6 +137,8 @@ let rpMyVotes        = {};   // { p0: optionId, p1: optionId, p2: optionId }
 let rpAxIdx          = 0;
 let rpGMSelectedOpt  = null; // optionId the GM has clicked in the tally
 let rpGMSelectedPuz  = -1;   // which puzzle index the selection belongs to
+let rpDismissed      = false; // player closed the overlay manually
+let rpLastPhase      = null;  // track phase changes to re-open after dismiss
 
 // ─── GM PANEL ─────────────────────────────────────────────────────────────────
 window.openReactorGMPanel = function() {
@@ -283,16 +285,29 @@ window.startReactorWatcher = function() {
 
 function rpHandleState(data) {
   if (!data || !data.active || data.phase === 'idle') {
+    rpDismissed = false; rpLastPhase = null;
     rpHideAll();
     return;
   }
-  if (data.phase === 'timeout') { rpShowMainOverlay(data); rpShowTimeout(); return; }
-  if (data.phase === 'finished') { rpShowMainOverlay(data); rpShowFinale(); return; }
-  if (data.phase === 'result')   { rpShowMainOverlay(data); rpShowResult(data); return; }
-  // 'voting'
+
+  // Re-open automatically when GM changes phase (new puzzle, result, timeout, finale)
+  const phase = data.phase;
+  if (phase !== rpLastPhase) { rpDismissed = false; }
+  rpLastPhase = phase;
+
+  if (rpDismissed) return; // player closed it, stay hidden until next phase change
+
+  if (phase === 'timeout') { rpShowMainOverlay(data); rpShowTimeout(); return; }
+  if (phase === 'finished') { rpShowMainOverlay(data); rpShowFinale(); return; }
+  if (phase === 'result')   { rpShowMainOverlay(data); rpShowResult(data); return; }
   rpShowMainOverlay(data);
   rpShowVoting(data);
 }
+
+window.rpPlayerClose = function() {
+  rpDismissed = true;
+  rpHideAll();
+};
 
 // ─── PLAYER UI ────────────────────────────────────────────────────────────────
 function rpHideAll() {

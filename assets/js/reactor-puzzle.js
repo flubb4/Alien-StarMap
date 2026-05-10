@@ -642,15 +642,20 @@ function rpGMRender() {
   if (isActive) {
     selectPhaseEl.style.display = '';
     advanceWrapEl.style.display = 'none';
+    selInfoEl.style.display     = 'none';
+    confirmWrapEl.style.display = '';
 
+    const confirmBtn = document.getElementById('rpGMConfirmBtn');
     if (rpGMSelectedOpt) {
       const selLabel = (pd.opts.find(([id]) => id === rpGMSelectedOpt) || [])[1] || rpGMSelectedOpt;
-      selInfoEl.style.display   = 'none';
-      confirmWrapEl.style.display = '';
-      selLabelEl.textContent    = '[' + rpGMSelectedOpt + ']  ' + selLabel;
+      selLabelEl.textContent  = '[' + rpGMSelectedOpt + ']  ' + selLabel;
+      selLabelEl.style.display = '';
+      confirmBtn.disabled     = false;
+      confirmBtn.textContent  = '✓ AUSWAHL BESTÄTIGEN';
     } else {
-      selInfoEl.style.display   = '';
-      confirmWrapEl.style.display = 'none';
+      selLabelEl.style.display = 'none';
+      confirmBtn.disabled     = true;
+      confirmBtn.textContent  = '✓ AUSWAHL BESTÄTIGEN';
     }
   } else {
     // result phase

@@ -284,6 +284,10 @@ window.startReactorWatcher = function() {
 };
 
 function rpHandleState(data) {
+  // GM never sees the player overlays — only the GM side panel.
+  // The puzzle modal backdrop (z-index 3100) would otherwise cover the GM panel.
+  if (window.isGM) { rpHideAll(); return; }
+
   if (!data || !data.active || data.phase === 'idle') {
     rpDismissed = false; rpLastPhase = null;
     rpHideAll();
@@ -314,11 +318,15 @@ function rpHideAll() {
   document.getElementById('reactorPlayerOverlay').classList.remove('open');
   document.getElementById('rpPuzOverlay').classList.remove('open');
   document.getElementById('rpTimeoutOv').classList.remove('open');
+  const cb = document.getElementById('rpCloseBtn');
+  if (cb) cb.style.display = 'none';
   if (rpTimerRAF) { cancelAnimationFrame(rpTimerRAF); rpTimerRAF = null; }
 }
 
 function rpShowMainOverlay(data) {
   document.getElementById('reactorPlayerOverlay').classList.add('open');
+  const cb = document.getElementById('rpCloseBtn');
+  if (cb) cb.style.display = '';
 
   const statusEl = document.getElementById('rpReactStatus');
   if (data.phase === 'finished') {

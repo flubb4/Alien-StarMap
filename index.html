@@ -81,7 +81,12 @@
         <button class="gm-xp-btn gm-dd-btn" onclick="openXPAward();closeGMTools()">XP Award</button>
         <button class="gm-session-btn gm-dd-btn" id="gmSessionBtn" onclick="toggleSession()">Session Active — Close Map</button>
         <button class="gm-dd-btn" onclick="openGMBroadcast();closeGMTools()">Login Screen Memories</button>
-        <button class="gm-dd-btn" onclick="openReactorGMPanel();closeGMTools()">⚛ Reactor Puzzle</button>
+        <div class="gm-submenu" id="gmRaetselMenu">
+          <button class="gm-dd-btn gm-submenu-toggle" onclick="document.getElementById('gmRaetselMenu').classList.toggle('open')">⚙ RÄTSEL <span class="gm-submenu-arrow">▸</span></button>
+          <div class="gm-submenu-items">
+            <button class="gm-dd-btn gm-dd-sub" onclick="openReactorGMPanel();closeGMTools()">Atlas Reaktor</button>
+          </div>
+        </div>
         <div class="gm-dropdown-divider"></div>
         <div class="gm-dropdown-title" style="color:var(--rust);">Clunkkynoost</div>
         <button class="gm-intercept-btn gm-dd-btn" id="gmInterceptBtn" onclick="triggerManualIntercept()">Trigger Interception</button>

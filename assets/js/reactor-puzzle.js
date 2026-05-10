@@ -131,10 +131,12 @@ const RP_PATH = 'session/puzzle/reactor';
 const rpRef   = () => ref(window.db, RP_PATH);
 
 // ─── MODULE STATE ─────────────────────────────────────────────────────────────
-let rpState   = null;
-let rpTimerRAF = null;
-let rpMyVotes = {};   // { p0: optionId, p1: optionId, p2: optionId }
-let rpAxIdx   = 0;
+let rpState          = null;
+let rpTimerRAF       = null;
+let rpMyVotes        = {};   // { p0: optionId, p1: optionId, p2: optionId }
+let rpAxIdx          = 0;
+let rpGMSelectedOpt  = null; // optionId the GM has clicked in the tally
+let rpGMSelectedPuz  = -1;   // which puzzle index the selection belongs to
 
 // ─── GM PANEL ─────────────────────────────────────────────────────────────────
 window.openReactorGMPanel = function() {
@@ -165,24 +167,17 @@ window.rpTrigger = function(difficulty) {
   });
 };
 
-// GM resolves current vote: tally → apply correct/wrong
+// GM resolves current vote: uses the explicitly selected option
 window.rpResolve = function() {
   if (!window.isGM || !rpState || rpState.phase !== 'voting') return;
-  const idx  = rpState.currentPuzzle;
-  const key  = 'p' + idx;
-  const pd   = D['p' + (idx + 1)][rpState.difficulty];
-  const voteMap = (rpState.votes && rpState.votes[key]) ? rpState.votes[key] : {};
+  if (!rpGMSelectedOpt) return; // GM must click an option first
 
-  // Tally
-  const counts = {};
-  Object.values(voteMap).forEach(v => { counts[v] = (counts[v] || 0) + 1; });
-  if (Object.keys(counts).length === 0) return; // no votes yet
-
-  // Winner = most votes; ties broken by option list order
-  let winner = null, maxCount = -1;
-  pd.opts.forEach(([id]) => {
-    if ((counts[id] || 0) > maxCount) { maxCount = counts[id] || 0; winner = id; }
-  });
+  const idx    = rpState.currentPuzzle;
+  const key    = 'p' + idx;
+  const pd     = D['p' + (idx + 1)][rpState.difficulty];
+  const winner = rpGMSelectedOpt;
+  rpGMSelectedOpt = null;
+  rpGMSelectedPuz = -1;
 
   const correct = winner === pd.correct;
   const newSolved = Object.assign({}, rpState.solved);
@@ -370,6 +365,10 @@ function rpShowVoting(data) {
   const total  = Object.keys(voteMap).length;
   const myVote = rpMyVotes[key] || null;
 
+  // Per-option vote counts
+  const counts = {};
+  Object.values(voteMap).forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+
   const voteStatus = document.getElementById('rpVoteStatus');
   voteStatus.style.display = '';
   if (myVote) {
@@ -380,14 +379,24 @@ function rpShowVoting(data) {
     voteStatus.className = 'rp-vote-status';
   }
 
-  // Build option buttons
+  // Build option buttons with live vote badges
   const optsEl = document.getElementById('rpPuzOpts');
   optsEl.style.display = '';
   optsEl.innerHTML = '';
   pd.opts.forEach(([id, label]) => {
     const btn = document.createElement('button');
     btn.className = 'rp-opt-btn' + (id === myVote ? ' my-vote' : '');
-    btn.textContent = '[' + id + ']  ' + label;
+
+    const labelSpan = document.createElement('span');
+    labelSpan.textContent = '[' + id + ']  ' + label;
+
+    const voteCount = counts[id] || 0;
+    const badge = document.createElement('span');
+    badge.className = 'rp-vote-badge' + (voteCount > 0 ? ' has-votes' : '');
+    badge.textContent = voteCount > 0 ? '● '.repeat(voteCount).trim() : '';
+
+    btn.appendChild(labelSpan);
+    btn.appendChild(badge);
     btn.addEventListener('click', () => rpCastVote(idx, id));
     optsEl.appendChild(btn);
   });
@@ -582,18 +591,32 @@ function rpGMRender() {
   const totalVotes = Object.values(counts).reduce((a, b) => a + b, 0);
   const maxCount   = totalVotes > 0 ? Math.max(...Object.values(counts)) : 0;
 
+  // Reset selection if puzzle changed
+  if (rpGMSelectedPuz !== idx) { rpGMSelectedOpt = null; rpGMSelectedPuz = idx; }
+
   const tallyEl = document.getElementById('rpGMTally');
   tallyEl.innerHTML = '';
   pd.opts.forEach(([id, label]) => {
-    const count = counts[id] || 0;
-    const isTop = count > 0 && count === maxCount;
+    const count  = counts[id] || 0;
+    const isTop  = count > 0 && count === maxCount;
+    const isSel  = isActive && id === rpGMSelectedOpt;
     const barPct = totalVotes > 0 ? Math.round(count / totalVotes * 100) : 0;
+
     const row = document.createElement('div');
-    row.className = 'rp-tally-row' + (isTop ? ' top-vote' : '');
+    row.className = 'rp-tally-row' +
+      (isSel ? ' selected' : (isTop ? ' top-vote' : ''));
     row.innerHTML =
       '<div class="rp-tally-label">[' + id + '] ' + label + '</div>' +
       '<div class="rp-tally-bar-wrap"><div class="rp-tally-bar-fill" style="width:' + barPct + '%"></div></div>' +
       '<div class="rp-tally-count">' + count + '</div>';
+
+    if (isActive) {
+      row.addEventListener('click', () => {
+        rpGMSelectedOpt = (rpGMSelectedOpt === id) ? null : id;
+        rpGMSelectedPuz = idx;
+        rpGMRender();
+      });
+    }
     tallyEl.appendChild(row);
   });
 
@@ -602,9 +625,17 @@ function rpGMRender() {
   // Resolve / advance button
   const resolveBtn = document.getElementById('rpResolveBtn');
   if (isActive) {
-    resolveBtn.textContent = '▶ ABSTIMMUNG AUSWERTEN';
-    resolveBtn.disabled    = totalVotes === 0;
-    resolveBtn.onclick     = window.rpResolve;
+    if (rpGMSelectedOpt) {
+      const selLabel = pd.opts.find(([id]) => id === rpGMSelectedOpt)?.[1] || rpGMSelectedOpt;
+      resolveBtn.textContent = '✓ BESTÄTIGEN: [' + rpGMSelectedOpt + '] ' + selLabel;
+      resolveBtn.disabled    = false;
+      resolveBtn.className   = 'rp-gm-btn green';
+    } else {
+      resolveBtn.textContent = '▸ OPTION ANKLICKEN ZUM WÄHLEN';
+      resolveBtn.disabled    = true;
+      resolveBtn.className   = 'rp-gm-btn green';
+    }
+    resolveBtn.onclick = window.rpResolve;
   } else {
     const lr = data.lastResult;
     resolveBtn.textContent = lr && lr.correct ? '→ NÄCHSTES PUZZLE' : '↺ NEU ABSTIMMEN';

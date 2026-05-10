@@ -655,6 +655,15 @@
   }
   .gm-dropdown button:hover { border-color: var(--amber); color: var(--amber); }
 
+  /* Rätsel submenu */
+  .gm-submenu-toggle { justify-content: space-between !important; }
+  .gm-submenu-arrow  { display: inline-block; font-size: 9px; transition: transform .2s; }
+  .gm-submenu.open .gm-submenu-arrow { transform: rotate(90deg); }
+  .gm-submenu-items  { display: none; padding-left: 10px; }
+  .gm-submenu.open .gm-submenu-items { display: block; }
+  .gm-dropdown .gm-dd-sub { font-size: 11px !important; color: #5a7a6a !important; border-color: #1a2e22 !important; }
+  .gm-dropdown .gm-dd-sub:hover { color: var(--amber) !important; border-color: var(--amber) !important; }
+
   /* Colour overrides — two classes = specificity 0,2,0, beats .gm-dropdown button */
   .gm-dropdown .gm-session-btn  { border-color: var(--green); color: var(--green); }
   .gm-dropdown .gm-session-btn:hover  { background: rgba(127,176,105,0.12); border-color: var(--green); color: var(--green); }

@@ -315,3 +315,22 @@
 .rp-cons-item { padding: 7px 10px; border: 1px solid rgba(198,66,37,.28); border-left: 3px solid #c64225; font-size: 11px; letter-spacing: 1px; color: #c64225; cursor: pointer; transition: background .14s; margin-bottom: 5px; }
 .rp-cons-item:hover    { background: rgba(198,66,37,.07); }
 .rp-cons-item.selected { background: rgba(198,66,37,.14); border-color: #c64225; }
+
+/* ── GM-mode layout shift ────────────────────────────────────────────────────
+   When the GM is logged in, the GM panel (420px, right side) stays open while
+   the player overlays are also visible. Shift overlays + close button left so
+   they don't get covered by the panel. */
+body.rp-gm-mode #reactorPlayerOverlay,
+body.rp-gm-mode #rpPuzOverlay,
+body.rp-gm-mode #rpTimeoutOv { right: 420px; }
+body.rp-gm-mode .rp-close-btn { right: 438px; }
+
+/* ── Subsystem bar flash when reactor segment shuts down ────────────────────
+   Applied briefly after a correct answer when the modal auto-closes, so players
+   visibly see the reactor coming down. */
+.rp-bar.shutdown-flash { animation: rpShutdownFlash 2.4s ease-out; }
+@keyframes rpShutdownFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(127,176,105,0); border-left-color: var(--rp-amber); }
+  20%  { box-shadow: 0 0 60px 8px rgba(127,176,105,.55); border-left-color: var(--rp-green); }
+  100% { box-shadow: 0 0 0 0 rgba(127,176,105,0); border-left-color: var(--rp-green); }
+}

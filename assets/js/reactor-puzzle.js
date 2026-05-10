@@ -139,6 +139,7 @@ let rpGMSelectedOpt  = null; // optionId the GM has clicked in the tally
 let rpGMSelectedPuz  = -1;   // which puzzle index the selection belongs to
 let rpDismissed      = false; // player closed the overlay manually
 let rpLastPhase      = null;  // track phase changes to re-open after dismiss
+let rpResultCloseT   = null;  // timeout id: auto-close modal after correct result
 
 // ─── GM PANEL ─────────────────────────────────────────────────────────────────
 window.openReactorGMPanel = function() {
@@ -276,6 +277,8 @@ window.rpReset = function() {
 // ─── PLAYER WATCHER ───────────────────────────────────────────────────────────
 window.startReactorWatcher = function() {
   rpMyVotes = {};
+  // GM gets a body class so player overlays shift left and leave room for the GM panel
+  if (window.isGM) document.body.classList.add('rp-gm-mode');
   onValue(rpRef(), snap => {
     rpState = snap.val();
     rpHandleState(rpState);
@@ -284,10 +287,6 @@ window.startReactorWatcher = function() {
 };
 
 function rpHandleState(data) {
-  // GM never sees the player overlays — only the GM side panel.
-  // The puzzle modal backdrop (z-index 3100) would otherwise cover the GM panel.
-  if (window.isGM) { rpHideAll(); return; }
-
   if (!data || !data.active || data.phase === 'idle') {
     rpDismissed = false; rpLastPhase = null;
     rpHideAll();
@@ -321,6 +320,7 @@ function rpHideAll() {
   const cb = document.getElementById('rpCloseBtn');
   if (cb) cb.style.display = 'none';
   if (rpTimerRAF) { cancelAnimationFrame(rpTimerRAF); rpTimerRAF = null; }
+  if (rpResultCloseT) { clearTimeout(rpResultCloseT); rpResultCloseT = null; }
 }
 
 function rpShowMainOverlay(data) {
@@ -471,6 +471,25 @@ function rpShowResult(data) {
   document.getElementById('rpWaitingGM').style.display = '';
 
   document.getElementById('rpPuzOverlay').classList.add('open');
+
+  // After a correct answer, briefly close the modal so the main reactor overlay
+  // becomes visible — players see the subsystem bar flip to .done and percentages
+  // drop. Modal re-opens automatically on the next phase change (next puzzle).
+  if (rpResultCloseT) { clearTimeout(rpResultCloseT); rpResultCloseT = null; }
+  if (lr.correct) {
+    rpResultCloseT = setTimeout(() => {
+      if (rpState && rpState.phase === 'result'
+          && rpState.lastResult && rpState.lastResult.correct) {
+        document.getElementById('rpPuzOverlay').classList.remove('open');
+        const panel = document.getElementById('rpPanel' + lr.puzzleIdx);
+        if (panel) {
+          panel.classList.add('shutdown-flash');
+          setTimeout(() => panel.classList.remove('shutdown-flash'), 2400);
+        }
+      }
+      rpResultCloseT = null;
+    }, 5500);
+  }
 }
 
 // Show finale

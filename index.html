@@ -1406,9 +1406,22 @@ Recalculating."</div>
     <div id="rpGMControl" class="rp-gm-section" style="display:none">
       <div class="rp-gm-sec-title">ABSTIMMUNG — AKTUELLES PUZZLE</div>
       <div id="rpGMTally" class="rp-vote-tally"></div>
-      <div id="rpGMVoteInfo" class="rp-gm-info" style="margin-bottom:8px"></div>
-      <div id="rpGMLastResult" style="font-size:10px;letter-spacing:2px;margin-bottom:10px"></div>
-      <button class="rp-gm-btn green" id="rpResolveBtn" onclick="rpResolve()" disabled>▶ ABSTIMMUNG AUSWERTEN</button>
+      <div id="rpGMVoteInfo" class="rp-gm-info" style="margin-bottom:6px"></div>
+
+      <!-- Voting phase: select option → confirm -->
+      <div id="rpGMSelectPhase">
+        <div id="rpGMSelInfo" class="rp-gm-info">▸ Option anklicken zum Auswählen</div>
+        <div id="rpGMConfirmWrap" style="display:none">
+          <div id="rpGMSelLabel" class="rp-gm-sel-label"></div>
+          <button class="rp-gm-btn green" id="rpGMConfirmBtn" onclick="rpResolve()">✓ AUSWAHL BESTÄTIGEN</button>
+        </div>
+      </div>
+
+      <!-- Result phase: show result → advance -->
+      <div id="rpGMAdvanceWrap" style="display:none">
+        <div id="rpGMLastResult" class="rp-gm-last-result"></div>
+        <button class="rp-gm-btn" id="rpResolveBtn" onclick="rpAdvance()">→ WEITER</button>
+      </div>
 
       <div class="rp-gm-sec-title" style="margin-top:16px">TIMER</div>
       <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;color:#ff9a3c;margin-bottom:8px;letter-spacing:4px" id="rpGMTimerVal">05:00</div>

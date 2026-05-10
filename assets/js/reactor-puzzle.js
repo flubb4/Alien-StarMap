@@ -390,10 +390,19 @@ function rpShowVoting(data) {
     const labelSpan = document.createElement('span');
     labelSpan.textContent = '[' + id + ']  ' + label;
 
-    const voteCount = counts[id] || 0;
+    // Voter name chips — show who voted for this option
+    const voters = Object.entries(voteMap)
+      .filter(([, v]) => v === id)
+      .map(([name]) => name);
+
     const badge = document.createElement('span');
-    badge.className = 'rp-vote-badge' + (voteCount > 0 ? ' has-votes' : '');
-    badge.textContent = voteCount > 0 ? '● '.repeat(voteCount).trim() : '';
+    badge.className = 'rp-vote-badge';
+    voters.forEach(name => {
+      const chip = document.createElement('span');
+      chip.className = 'rp-voter-chip' + (name === window.myName ? ' mine' : '');
+      chip.textContent = name.toUpperCase();
+      badge.appendChild(chip);
+    });
 
     btn.appendChild(labelSpan);
     btn.appendChild(badge);
@@ -622,36 +631,39 @@ function rpGMRender() {
 
   document.getElementById('rpGMVoteInfo').textContent = totalVotes + ' STIMME(N) ABGEGEBEN';
 
-  // Resolve / advance button
-  const resolveBtn = document.getElementById('rpResolveBtn');
-  if (isActive) {
-    if (rpGMSelectedOpt) {
-      const selLabel = pd.opts.find(([id]) => id === rpGMSelectedOpt)?.[1] || rpGMSelectedOpt;
-      resolveBtn.textContent = '✓ BESTÄTIGEN: [' + rpGMSelectedOpt + '] ' + selLabel;
-      resolveBtn.disabled    = false;
-      resolveBtn.className   = 'rp-gm-btn green';
-    } else {
-      resolveBtn.textContent = '▸ OPTION ANKLICKEN ZUM WÄHLEN';
-      resolveBtn.disabled    = true;
-      resolveBtn.className   = 'rp-gm-btn green';
-    }
-    resolveBtn.onclick = window.rpResolve;
-  } else {
-    const lr = data.lastResult;
-    resolveBtn.textContent = lr && lr.correct ? '→ NÄCHSTES PUZZLE' : '↺ NEU ABSTIMMEN';
-    resolveBtn.disabled    = false;
-    resolveBtn.onclick     = window.rpAdvance;
-    resolveBtn.className   = 'rp-gm-btn ' + (lr && lr.correct ? 'green' : 'amber');
-  }
+  const selectPhaseEl  = document.getElementById('rpGMSelectPhase');
+  const advanceWrapEl  = document.getElementById('rpGMAdvanceWrap');
+  const confirmWrapEl  = document.getElementById('rpGMConfirmWrap');
+  const selInfoEl      = document.getElementById('rpGMSelInfo');
+  const selLabelEl     = document.getElementById('rpGMSelLabel');
+  const lrEl           = document.getElementById('rpGMLastResult');
+  const resolveBtn     = document.getElementById('rpResolveBtn');
 
-  // Last result info
-  const lrEl = document.getElementById('rpGMLastResult');
-  if (data.lastResult) {
-    const lr = data.lastResult;
-    lrEl.textContent   = 'LETZTES ERGEBNIS: [' + lr.winner + '] — ' + (lr.correct ? 'KORREKT ✓' : 'FALSCH ✗');
-    lrEl.style.color   = lr.correct ? '#7fb069' : '#c64225';
+  if (isActive) {
+    selectPhaseEl.style.display = '';
+    advanceWrapEl.style.display = 'none';
+
+    if (rpGMSelectedOpt) {
+      const selLabel = (pd.opts.find(([id]) => id === rpGMSelectedOpt) || [])[1] || rpGMSelectedOpt;
+      selInfoEl.style.display   = 'none';
+      confirmWrapEl.style.display = '';
+      selLabelEl.textContent    = '[' + rpGMSelectedOpt + ']  ' + selLabel;
+    } else {
+      selInfoEl.style.display   = '';
+      confirmWrapEl.style.display = 'none';
+    }
   } else {
-    lrEl.textContent = '';
+    // result phase
+    selectPhaseEl.style.display = 'none';
+    advanceWrapEl.style.display = '';
+    const lr = data.lastResult;
+    if (lr) {
+      lrEl.textContent      = (lr.correct ? '✓ KORREKT' : '✗ FALSCH') + '  //  [' + lr.winner + ']';
+      lrEl.style.color      = lr.correct ? '#7fb069' : '#c64225';
+      lrEl.style.borderColor = lr.correct ? 'rgba(127,176,105,.35)' : 'rgba(198,66,37,.35)';
+      resolveBtn.textContent = lr.correct ? '→ NÄCHSTES PUZZLE' : '↺ NEU ABSTIMMEN';
+      resolveBtn.className   = 'rp-gm-btn ' + (lr.correct ? 'green' : 'amber');
+    }
   }
 
   // Timer display in GM panel

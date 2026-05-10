@@ -180,11 +180,11 @@
 .rp-opt-btn.my-vote  { border-color: var(--rp-amber); background: rgba(255,154,60,.12); color: var(--rp-amber); }
 .rp-opt-btn.winner   { border-color: var(--rp-green); background: rgba(127,176,105,.09); color: var(--rp-green); }
 
-/* Vote badge (per-option count shown on player buttons) */
-.rp-opt-btn            { display: flex; justify-content: space-between; align-items: center; }
-.rp-vote-badge         { font-size: 10px; letter-spacing: 3px; color: var(--rp-border); margin-left: 10px; flex-shrink: 0; white-space: nowrap; transition: color .2s; }
-.rp-vote-badge.has-votes { color: var(--rp-dim); }
-.rp-opt-btn.my-vote .rp-vote-badge { color: var(--rp-amber); }
+/* Vote badges — player name chips on options */
+.rp-opt-btn        { display: flex; justify-content: space-between; align-items: center; }
+.rp-vote-badge     { display: flex; gap: 4px; flex-shrink: 0; margin-left: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.rp-voter-chip     { font-size: 9px; letter-spacing: 1px; padding: 2px 5px; border: 1px solid var(--rp-border); color: var(--rp-dim); background: rgba(130,164,148,.06); white-space: nowrap; }
+.rp-voter-chip.mine { border-color: var(--rp-amber); color: var(--rp-amber); background: rgba(255,154,60,.08); }
 
 /* Vote status */
 .rp-vote-status         { font-size: 11px; color: var(--rp-dim); letter-spacing: 2px; margin-bottom: 10px; }
@@ -290,7 +290,9 @@
 .rp-gm-btn:disabled { opacity: .3; cursor: not-allowed; }
 .rp-timer-row { display: flex; gap: 7px; margin-bottom: 0; }
 .rp-timer-row .rp-gm-btn { margin-bottom: 0; flex: 1; }
-.rp-gm-info { font-size: 10px; color: #3a5a44; letter-spacing: 1px; line-height: 1.6; margin-top: 6px; }
+.rp-gm-info         { font-size: 10px; color: #3a5a44; letter-spacing: 1px; line-height: 1.6; margin-top: 6px; }
+.rp-gm-sel-label    { font-size: 12px; letter-spacing: 2px; color: #ff9a3c; padding: 8px 12px; border: 1px solid rgba(255,154,60,.35); background: rgba(255,154,60,.06); margin-bottom: 8px; }
+.rp-gm-last-result  { font-size: 11px; letter-spacing: 2px; padding: 8px 12px; border: 1px solid #1a3020; margin-bottom: 10px; }
 
 /* Consequence list */
 .rp-cons-item { padding: 7px 10px; border: 1px solid rgba(198,66,37,.28); border-left: 3px solid #c64225; font-size: 11px; letter-spacing: 1px; color: #c64225; cursor: pointer; transition: background .14s; margin-bottom: 5px; }

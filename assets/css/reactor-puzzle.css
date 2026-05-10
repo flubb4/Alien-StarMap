@@ -45,18 +45,18 @@
   position: fixed;
   top: 14px;
   right: 18px;
-  z-index: 11;
-  background: transparent;
-  border: 1px solid var(--rp-border);
-  color: var(--rp-dim);
+  z-index: 3300;
+  background: rgba(5,16,12,.9);
+  border: 1px solid #ff9a3c;
+  color: #ff9a3c;
   font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 2px;
-  padding: 5px 11px;
+  padding: 6px 14px;
   cursor: pointer;
   transition: all .14s;
 }
-.rp-close-btn:hover { border-color: var(--rp-rust); color: var(--rp-rust); }
+.rp-close-btn:hover { background: rgba(198,66,37,.15); border-color: #c64225; color: #c64225; }
 
 .rp-vignette { position: fixed; inset: 0; background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.78) 100%); pointer-events: none; z-index: 8; }
 .rp-frame    { position: fixed; inset: 6px; border: 1px solid var(--rp-border); pointer-events: none; z-index: 7; }

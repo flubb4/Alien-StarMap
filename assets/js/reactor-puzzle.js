@@ -661,16 +661,17 @@ function rpGMRender() {
     confirmWrapEl.style.display = '';
 
     const confirmBtn = document.getElementById('rpGMConfirmBtn');
+    confirmBtn.disabled = false;
     if (rpGMSelectedOpt) {
       const selLabel = (pd.opts.find(([id]) => id === rpGMSelectedOpt) || [])[1] || rpGMSelectedOpt;
-      selLabelEl.textContent  = '[' + rpGMSelectedOpt + ']  ' + selLabel;
+      selLabelEl.textContent   = '[' + rpGMSelectedOpt + ']  ' + selLabel;
       selLabelEl.style.display = '';
-      confirmBtn.disabled     = false;
-      confirmBtn.textContent  = '✓ AUSWAHL BESTÄTIGEN';
+      confirmBtn.textContent   = '✓ AUSWAHL BESTÄTIGEN';
+      confirmBtn.className     = 'rp-gm-btn green';
     } else {
       selLabelEl.style.display = 'none';
-      confirmBtn.disabled     = true;
-      confirmBtn.textContent  = '✓ AUSWAHL BESTÄTIGEN';
+      confirmBtn.textContent   = '▸ ERST OPTION OBEN ANKLICKEN';
+      confirmBtn.className     = 'rp-gm-btn amber';
     }
   } else {
     // result phase

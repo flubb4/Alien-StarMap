@@ -556,10 +556,6 @@ window.startAudioWatcher = function() {
   if (slider) slider.value = myVolume;
   const vlab = document.getElementById('awVolLabel');
   if (vlab) vlab.textContent = myVolume;
-  const rpSlider = document.getElementById('rpVolSlider');
-  if (rpSlider) rpSlider.value = myVolume;
-  const rpLab = document.getElementById('rpVolLabel');
-  if (rpLab) rpLab.textContent = myVolume + '%';
   _updateMuteIcon();
 
   onValue(audioRef, snap => {
@@ -591,11 +587,6 @@ window.audioSetVolume = function(v) {
   if (lab) lab.textContent = myVolume;
   const slider = document.getElementById('volSlider');
   if (slider && parseInt(slider.value,10) !== myVolume) slider.value = myVolume;
-  // Mirror to the puzzle-modal volume control (when present)
-  const rpSlider = document.getElementById('rpVolSlider');
-  if (rpSlider && parseInt(rpSlider.value,10) !== myVolume) rpSlider.value = myVolume;
-  const rpLab = document.getElementById('rpVolLabel');
-  if (rpLab) rpLab.textContent = myVolume + '%';
   _updateMuteIcon();
 };
 
@@ -609,13 +600,10 @@ window.audioToggleMute = function() {
 };
 
 function _updateMuteIcon() {
-  const sym = myVolume === 0 ? '🔇' : (myVolume < 40 ? '🔉' : '🔊');
   const ic = document.getElementById('awMuteIcon');
-  if (ic) ic.textContent = sym;
+  if (ic) ic.textContent = myVolume === 0 ? '🔇' : (myVolume < 40 ? '🔉' : '🔊');
   const tg = document.getElementById('awToggleIcon');
   if (tg) tg.textContent = myVolume === 0 ? '🔇' : '🔊';
-  const rpIc = document.getElementById('rpMuteIcon');
-  if (rpIc) rpIc.textContent = sym;
 }
 
 window.audioToggleWidget = function() {
@@ -626,11 +614,9 @@ window.audioToggleWidget = function() {
 
 function _updateWidgetTrack(d) {
   const trackLab = document.getElementById('awTrack');
-  const rpTrack  = document.getElementById('rpAudTrack');
-  if (!trackLab && !rpTrack) return;
+  if (!trackLab) return;
   if (!d || (!d.videoId && !d.src)) {
-    if (trackLab) trackLab.textContent = '— NO TRANSMISSION —';
-    if (rpTrack)  rpTrack.textContent  = '— NO TRANSMISSION —';
+    trackLab.textContent = '— NO TRANSMISSION —';
     return;
   }
   let title = '';
@@ -643,7 +629,5 @@ function _updateWidgetTrack(d) {
     } catch(e) {}
     if (!title) title = d.label || d.videoId || '';
   }
-  const display = (d.isPlaying ? '▶ ' : '⏸ ') + title;
-  if (trackLab) trackLab.textContent = display;
-  if (rpTrack)  rpTrack.textContent  = display;
+  trackLab.textContent = (d.isPlaying ? '▶ ' : '⏸ ') + title;
 }

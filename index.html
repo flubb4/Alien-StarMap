@@ -1283,6 +1283,7 @@
       </div>
     </div>
     <div class="rp-blocked-banner">▸ MANUAL SHUTDOWN BLOCKED ◂ AX-44 COGNITIVE DEFENSE LAYER ACTIVE ▸</div>
+    <div id="rpSelectHint" class="rp-select-hint" style="display:none">▸ WÄHLE EIN SUBSYSTEM ZUM ABSCHALTEN — KLICKE EINE LEISTE ◂</div>
     <div class="rp-sec-div">SUBSYSTEM STATUS</div>
     <div class="rp-bar" id="rpPanel0">
       <div class="rp-bar-top">
@@ -1415,14 +1416,20 @@ Recalculating."</div>
       <div class="rp-gm-info">Öffnet das Rätsel gleichzeitig für alle eingeloggten Spieler.</div>
     </div>
 
-    <!-- Control (voting or result phase) -->
+    <!-- Control (select / voting / result phase) -->
     <div id="rpGMControl" class="rp-gm-section" style="display:none">
-      <div class="rp-gm-sec-title">ABSTIMMUNG — AKTUELLES PUZZLE</div>
+      <div id="rpGMControlTitle" class="rp-gm-sec-title">ABSTIMMUNG — AKTUELLES PUZZLE</div>
       <div id="rpGMTally" class="rp-vote-tally"></div>
       <div id="rpGMVoteInfo" class="rp-gm-info" style="margin-bottom:6px"></div>
 
+      <!-- Subsystem-select phase: pick which subsystem → confirm -->
+      <div id="rpGMSubsysWrap" style="display:none">
+        <div id="rpGMSubSelLabel" class="rp-gm-sel-label" style="display:none"></div>
+        <button class="rp-gm-btn amber" id="rpGMSubConfirmBtn" onclick="rpConfirmSubsystem()">▸ ERST SUBSYSTEM OBEN ANKLICKEN</button>
+      </div>
+
       <!-- Voting phase: select option → confirm -->
-      <div id="rpGMSelectPhase">
+      <div id="rpGMSelectPhase" style="display:none">
         <div id="rpGMSelInfo" class="rp-gm-info">▸ Option anklicken zum Auswählen</div>
         <div id="rpGMConfirmWrap">
           <div id="rpGMSelLabel" class="rp-gm-sel-label"></div>

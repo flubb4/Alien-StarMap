@@ -103,6 +103,10 @@
 /* Blocked banner */
 .rp-blocked-banner { text-align: center; font-size: 11px; letter-spacing: 3px; color: var(--rp-rust); padding: 6px 10px; border: 1px solid rgba(198,66,37,.28); background: rgba(198,66,37,.04); margin-bottom: 14px; animation: rpSPulse 2.2s ease-in-out infinite; }
 
+/* Select-phase hint */
+.rp-select-hint { text-align: center; font-size: 11px; letter-spacing: 3px; color: var(--rp-amber); padding: 8px 10px; border: 1px solid rgba(255,154,60,.35); background: rgba(255,154,60,.06); margin-bottom: 14px; animation: rpSelectHintPulse 1.8s ease-in-out infinite; }
+@keyframes rpSelectHintPulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+
 /* Section divider */
 .rp-sec-div { font-size: 10px; color: var(--rp-dim); letter-spacing: 3px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
 .rp-sec-div::before, .rp-sec-div::after { content: ''; flex: 1; height: 1px; background: var(--rp-border); }
@@ -123,6 +127,19 @@
 @keyframes rpBGlowG { 0%,100% { text-shadow: 0 0 7px rgba(127,176,105,.35); } 50% { text-shadow: 0 0 18px rgba(127,176,105,.85); } }
 .rp-bar-status   { font-size: 10px; letter-spacing: 1px; color: var(--rp-dim); margin-top: 4px; }
 .rp-bar.done .rp-bar-status { color: var(--rp-green); }
+
+/* Selectable bar — players click during 'select' phase to pick a subsystem */
+.rp-bar.selectable             { cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s; }
+.rp-bar.selectable:hover       { border-color: var(--rp-amber); border-left-color: var(--rp-amber); background: linear-gradient(90deg, rgba(255,154,60,.08), rgba(14,24,20,.5)); box-shadow: 0 0 22px rgba(255,154,60,.18); }
+.rp-bar.selectable .rp-bar-status { color: var(--rp-amber); }
+.rp-bar.selectable.my-pick     { border-color: var(--rp-amber); border-left-color: var(--rp-amber); background: linear-gradient(90deg, rgba(255,154,60,.12), rgba(14,24,20,.5)); }
+.rp-bar-vote-label             { font-size: 9px; letter-spacing: 2px; color: var(--rp-dim); margin-right: 4px; }
+.rp-bar-chip                   { display: inline-block; font-size: 9px; letter-spacing: 1px; padding: 1px 5px; margin: 0 2px; border: 1px solid var(--rp-border); color: var(--rp-dim); background: rgba(130,164,148,.06); }
+.rp-bar-chip.mine              { border-color: var(--rp-amber); color: var(--rp-amber); background: rgba(255,154,60,.1); }
+
+/* Solved row in GM tally — dim out */
+.rp-tally-row.solved { opacity: .45; cursor: default; }
+.rp-tally-row.solved:hover { background: #0b1812; border-color: #1a3020; }
 
 /* AX-44 message box */
 .rp-ax-box   { border: 1px solid var(--rp-border); border-left: 3px solid var(--rp-teal); background: var(--rp-panel); padding: 9px 14px; min-height: 46px; margin-top: 12px; }

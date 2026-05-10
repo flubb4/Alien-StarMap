@@ -148,6 +148,8 @@ let rpLastPhase      = null;  // track phase changes to re-open after dismiss
 let rpResultCloseT   = null;  // timeout id: auto-close modal after correct result
 let rpFxScheduledT   = null;  // timeout id: scheduled FX trigger
 let rpFxPlayedKey    = null;  // 'p0' | 'p1' | 'p2' — prevents double-fire of FX
+let rpGMSubSelected  = null;  // subsystem idx the GM has clicked in the select tally
+let rpMySubVote      = null;  // player's current subsystem pick (mirror of subVotes[myName])
 
 // ─── GM PANEL ─────────────────────────────────────────────────────────────────
 window.openReactorGMPanel = function() {
@@ -160,21 +162,45 @@ window.closeReactorGMPanel = function() {
   document.getElementById('reactorGMPanel').classList.remove('open');
 };
 
-// GM starts puzzle with chosen difficulty
+// GM starts puzzle with chosen difficulty — players land in 'select' phase first,
+// where they pick which subsystem to tackle. GM confirms → 'voting' phase opens.
 window.rpTrigger = function(difficulty) {
   if (!window.isGM) return;
   set(rpRef(), {
     active: true,
-    phase: 'voting',
+    phase: 'select',
     difficulty,
-    currentPuzzle: 0,
+    currentPuzzle: null,
     solved: { p0: false, p1: false, p2: false },
     stress: 0,
     timerStart: Date.now(),
     timerDuration: 300,
     timerPaused: false,
+    subVotes: {},
     votes: { p0: {}, p1: {}, p2: {} },
     lastResult: null
+  });
+};
+
+// Player picks a subsystem to tackle. Solved ones can't be chosen.
+window.rpCastSubsystemVote = function(subIdx) {
+  if (!window.myName || !rpState || rpState.phase !== 'select') return;
+  if (rpState.solved && rpState.solved['p' + subIdx]) return;
+  rpMySubVote = subIdx;
+  update(ref(window.db, RP_PATH + '/subVotes'), { [window.myName]: subIdx });
+};
+
+// GM confirms a subsystem → transition to voting phase for that puzzle
+window.rpConfirmSubsystem = function() {
+  if (!window.isGM || !rpState || rpState.phase !== 'select') return;
+  if (rpGMSubSelected == null) return;
+  const idx = rpGMSubSelected;
+  rpGMSubSelected = null;
+  update(rpRef(), {
+    phase: 'voting',
+    currentPuzzle: idx,
+    subVotes: null,
+    ['votes/p' + idx]: {}
   });
 };
 
@@ -223,20 +249,22 @@ window.rpResolve = function() {
   update(rpRef(), payload);
 };
 
-// GM advances after showing result
+// GM advances after showing result. Correct → return to subsystem select for
+// next round (or 'finished' if all solved, which is already set by rpResolve).
+// Wrong → re-vote on same puzzle with cleared answer votes.
 window.rpAdvance = function() {
   if (!window.isGM || !rpState) return;
   const lr = rpState.lastResult;
   if (!lr) return;
 
   if (lr.correct) {
-    // Move to next puzzle (already advanced in solved state, just set phase back to voting)
-    const nextIdx = lr.puzzleIdx + 1;
-    const nextVotes = Object.assign({}, rpState.votes || {});
-    nextVotes['p' + nextIdx] = {};
-    update(rpRef(), { phase: 'voting', currentPuzzle: nextIdx, votes: nextVotes, lastResult: null });
+    update(rpRef(), {
+      phase: 'select',
+      currentPuzzle: null,
+      subVotes: null,
+      lastResult: null
+    });
   } else {
-    // Re-open voting for same puzzle with cleared votes
     const clearedVotes = Object.assign({}, rpState.votes || {});
     clearedVotes['p' + lr.puzzleIdx] = {};
     update(rpRef(), { phase: 'voting', votes: clearedVotes, lastResult: null });
@@ -319,9 +347,21 @@ function rpHandleState(data) {
     rpShowFinale();
     return;
   }
-  if (phase === 'result')   { rpShowMainOverlay(data); rpShowResult(data); return; }
+  if (phase === 'result')  { rpShowMainOverlay(data); rpShowResult(data); return; }
+  if (phase === 'select')  { rpShowMainOverlay(data); rpShowSelect(data); return; }
   rpShowMainOverlay(data);
   rpShowVoting(data);
+}
+
+// 'select' phase: main overlay only, no modal. Bars become clickable for players.
+function rpShowSelect(data) {
+  document.getElementById('rpPuzOverlay').classList.remove('open');
+  document.getElementById('rpTimeoutOv').classList.remove('open');
+  const fx = document.getElementById('rpShutdownFx');
+  if (fx) fx.classList.remove('show');
+  // Mirror my own vote so click handler can highlight it
+  rpMySubVote = (data.subVotes && window.myName) ? data.subVotes[window.myName] : null;
+  if (rpMySubVote === undefined) rpMySubVote = null;
 }
 
 // Schedule the shutdown FX once per puzzle. Plays after delayMs over whatever
@@ -399,10 +439,16 @@ function rpShowMainOverlay(data) {
   const initPcts   = ['100%', '100%', '100%'];
   const prots      = ['GUILT PROTOCOL', 'TRUST PROTOCOL', 'SURVIVAL PROTOCOL'];
 
+  const isSelectPhase = data.phase === 'select';
+  const subVotes      = data.subVotes || {};
+
+  // Show or hide the "WÄHLE EIN SUBSYSTEM" hint banner
+  const selectHint = document.getElementById('rpSelectHint');
+  if (selectHint) selectHint.style.display = isSelectPhase ? '' : 'none';
+
   for (let i = 0; i < 3; i++) {
     const solved   = data.solved && data.solved['p' + i];
     const isCurr   = !solved && i === data.currentPuzzle;
-    const isLocked = !solved && i > (data.currentPuzzle || 0);
     const panel    = document.getElementById('rpPanel' + i);
     const blk      = document.getElementById('rpBlk' + i);
     const pct      = document.getElementById('rpPct' + i);
@@ -410,6 +456,9 @@ function rpShowMainOverlay(data) {
     const prot     = document.getElementById('rpProt' + i);
 
     panel.className = 'rp-bar';
+    // Clear any old click handler — re-wired below if selectable
+    panel.onclick = null;
+
     if (solved) {
       panel.classList.add('done');
       blk.textContent  = BAR_AFTER[i].blk;
@@ -420,8 +469,33 @@ function rpShowMainOverlay(data) {
       blk.textContent  = initBlocks;
       pct.textContent  = initPcts[i];
       prot.textContent = prots[i];
-      if (isCurr)   { panel.classList.add('active-now'); bst.textContent = 'AKTIV — ABSTIMMUNG LÄUFT'; }
-      else if (isLocked) bst.textContent = 'GESPERRT';
+
+      if (isSelectPhase) {
+        // Bar is selectable — players click to pick which subsystem to tackle.
+        panel.classList.add('selectable');
+        const voters = Object.entries(subVotes).filter(([, v]) => v === i).map(([n]) => n);
+        const myVote = window.myName ? subVotes[window.myName] : null;
+        if (myVote === i) panel.classList.add('my-pick');
+
+        if (voters.length > 0) {
+          const chips = voters.map(n => {
+            const mine = (n === window.myName);
+            return '<span class="rp-bar-chip' + (mine ? ' mine' : '') + '">' + n.toUpperCase() + '</span>';
+          }).join('');
+          bst.innerHTML = '<span class="rp-bar-vote-label">STIMMEN:</span> ' + chips;
+        } else {
+          bst.textContent = '▸ KLICKEN ZUM WÄHLEN';
+        }
+
+        if (!window.isGM) {
+          panel.onclick = () => window.rpCastSubsystemVote(i);
+        }
+      } else if (isCurr) {
+        panel.classList.add('active-now');
+        bst.textContent = 'AKTIV — ABSTIMMUNG LÄUFT';
+      } else {
+        bst.textContent = 'WARTET AUF AUSWAHL';
+      }
     }
   }
 
@@ -657,9 +731,12 @@ function rpCycleAxMsg() {
 }
 
 // ─── GM PANEL RENDER ──────────────────────────────────────────────────────────
+const RP_SUB_NAMES = ['CORE TEMP', 'COOLANT PRESSURE', 'FUSION OUTPUT'];
+
 function rpGMRender() {
   const data     = rpState;
   const phase    = data ? data.phase : 'idle';
+  const isSelect = phase === 'select';
   const isActive = phase === 'voting';
   const isResult = phase === 'result';
   const isIdle   = !data || !data.active || phase === 'idle';
@@ -675,6 +752,9 @@ function rpGMRender() {
   } else if (phase === 'timeout') {
     statusEl.textContent = 'TIMEOUT — TIMER ABGELAUFEN';
     statusEl.className   = 'rp-gm-status active';
+  } else if (isSelect) {
+    statusEl.textContent = 'SUBSYSTEM-AUSWAHL — SPIELER WÄHLEN';
+    statusEl.className   = 'rp-gm-status active';
   } else {
     const titles = ['GUILT PROTOCOL', 'TRUST PROTOCOL', 'SURVIVAL PROTOCOL'];
     const idx    = data ? data.currentPuzzle : 0;
@@ -684,95 +764,144 @@ function rpGMRender() {
 
   // Section visibility
   document.getElementById('rpGMSetup').style.display    = isIdle    ? '' : 'none';
-  document.getElementById('rpGMControl').style.display  = (isActive || isResult) ? '' : 'none';
+  document.getElementById('rpGMControl').style.display  = (isSelect || isActive || isResult) ? '' : 'none';
   document.getElementById('rpGMTimeout').style.display  = phase === 'timeout'  ? '' : 'none';
   document.getElementById('rpGMFinished').style.display = phase === 'finished' ? '' : 'none';
 
-  if (!isActive && !isResult) return;
+  if (isIdle || phase === 'timeout' || phase === 'finished') {
+    // Still render timer if available
+    rpGMRenderTimer(data);
+    return;
+  }
 
-  // Vote tally
-  const idx     = data.currentPuzzle;
-  const key     = 'p' + idx;
-  const pd      = D['p' + (idx + 1)][data.difficulty];
-  const voteMap = (data.votes && data.votes[key]) ? data.votes[key] : {};
-  const counts  = {};
-  Object.values(voteMap).forEach(v => { counts[v] = (counts[v] || 0) + 1; });
-  const totalVotes = Object.values(counts).reduce((a, b) => a + b, 0);
-  const maxCount   = totalVotes > 0 ? Math.max(...Object.values(counts)) : 0;
+  // Toggle which sub-panel is shown inside rpGMControl
+  document.getElementById('rpGMSubsysWrap').style.display = isSelect ? '' : 'none';
+  document.getElementById('rpGMSelectPhase').style.display = isActive ? '' : 'none';
+  document.getElementById('rpGMAdvanceWrap').style.display = isResult ? '' : 'none';
+  document.getElementById('rpGMControlTitle').textContent =
+    isSelect ? 'SUBSYSTEM-AUSWAHL — SPIELERSTIMMEN' : 'ABSTIMMUNG — AKTUELLES PUZZLE';
 
-  // Reset selection if puzzle changed
-  if (rpGMSelectedPuz !== idx) { rpGMSelectedOpt = null; rpGMSelectedPuz = idx; }
-
+  // Render the tally — subsystem rows in select phase, answer rows in voting/result
   const tallyEl = document.getElementById('rpGMTally');
   tallyEl.innerHTML = '';
-  pd.opts.forEach(([id, label]) => {
-    const count  = counts[id] || 0;
-    const isTop  = count > 0 && count === maxCount;
-    const isSel  = isActive && id === rpGMSelectedOpt;
-    const barPct = totalVotes > 0 ? Math.round(count / totalVotes * 100) : 0;
 
-    const row = document.createElement('div');
-    row.className = 'rp-tally-row' +
-      (isSel ? ' selected' : (isTop ? ' top-vote' : ''));
-    row.innerHTML =
-      '<div class="rp-tally-label">[' + id + '] ' + label + '</div>' +
-      '<div class="rp-tally-bar-wrap"><div class="rp-tally-bar-fill" style="width:' + barPct + '%"></div></div>' +
-      '<div class="rp-tally-count">' + count + '</div>';
+  if (isSelect) {
+    const subVotes = data.subVotes || {};
+    const subCounts = [0, 0, 0];
+    Object.values(subVotes).forEach(v => { if (v >= 0 && v <= 2) subCounts[v]++; });
+    const total = subCounts.reduce((a, b) => a + b, 0);
+    const max   = total > 0 ? Math.max(...subCounts) : 0;
 
-    if (isActive) {
-      row.addEventListener('click', () => {
-        rpGMSelectedOpt = (rpGMSelectedOpt === id) ? null : id;
-        rpGMSelectedPuz = idx;
-        rpGMRender();
-      });
+    for (let i = 0; i < 3; i++) {
+      const solved = data.solved && data.solved['p' + i];
+      const row = document.createElement('div');
+      const count = subCounts[i];
+      const isTop = !solved && count > 0 && count === max;
+      const isSel = rpGMSubSelected === i;
+      row.className = 'rp-tally-row' +
+        (solved ? ' solved' : '') +
+        (isSel ? ' selected' : (isTop ? ' top-vote' : ''));
+      row.innerHTML =
+        '<div class="rp-tally-label">' + RP_SUB_NAMES[i] + (solved ? '  (✓ ERLEDIGT)' : '') + '</div>' +
+        '<div class="rp-tally-bar-wrap"><div class="rp-tally-bar-fill" style="width:' + (total > 0 ? Math.round(count / total * 100) : 0) + '%"></div></div>' +
+        '<div class="rp-tally-count">' + count + '</div>';
+      if (!solved) {
+        row.addEventListener('click', () => {
+          rpGMSubSelected = (rpGMSubSelected === i) ? null : i;
+          rpGMRender();
+        });
+      }
+      tallyEl.appendChild(row);
     }
-    tallyEl.appendChild(row);
-  });
 
-  document.getElementById('rpGMVoteInfo').textContent = totalVotes + ' STIMME(N) ABGEGEBEN';
+    document.getElementById('rpGMVoteInfo').textContent = total + ' STIMME(N) ABGEGEBEN';
 
-  const selectPhaseEl  = document.getElementById('rpGMSelectPhase');
-  const advanceWrapEl  = document.getElementById('rpGMAdvanceWrap');
-  const confirmWrapEl  = document.getElementById('rpGMConfirmWrap');
-  const selInfoEl      = document.getElementById('rpGMSelInfo');
-  const selLabelEl     = document.getElementById('rpGMSelLabel');
-  const lrEl           = document.getElementById('rpGMLastResult');
-  const resolveBtn     = document.getElementById('rpResolveBtn');
-
-  if (isActive) {
-    selectPhaseEl.style.display = '';
-    advanceWrapEl.style.display = 'none';
-    selInfoEl.style.display     = 'none';
-    confirmWrapEl.style.display = '';
-
-    const confirmBtn = document.getElementById('rpGMConfirmBtn');
-    confirmBtn.disabled = false;
-    if (rpGMSelectedOpt) {
-      const selLabel = (pd.opts.find(([id]) => id === rpGMSelectedOpt) || [])[1] || rpGMSelectedOpt;
-      selLabelEl.textContent   = '[' + rpGMSelectedOpt + ']  ' + selLabel;
+    const confirmBtn = document.getElementById('rpGMSubConfirmBtn');
+    const selLabelEl = document.getElementById('rpGMSubSelLabel');
+    if (rpGMSubSelected != null) {
+      selLabelEl.textContent   = '▸ ' + RP_SUB_NAMES[rpGMSubSelected];
       selLabelEl.style.display = '';
-      confirmBtn.textContent   = '✓ AUSWAHL BESTÄTIGEN';
+      confirmBtn.textContent   = '✓ SUBSYSTEM BESTÄTIGEN — FRAGE ÖFFNEN';
       confirmBtn.className     = 'rp-gm-btn green';
     } else {
       selLabelEl.style.display = 'none';
-      confirmBtn.textContent   = '▸ ERST OPTION OBEN ANKLICKEN';
+      confirmBtn.textContent   = '▸ ERST SUBSYSTEM OBEN ANKLICKEN';
       confirmBtn.className     = 'rp-gm-btn amber';
     }
   } else {
-    // result phase
-    selectPhaseEl.style.display = 'none';
-    advanceWrapEl.style.display = '';
-    const lr = data.lastResult;
-    if (lr) {
-      lrEl.textContent      = (lr.correct ? '✓ KORREKT' : '✗ FALSCH') + '  //  [' + lr.winner + ']';
-      lrEl.style.color      = lr.correct ? '#7fb069' : '#c64225';
-      lrEl.style.borderColor = lr.correct ? 'rgba(127,176,105,.35)' : 'rgba(198,66,37,.35)';
-      resolveBtn.textContent = lr.correct ? '→ NÄCHSTES PUZZLE' : '↺ NEU ABSTIMMEN';
-      resolveBtn.className   = 'rp-gm-btn ' + (lr.correct ? 'green' : 'amber');
+    // voting or result — answer tally
+    const idx     = data.currentPuzzle;
+    const key     = 'p' + idx;
+    const pd      = D['p' + (idx + 1)][data.difficulty];
+    const voteMap = (data.votes && data.votes[key]) ? data.votes[key] : {};
+    const counts  = {};
+    Object.values(voteMap).forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+    const totalVotes = Object.values(counts).reduce((a, b) => a + b, 0);
+    const maxCount   = totalVotes > 0 ? Math.max(...Object.values(counts)) : 0;
+
+    if (rpGMSelectedPuz !== idx) { rpGMSelectedOpt = null; rpGMSelectedPuz = idx; }
+
+    pd.opts.forEach(([id, label]) => {
+      const count  = counts[id] || 0;
+      const isTop  = count > 0 && count === maxCount;
+      const isSel  = isActive && id === rpGMSelectedOpt;
+      const barPct = totalVotes > 0 ? Math.round(count / totalVotes * 100) : 0;
+
+      const row = document.createElement('div');
+      row.className = 'rp-tally-row' +
+        (isSel ? ' selected' : (isTop ? ' top-vote' : ''));
+      row.innerHTML =
+        '<div class="rp-tally-label">[' + id + '] ' + label + '</div>' +
+        '<div class="rp-tally-bar-wrap"><div class="rp-tally-bar-fill" style="width:' + barPct + '%"></div></div>' +
+        '<div class="rp-tally-count">' + count + '</div>';
+
+      if (isActive) {
+        row.addEventListener('click', () => {
+          rpGMSelectedOpt = (rpGMSelectedOpt === id) ? null : id;
+          rpGMSelectedPuz = idx;
+          rpGMRender();
+        });
+      }
+      tallyEl.appendChild(row);
+    });
+
+    document.getElementById('rpGMVoteInfo').textContent = totalVotes + ' STIMME(N) ABGEGEBEN';
+
+    const selLabelEl = document.getElementById('rpGMSelLabel');
+    const lrEl       = document.getElementById('rpGMLastResult');
+    const resolveBtn = document.getElementById('rpResolveBtn');
+
+    if (isActive) {
+      const confirmBtn = document.getElementById('rpGMConfirmBtn');
+      confirmBtn.disabled = false;
+      if (rpGMSelectedOpt) {
+        const selLabel = (pd.opts.find(([id]) => id === rpGMSelectedOpt) || [])[1] || rpGMSelectedOpt;
+        selLabelEl.textContent   = '[' + rpGMSelectedOpt + ']  ' + selLabel;
+        selLabelEl.style.display = '';
+        confirmBtn.textContent   = '✓ AUSWAHL BESTÄTIGEN';
+        confirmBtn.className     = 'rp-gm-btn green';
+      } else {
+        selLabelEl.style.display = 'none';
+        confirmBtn.textContent   = '▸ ERST OPTION OBEN ANKLICKEN';
+        confirmBtn.className     = 'rp-gm-btn amber';
+      }
+    } else {
+      const lr = data.lastResult;
+      if (lr) {
+        lrEl.textContent      = (lr.correct ? '✓ KORREKT' : '✗ FALSCH') + '  //  [' + lr.winner + ']';
+        lrEl.style.color      = lr.correct ? '#7fb069' : '#c64225';
+        lrEl.style.borderColor = lr.correct ? 'rgba(127,176,105,.35)' : 'rgba(198,66,37,.35)';
+        resolveBtn.textContent = lr.correct ? '→ SUBSYSTEM-AUSWAHL' : '↺ NEU ABSTIMMEN';
+        resolveBtn.className   = 'rp-gm-btn ' + (lr.correct ? 'green' : 'amber');
+      }
     }
   }
 
-  // Timer display in GM panel
+  rpGMRenderTimer(data);
+}
+
+function rpGMRenderTimer(data) {
+  if (!data) return;
   const remaining = data.timerPaused
     ? data.timerDuration
     : Math.max(0, data.timerDuration - Math.floor((Date.now() - data.timerStart) / 1000));

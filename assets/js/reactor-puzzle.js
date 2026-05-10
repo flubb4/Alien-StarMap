@@ -246,6 +246,18 @@ window.rpResolve = function() {
   };
   if (allSolved) payload.timerPaused = true;
 
+  // First answer of the session — kick off the Station Alarm transmission.
+  // Flag sticks in Firebase so reloads / re-triggers don't re-play the audio.
+  if (!rpState.audioTriggered) {
+    payload.audioTriggered = true;
+    if (typeof window.audioPlayMp3 === 'function') {
+      window.audioPlayMp3(
+        'https://www.dropbox.com/scl/fi/aouaylndbhz4cin49i5c9/Station-Alarm.mp3?rlkey=cawdlbbbsvyu2lgwvcpkvv14l&st=wb07utcf&raw=1',
+        'Station Alarm'
+      );
+    }
+  }
+
   update(rpRef(), payload);
 };
 

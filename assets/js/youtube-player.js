@@ -314,6 +314,23 @@ window.audioLoadAndPlay = function() {
   }
 };
 
+// Programmatic playback for other modules (e.g. reactor puzzle) — GM only.
+// Writes a fresh play-from-0 state for the given URL. Dropbox share links
+// with "&dl=0" are normalized to "&raw=1" so the file streams directly.
+window.audioPlayMp3 = function(src, label) {
+  if (!window.isGM || !src) return;
+  const fixedSrc = src.replace(/([?&])dl=0(\b)/, '$1raw=1$2');
+  set(audioRef, {
+    kind:       'mp3',
+    src:        fixedSrc,
+    label:      label || '',
+    isPlaying:  true,
+    position:   0,
+    serverTime: serverTimestamp(),
+    cmd:        Date.now()
+  });
+};
+
 window.audioPlayPreset = function(index) {
   if (!window.isGM) return;
   const p = PRESETS[index];
@@ -539,6 +556,10 @@ window.startAudioWatcher = function() {
   if (slider) slider.value = myVolume;
   const vlab = document.getElementById('awVolLabel');
   if (vlab) vlab.textContent = myVolume;
+  const rpSlider = document.getElementById('rpVolSlider');
+  if (rpSlider) rpSlider.value = myVolume;
+  const rpLab = document.getElementById('rpVolLabel');
+  if (rpLab) rpLab.textContent = myVolume + '%';
   _updateMuteIcon();
 
   onValue(audioRef, snap => {
@@ -570,6 +591,11 @@ window.audioSetVolume = function(v) {
   if (lab) lab.textContent = myVolume;
   const slider = document.getElementById('volSlider');
   if (slider && parseInt(slider.value,10) !== myVolume) slider.value = myVolume;
+  // Mirror to the puzzle-modal volume control (when present)
+  const rpSlider = document.getElementById('rpVolSlider');
+  if (rpSlider && parseInt(rpSlider.value,10) !== myVolume) rpSlider.value = myVolume;
+  const rpLab = document.getElementById('rpVolLabel');
+  if (rpLab) rpLab.textContent = myVolume + '%';
   _updateMuteIcon();
 };
 
@@ -583,10 +609,13 @@ window.audioToggleMute = function() {
 };
 
 function _updateMuteIcon() {
+  const sym = myVolume === 0 ? '🔇' : (myVolume < 40 ? '🔉' : '🔊');
   const ic = document.getElementById('awMuteIcon');
-  if (ic) ic.textContent = myVolume === 0 ? '🔇' : (myVolume < 40 ? '🔉' : '🔊');
+  if (ic) ic.textContent = sym;
   const tg = document.getElementById('awToggleIcon');
   if (tg) tg.textContent = myVolume === 0 ? '🔇' : '🔊';
+  const rpIc = document.getElementById('rpMuteIcon');
+  if (rpIc) rpIc.textContent = sym;
 }
 
 window.audioToggleWidget = function() {
@@ -597,21 +626,24 @@ window.audioToggleWidget = function() {
 
 function _updateWidgetTrack(d) {
   const trackLab = document.getElementById('awTrack');
-  if (!trackLab) return;
+  const rpTrack  = document.getElementById('rpAudTrack');
+  if (!trackLab && !rpTrack) return;
   if (!d || (!d.videoId && !d.src)) {
-    trackLab.textContent = '— NO TRANSMISSION —';
+    if (trackLab) trackLab.textContent = '— NO TRANSMISSION —';
+    if (rpTrack)  rpTrack.textContent  = '— NO TRANSMISSION —';
     return;
   }
   let title = '';
   if (d.kind === 'mp3') {
     title = d.label || (d.src ? (d.src.split('/').pop() || '').split('?')[0] : '');
   } else {
-    // YouTube — pull live title from the API if available
     try {
       const vd = ytPlayer && ytPlayer.getVideoData && ytPlayer.getVideoData();
       if (vd && vd.title) title = vd.title;
     } catch(e) {}
-    if (!title) title = d.videoId || '';
+    if (!title) title = d.label || d.videoId || '';
   }
-  trackLab.textContent = (d.isPlaying ? '▶ ' : '⏸ ') + title;
+  const display = (d.isPlaying ? '▶ ' : '⏸ ') + title;
+  if (trackLab) trackLab.textContent = display;
+  if (rpTrack)  rpTrack.textContent  = display;
 }

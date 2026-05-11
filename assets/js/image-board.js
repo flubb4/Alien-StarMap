@@ -33,12 +33,13 @@ function ibGetPH()           { return document.getElementById('ibPlaceholder'); 
 
 function ibResizeCanvas() {
   var wrap = ibGetWrap();
+  var newW = wrap.clientWidth;
+  var newH = wrap.clientHeight;
   var c = ibGetCanvas();
-  c.width  = wrap.clientWidth;
-  c.height = wrap.clientHeight;
+  // Setting canvas dimensions always clears it — skip if unchanged to preserve strokes
+  if (c.width !== newW || c.height !== newH) { c.width = newW; c.height = newH; }
   var cc = ibGetCoverCanvas();
-  cc.width  = wrap.clientWidth;
-  cc.height = wrap.clientHeight;
+  if (cc.width !== newW || cc.height !== newH) { cc.width = newW; cc.height = newH; }
   if (window.mtResize) window.mtResize();
   ibRedrawFogLayer();
 }
@@ -335,6 +336,8 @@ function ibDoOpen() {
   });
   document.getElementById('ibColorPicker').value = window.colorFromName(window.myName);
   ibResizeCanvas();
+  // Explicit clean slate before listeners replay strokes from Firebase
+  var _c = ibGetCanvas(); ibGetCtx().clearRect(0, 0, _c.width, _c.height);
   ibSetupDrawing();
   ibStartListeners();
   ibStartStressWatch();

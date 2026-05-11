@@ -168,7 +168,7 @@
   border-bottom: 1px dashed rgba(245,166,35,.25); padding-bottom: 10px;
 }
 .mt-gm-label {
-  font-size: 9px; letter-spacing: .22em; color: rgba(245,166,35,.65); margin-bottom: 7px;
+  font-size: 10px; letter-spacing: .22em; color: rgba(245,166,35,.9); margin-bottom: 7px;
 }
 
 /* Trust score */
@@ -197,17 +197,17 @@
 /* Flags */
 .mt-flags { display: flex; flex-direction: column; gap: 5px; }
 .mt-flag {
-  font-size: 9px; letter-spacing: .12em; padding: 5px 9px; line-height: 1.4;
-  border: 1px solid rgba(255,59,59,.4); color: rgba(255,80,80,.95);
-  background: rgba(255,59,59,.07);
+  font-size: 10px; letter-spacing: .12em; padding: 6px 9px; line-height: 1.5;
+  border: 1px solid rgba(255,59,59,.5); color: rgba(255,90,90,1);
+  background: rgba(255,59,59,.09);
 }
-.mt-no-flags { font-size: 9px; letter-spacing: .2em; color: rgba(57,255,20,.45); }
+.mt-no-flags { font-size: 10px; letter-spacing: .2em; color: rgba(57,255,20,.65); }
 
 /* Assessment note */
 #mtAssessment {
-  font-size: 10px; letter-spacing: .08em; line-height: 1.65;
-  color: rgba(245,166,35,.8);
-  border-top: 1px dashed rgba(245,166,35,.2); padding-top: 10px;
+  font-size: 11px; letter-spacing: .06em; line-height: 1.7;
+  color: rgba(245,166,35,.97);
+  border-top: 1px dashed rgba(245,166,35,.25); padding-top: 10px;
 }
 
 /* ── GM Ask (als MU/TH/UR fragen) ── */
@@ -224,9 +224,9 @@
 #mtGmAskInput::placeholder { color: rgba(57,255,20,.3); }
 #mtGmAskInput:focus { border-color: rgba(57,255,20,.6); }
 #mtGmAskBtn {
-  padding: 6px 12px; border: 1px solid rgba(57,255,20,.5);
+  padding: 7px 12px; border: 1px solid rgba(57,255,20,.5);
   background: rgba(57,255,20,.08); color: #39ff14;
-  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  font-family: 'Share Tech Mono', monospace; font-size: 10px;
   letter-spacing: .22em; cursor: pointer; align-self: flex-end;
   text-shadow: 0 0 6px rgba(57,255,20,.4);
 }
@@ -247,8 +247,8 @@
 #mtCaptainInput:focus { border-color: rgba(245,166,35,.6); }
 #mtCaptainBtn {
   padding: 6px 10px; border: 1px solid rgba(245,166,35,.35);
-  background: rgba(245,166,35,.06); color: rgba(245,166,35,.8);
-  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  background: rgba(245,166,35,.06); color: rgba(245,166,35,.95);
+  font-family: 'Share Tech Mono', monospace; font-size: 10px;
   letter-spacing: .16em; cursor: pointer; white-space: nowrap;
 }
 #mtCaptainBtn:hover { background: rgba(245,166,35,.14); color: #f5a623; }
@@ -267,9 +267,9 @@
 #mtDirective::placeholder { color: rgba(57,255,20,.3); }
 #mtDirective:focus { border-color: rgba(57,255,20,.6); }
 #mtDirectiveBtn {
-  padding: 6px 12px; border: 1px solid rgba(57,255,20,.35);
-  background: rgba(57,255,20,.06); color: rgba(57,255,20,.8);
-  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  padding: 7px 12px; border: 1px solid rgba(57,255,20,.35);
+  background: rgba(57,255,20,.06); color: rgba(57,255,20,.95);
+  font-family: 'Share Tech Mono', monospace; font-size: 10px;
   letter-spacing: .22em; cursor: pointer; align-self: flex-end;
 }
 #mtDirectiveBtn:hover { background: rgba(57,255,20,.14); color: #39ff14; }
@@ -287,14 +287,14 @@
 #mtCrewMeasuresList { display: flex; flex-direction: column; gap: 5px; }
 .mt-crew-measure-btn {
   display: flex; align-items: flex-start; gap: 10px;
-  padding: 10px 12px; border: 1px solid rgba(245,166,35,.25);
-  background: rgba(245,166,35,.04); color: rgba(245,166,35,.75);
-  font-family: 'Share Tech Mono', monospace; font-size: 9px;
-  letter-spacing: .08em; line-height: 1.5; text-align: left;
+  padding: 10px 12px; border: 1px solid rgba(245,166,35,.3);
+  background: rgba(245,166,35,.05); color: rgba(245,166,35,.92);
+  font-family: 'Share Tech Mono', monospace; font-size: 10px;
+  letter-spacing: .06em; line-height: 1.55; text-align: left;
   cursor: pointer; transition: all .12s ease; width: 100%;
 }
-.mt-crew-measure-btn:hover { background: rgba(245,166,35,.12); border-color: rgba(245,166,35,.6); color: #f5a623; }
-.mt-measure-num { min-width: 14px; color: #f5a623; font-size: 11px; letter-spacing: .2em; flex-shrink: 0; }
+.mt-crew-measure-btn:hover { background: rgba(245,166,35,.14); border-color: rgba(245,166,35,.7); color: #f5a623; }
+.mt-measure-num { min-width: 14px; color: #f5a623; font-size: 12px; letter-spacing: .2em; flex-shrink: 0; }
 .mt-crew-measure-custom { display: flex; gap: 6px; margin-top: 2px; }
 #mtCrewMeasureCustom {
   flex: 1; background: rgba(245,166,35,.05); border: 1px solid rgba(245,166,35,.22);
@@ -304,12 +304,12 @@
 #mtCrewMeasureCustom::placeholder { color: rgba(245,166,35,.3); }
 #mtCrewMeasureCustom:focus { border-color: rgba(245,166,35,.6); }
 #mtCrewMeasureCustomBtn {
-  padding: 6px 10px; border: 1px solid rgba(245,166,35,.35);
-  background: rgba(245,166,35,.06); color: rgba(245,166,35,.8);
-  font-family: 'Share Tech Mono', monospace; font-size: 9px;
-  letter-spacing: .2em; cursor: pointer; white-space: nowrap;
+  padding: 7px 10px; border: 1px solid rgba(245,166,35,.4);
+  background: rgba(245,166,35,.07); color: rgba(245,166,35,.95);
+  font-family: 'Share Tech Mono', monospace; font-size: 10px;
+  letter-spacing: .18em; cursor: pointer; white-space: nowrap;
 }
-#mtCrewMeasureCustomBtn:hover { background: rgba(245,166,35,.14); color: #f5a623; }
+#mtCrewMeasureCustomBtn:hover { background: rgba(245,166,35,.15); color: #f5a623; }
 
 /* ── Player confirm overlay ── */
 #mtConfirmOverlay {

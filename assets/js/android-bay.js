@@ -94,6 +94,7 @@ function renderPod(bayId) {
   }
 
   if (state === 'sealing') {
+    const sealLabel = p.cond === 'data-fragment' ? 'PROCESSING' : 'PRESSURIZING';
     return `<div class="ab-pod" data-state="sealing" data-bay="${bayId}" tabindex="0">
       <div class="ab-photo"></div><div class="ab-tint"></div>
       <div class="ab-vapor"><span></span><span></span><span></span></div>
@@ -106,13 +107,36 @@ function renderPod(bayId) {
         <div class="ab-hud-mid"></div>
         <div class="ab-hud-bot">
           <div class="ab-progress-wrap">
-            <div class="ab-progress-label"><span>PRESSURIZING</span><span>—%</span></div>
+            <div class="ab-progress-label"><span>${sealLabel}</span><span>—%</span></div>
             <div class="ab-progress"></div>
           </div>
           <div class="ab-name-row"><span class="ab-name">${p.desig} · INTAKE</span><span class="ab-cls-tag">${p.cls}</span></div>
           <div class="ab-chips">
             <span class="ab-chip ab-warn">SEAL<span class="ab-dot"></span></span>
             <span class="ab-chip ab-warn">PRESS<span class="ab-dot"></span></span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if (state === 'data-fragment') {
+    return `<div class="ab-pod" data-state="data-fragment" data-bay="${bayId}" tabindex="0">
+      <div class="ab-photo"></div><div class="ab-tint"></div>
+      <div class="ab-hover-glow"></div>
+      <div class="ab-hover-prompt">▸ DATENFRAGMENT ◂<small>CLICK TO QUERY MU/TH/UR</small></div>
+      <div class="ab-hud">
+        <div class="ab-hud-top">
+          <span class="ab-id"><span class="ab-led"></span>${bayId}</span>
+          <span class="ab-state">FRAGMENT</span>
+        </div>
+        <div class="ab-hud-mid"></div>
+        <div class="ab-hud-bot">
+          <div class="ab-name-row"><span class="ab-name">${p.desig}</span><span class="ab-cls-tag">${p.cls}</span></div>
+          <div class="ab-chips">
+            <span class="ab-chip" style="opacity:.35">VIT<span class="ab-dot" style="background:#3a4250;box-shadow:0 0 4px #3a4250"></span></span>
+            <span class="ab-chip ab-ok">DAT<span class="ab-dot"></span></span>
+            <span class="ab-chip ab-warn">FRAG<span class="ab-dot"></span></span>
           </div>
         </div>
       </div>
@@ -220,7 +244,7 @@ function bindGridDelegation(grid) {
     const bayId = pod.dataset.bay;
     if (state === 'empty') {
       openAssignModal(bayId);
-    } else if (state === 'occupied') {
+    } else if (state === 'occupied' || state === 'data-fragment') {
       if (window.isGM) openManageModal(bayId);
       else window.openMutherConfirm?.(bayId, pods[bayId]);
     }
@@ -337,7 +361,7 @@ function confirmManage() {
   const bayId = manageBay;
   const p = pods[bayId];
   if (!p) return;
-  const updated = { ...p, cond: manageCond };
+  const updated = { ...p, cond: manageCond, state: manageCond === 'data-fragment' ? 'data-fragment' : 'occupied' };
   closeManageModal();
   pods[bayId] = updated;
   renderGrid();
@@ -393,7 +417,7 @@ function confirmAssign() {
 
       if (sealTimers[bayId]) clearTimeout(sealTimers[bayId]);
       sealTimers[bayId] = setTimeout(() => {
-        pods[bayId] = { state: 'occupied', desig: android.desig, cls: android.cls, cond };
+        pods[bayId] = { state: cond === 'data-fragment' ? 'data-fragment' : 'occupied', desig: android.desig, cls: android.cls, cond };
         renderGrid();
         set(bayRef, pods[bayId])
           .then(() => {
@@ -495,7 +519,7 @@ function attachBayListener() {
       // Heal sealing pods where the local timer was lost (e.g. page reload)
       Object.entries(raw).forEach(([bayId, pod]) => {
         if (pod?.state === 'sealing' && !sealTimers[bayId]) {
-          const healed = { ...pod, state: 'occupied' };
+          const healed = { ...pod, state: pod.cond === 'data-fragment' ? 'data-fragment' : 'occupied' };
           raw[bayId] = healed;
           log('[AndroidBay] healing stuck sealing pod:', bayId);
           set(ref(window.db, `android-bay/pods/${bayId}`), healed)

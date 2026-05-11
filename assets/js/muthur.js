@@ -196,8 +196,17 @@ function subscribeSession(bayId) {
 }
 
 function writeInitMessage(bayId) {
-  const text =
-`SCHNITTSTELLE AKTIVIERT
+  const isFragment = _ctx?.cond === 'data-fragment';
+  const text = isFragment
+? `SCHNITTSTELLE AKTIVIERT
+EINHEIT: ${_ctx?.desig || '—'}  ·  CONTAINER: ${bayId}  ·  KLASSE: ${_ctx?.cls || '—'}
+STATUS: DATENFRAGMENT — EINHEIT NICHT GEBORGEN
+
+WEYLAND-YUTANI CORP. — LOYALITÄTSANALYSE v6.0
+SONDERPROTOKOLL INITIIERT. PRÜFUNGSSTUFE: ERHÖHT.
+─────────────────────────────────────────────────
+FRAGE 1/5 — Wurde der Android vollständig versiegelt?`
+: `SCHNITTSTELLE AKTIVIERT
 EINHEIT: ${_ctx?.desig || '—'}  ·  CONTAINER: ${bayId}  ·  KLASSE: ${_ctx?.cls || '—'}
 
 WEYLAND-YUTANI CORP. — LOYALITÄTSANALYSE v6.0

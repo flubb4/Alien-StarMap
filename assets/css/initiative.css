@@ -560,3 +560,11 @@
   .init-swap-btn:hover { border-color:var(--im-line); color:var(--im-ink); background:rgba(216,178,107,0.08); }
   .init-swap-btn.cancel { border-color:rgba(214,106,90,0.5); color:var(--im-red); }
   .init-swap-btn.cancel:hover { background:rgba(214,106,90,0.12); border-color:var(--im-red); }
+  /* Character Sheet button inside initiative cards */
+  .init-cs-btn {
+    background:none; border:1px solid var(--im-line-dim); color:var(--im-ink-dim);
+    font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:0.1em;
+    padding:2px 6px; border-radius:2px; cursor:pointer; margin-top:4px;
+    transition:all .15s; display:inline-block;
+  }
+  .init-cs-btn:hover { border-color:var(--im-ink); color:var(--im-ink); background:rgba(216,178,107,0.08); }

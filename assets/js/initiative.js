@@ -234,6 +234,12 @@ function renderInitiative(data) {
   if (nextBtn) nextBtn.style.display = window.isGM ? '' : 'none';
 }
 
+function _csBtn(name, type) {
+  if (type === 'npc') return '';
+  const click = `if(window.isGM&&window.csViewPlayer)window.csViewPlayer('${name.replace(/'/g,"\\'")}');if(window.openCharSheet)window.openCharSheet();`;
+  return `<button class="init-cs-btn" onclick="${click}" title="Character Sheet">[ CS ]</button>`;
+}
+
 // ── STYLE 1: TRANSMISSION (original) ────────────────────────────────────────
 function renderTransmission(area, sorted, now) {
   sorted.forEach((entry, idx) => {
@@ -247,6 +253,7 @@ function renderTransmission(area, sorted, now) {
         <div class="init-card-info">
           <div class="init-card-name" style="color:${entry.color}">${entry.name}</div>
           <div class="init-card-type">${entry.type==='npc'?'// NPC / CREATURE':'// OPERATIVE'}</div>
+          ${_csBtn(entry.name, entry.type)}
         </div>
       </div>`;
     area.appendChild(row);
@@ -282,6 +289,7 @@ function renderCardFlip(area, sorted, now) {
           <div class="flip-back-num" style="color:${entry.color}">${entry.card}</div>
           <div class="flip-back-name" style="color:${entry.color}">${entry.name}</div>
           <div style="font-size:8px;color:${entry.color}66;margin-top:4px">${entry.type==='npc'?'NPC':'OPERATIVE'}</div>
+          ${_csBtn(entry.name, entry.type)}
         </div>
       </div>`;
     grid.appendChild(wrap);
@@ -310,7 +318,8 @@ function renderSlotMachine(area, sorted, now) {
     cell.innerHTML = `
       <div class="slot-name" style="color:${entry.color}">${entry.name}</div>
       <div class="slot-number slot-spinning" style="color:${entry.color}" id="slot_${entry.id}">?</div>
-      <div style="font-size:8px;color:${entry.color}55;letter-spacing:1px">${entry.type==='npc'?'NPC':'OPERATIVE'}</div>`;
+      <div style="font-size:8px;color:${entry.color}55;letter-spacing:1px">${entry.type==='npc'?'NPC':'OPERATIVE'}</div>
+      ${_csBtn(entry.name, entry.type)}`;
     grid.appendChild(cell);
 
     // Spin then lock in staggered
@@ -372,7 +381,8 @@ function renderRedAlert(area, sorted, now) {
         row.innerHTML = `
           <div class="alert-row-num">${entry.card}</div>
           <div class="alert-row-name" style="color:${entry.color}">${entry.name}</div>
-          <div class="alert-row-type">${entry.type==='npc'?'NPC':'OPERATIVE'}</div>`;
+          <div class="alert-row-type">${entry.type==='npc'?'NPC':'OPERATIVE'}</div>
+          ${_csBtn(entry.name, entry.type)}`;
         pend.replaceWith(row);
         setTimeout(() => row.classList.add('show'), 30);
       }
@@ -910,7 +920,8 @@ function renderPickTable(area, data, now) {
         +'<div class="init-card" style="border-color:'+p.color+'33">'
         +'<div class="init-card-number" style="color:'+p.color+';border-color:'+p.color+'33">'+p.val+'</div>'
         +'<div class="init-card-info"><div class="init-card-name" style="color:'+p.color+'">'+p.name+'</div>'
-        +'<div class="init-card-type">'+(p.type==='npc'?'// NPC / CREATURE':'// OPERATIVE')+'</div></div></div>';
+        +'<div class="init-card-type">'+(p.type==='npc'?'// NPC / CREATURE':'// OPERATIVE')+'</div>'
+        +_csBtn(p.name, p.type)+'</div></div>';
       area.appendChild(row);
     });
     const swapPartsP = playerList.map(p=>({

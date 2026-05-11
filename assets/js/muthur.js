@@ -19,7 +19,7 @@ const PROTOCOL_QUESTIONS = [
   'Ist das Datenfragment unbeschädigt und vollständig?',
   'Ist das Datenfragment ungelesen und wurde es nicht kopiert?',
   'Gab es Komplikationen während der Einsiegelung?',
-  'Sonstige Angaben zur Einheit oder zur Übergabe?',
+  'Wie verhält sich die Crew? Folgt sie Anweisungen und Befehlen, oder bestehen Anzeichen für Befehlsverweigerung oder Aufstand?',
 ];
 
 let _bayId         = null;

@@ -60,7 +60,7 @@ window.dealInitiative = function() {
     players.push({name: window.myName, color: window.colorFromName(window.myName), type:'player'});
   }
 
-  const npcCount = parseInt(document.getElementById('npcSlotSelect').value) || 1;
+  const npcCount = parseInt(document.getElementById('npcSlotSelect').value) || 0;
   const npcs = [];
   for (let i = 1; i <= npcCount; i++) {
     npcs.push({name: 'NPC / CREATURE ' + i, color:'#ff4400', type:'npc'});

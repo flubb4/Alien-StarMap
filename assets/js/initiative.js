@@ -667,13 +667,19 @@ function renderSwapSection(area, participants, data, style) {
   const wrap = document.createElement('div');
   wrap.className = 'hunt-order-reveal';
 
+  const pendingEntry = pendingSwapName ? participants.find(x => x.name === pendingSwapName) : null;
+
   participants.forEach((p, i) => {
-    const isMe       = p.name === window.myName;
-    const isNpcForGM = window.isGM && p.type === 'npc';
-    const hasSwapped = swaps[p.name] === true;
-    const canAct     = (isMe || isNpcForGM) && !hasSwapped;
-    const isPending  = pendingSwapName === p.name;
-    const isTarget   = !!pendingSwapName && pendingSwapName !== p.name;
+    const isMe         = p.name === window.myName;
+    const isNpcForGM   = window.isGM && p.type === 'npc';
+    const hasSwapped   = swaps[p.name] === true;
+    const isPending    = pendingSwapName === p.name;
+    // Only show as swap target if this player has WORSE (higher) initiative than the initiator
+    const isTarget     = !!pendingSwapName && pendingSwapName !== p.name
+                         && pendingEntry && p.val > pendingEntry.val;
+    // Only allow initiating a swap if there is at least one later target available
+    const hasLaterTarget = participants.some(o => o.name !== p.name && !swaps[o.name] && o.val > p.val);
+    const canAct       = (isMe || isNpcForGM) && !hasSwapped && hasLaterTarget;
 
     const row = document.createElement('div');
     row.className = 'hunt-order-row';
@@ -702,8 +708,8 @@ function renderSwapSection(area, participants, data, style) {
     if (canAct) {
       const btn = document.createElement('button');
       btn.className = 'init-swap-btn' + (isPending ? ' cancel' : '');
-      btn.textContent = isPending ? '✕ CANCEL' : '⇄';
-      btn.title = isPending ? 'Cancel swap' : 'Swap your initiative with another player or NPC';
+      btn.textContent = isPending ? '✕ ABBRECHEN' : '⇄ TAUSCHEN';
+      btn.title = isPending ? 'Tausch abbrechen' : 'Initiative mit einem späteren Spieler tauschen';
       btn.addEventListener('click', e => {
         e.stopPropagation();
         pendingSwapName = isPending ? null : p.name;

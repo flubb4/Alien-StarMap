@@ -1,4 +1,4 @@
-import { ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, set, remove, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ── All known players from Firebase characters/ node ─────────────
 let _xpaAllKnownPlayers = new Set();
@@ -83,7 +83,7 @@ window._xpaUpdateTotals = function() {
   });
 };
 
-window.applyXPAward = function() {
+window.applyXPAward = async function() {
   if (!window.isGM) return;
   const players = _xpaGetPlayers();
   const totals = {};
@@ -92,13 +92,13 @@ window.applyXPAward = function() {
     totals[cb.dataset.player] = (totals[cb.dataset.player] || 0) + parseInt(cb.dataset.xp);
   });
 
-  players.forEach(p => {
-    if (!totals[p]) return;
-    const cur = parseInt(window._csGet(window._csAllSheets[p] || {}, 'xp')) || 0;
+  await Promise.all(players.filter(p => totals[p] > 0).map(async p => {
+    // Always read current XP directly from Firebase to avoid stale local cache
+    const snap = await get(ref(window.db, 'characters/' + p + '/xp'));
+    const cur = parseInt(snap.val()) || 0;
     window._csSave(p, 'xp', cur + totals[p]);
-    // Write chest notification to Firebase for each player
     set(ref(window.db, 'session/xpChest/' + p), { amount: totals[p], ts: Date.now() });
-  });
+  }));
 
   // Flash confirmation
   const msg = document.getElementById('xpaAwardedMsg');

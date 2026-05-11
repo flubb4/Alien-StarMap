@@ -1,4 +1,4 @@
-import { ref, onValue, push, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, onValue, push, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ── MU/TH/UR 6000 — Loyalty Analysis Terminal ────────────────────────────────
 
@@ -11,7 +11,7 @@ const PROTOCOL_STEPS = [
   { key: 'datenfragment',  label: 'DATENFRAGMENT'  },
   { key: 'kopierstatus',   label: 'KOPIER-STATUS'  },
   { key: 'komplikationen', label: 'KOMPLIKATIONEN' },
-  { key: 'sonstiges',      label: 'SONSTIGES'      },
+  { key: 'crew-loyalitaet', label: 'CREW-LOYALITÄT' },
 ];
 
 const PROTOCOL_QUESTIONS = [
@@ -190,6 +190,7 @@ function subscribeSession(bayId) {
         const ta = $('mtDirective');
         if (ta && document.activeElement !== ta) ta.value = _directive;
         updateDirectiveUI();
+        updateCrewMeasures(d.crewMeasures || null);
       }
     });
   }
@@ -230,7 +231,7 @@ function writeMsg(bayId, role, text) {
 }
 
 function writeGmData(bayId, score, flags, assessment) {
-  return set(ref(window.db, `muthur/gm/${bayId}`), {
+  return update(ref(window.db, `muthur/gm/${bayId}`), {
     trustScore: score, flags, assessment, directive: _directive,
   });
 }
@@ -404,6 +405,28 @@ function updateGmPanel(score, flags, assessment) {
       : `<span class="mt-no-flags">// KEINE FLAGS</span>`;
   }
   if (ass) ass.textContent = assessment || '';
+}
+
+function updateCrewMeasures(measures) {
+  const panel = $('mtCrewMeasuresPanel');
+  const list  = $('mtCrewMeasuresList');
+  if (!panel || !list) return;
+  if (!measures?.length) { panel.style.display = 'none'; return; }
+  panel.style.display = 'flex';
+  list.innerHTML = measures.map((m, i) =>
+    `<button class="mt-crew-measure-btn" type="button">
+      <span class="mt-measure-num">${i + 1}</span>
+      <span class="mt-measure-text">${esc(m)}</span>
+    </button>`
+  ).join('');
+  list.querySelectorAll('.mt-crew-measure-btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => applyCrewMeasure(measures[i]));
+  });
+}
+
+async function applyCrewMeasure(text) {
+  if (!text?.trim() || !_bayId) return;
+  await writeMsg(_bayId, 'muthur', `MASSNAHME INITIIERT:\n${text.trim()}`);
 }
 
 // ── Verdict ───────────────────────────────────────────────────────────────────
@@ -639,6 +662,9 @@ async function sendQuery() {
     if (data.trustScore !== undefined) {
       await writeGmData(_bayId, data.trustScore, data.flags || [], data.assessment || '');
     }
+    if (data.crewMeasures?.length) {
+      await update(ref(window.db, `muthur/gm/${_bayId}`), { crewMeasures: data.crewMeasures });
+    }
   } catch (err) {
     removeLoading();
     console.error('[MU/TH/UR]', err);
@@ -664,6 +690,16 @@ $('mtGmAskInput')?.addEventListener('keydown', e => {
 });
 $('mtCaptainBtn')?.addEventListener('click', saveCaptain);
 $('mtCaptainInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') saveCaptain(); });
+
+$('mtCrewMeasureCustomBtn')?.addEventListener('click', () => {
+  const inp = $('mtCrewMeasureCustom');
+  if (inp?.value.trim()) { applyCrewMeasure(inp.value.trim()); inp.value = ''; }
+});
+$('mtCrewMeasureCustom')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.value.trim()) {
+    applyCrewMeasure(e.target.value.trim()); e.target.value = '';
+  }
+});
 
 $('mtVerdictApproveBtn')?.addEventListener('click', approveVerdict);
 document.querySelectorAll('.mt-rating-btn').forEach(btn => {

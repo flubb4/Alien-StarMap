@@ -279,6 +279,38 @@
   animation: mt-blink .9s step-end infinite;
 }
 
+/* ── Crew measures panel ── */
+.mt-crew-measures {
+  border-top: 1px dashed rgba(245,166,35,.18); padding-top: 14px;
+  flex-direction: column; gap: 8px;
+}
+#mtCrewMeasuresList { display: flex; flex-direction: column; gap: 5px; }
+.mt-crew-measure-btn {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; border: 1px solid rgba(245,166,35,.25);
+  background: rgba(245,166,35,.04); color: rgba(245,166,35,.75);
+  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  letter-spacing: .08em; line-height: 1.5; text-align: left;
+  cursor: pointer; transition: all .12s ease; width: 100%;
+}
+.mt-crew-measure-btn:hover { background: rgba(245,166,35,.12); border-color: rgba(245,166,35,.6); color: #f5a623; }
+.mt-measure-num { min-width: 14px; color: #f5a623; font-size: 11px; letter-spacing: .2em; flex-shrink: 0; }
+.mt-crew-measure-custom { display: flex; gap: 6px; margin-top: 2px; }
+#mtCrewMeasureCustom {
+  flex: 1; background: rgba(245,166,35,.05); border: 1px solid rgba(245,166,35,.22);
+  color: rgba(245,166,35,.9); font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; letter-spacing: .06em; padding: 7px 10px; outline: none;
+}
+#mtCrewMeasureCustom::placeholder { color: rgba(245,166,35,.3); }
+#mtCrewMeasureCustom:focus { border-color: rgba(245,166,35,.6); }
+#mtCrewMeasureCustomBtn {
+  padding: 6px 10px; border: 1px solid rgba(245,166,35,.35);
+  background: rgba(245,166,35,.06); color: rgba(245,166,35,.8);
+  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  letter-spacing: .2em; cursor: pointer; white-space: nowrap;
+}
+#mtCrewMeasureCustomBtn:hover { background: rgba(245,166,35,.14); color: #f5a623; }
+
 /* ── Player confirm overlay ── */
 #mtConfirmOverlay {
   position: fixed; inset: 0; z-index: 940;

@@ -407,21 +407,21 @@ function updateGmPanel(score, flags, assessment) {
   if (ass) ass.textContent = assessment || '';
 }
 
+let _crewMeasures = null;
+
 function updateCrewMeasures(measures) {
+  _crewMeasures = measures?.length ? measures : null;
   const panel = $('mtCrewMeasuresPanel');
   const list  = $('mtCrewMeasuresList');
   if (!panel || !list) return;
-  if (!measures?.length) { panel.style.display = 'none'; return; }
+  if (!_crewMeasures) { panel.style.display = 'none'; return; }
   panel.style.display = 'flex';
-  list.innerHTML = measures.map((m, i) =>
-    `<button class="mt-crew-measure-btn" type="button">
+  list.innerHTML = _crewMeasures.map((m, i) =>
+    `<button class="mt-crew-measure-btn" type="button" data-idx="${i}">
       <span class="mt-measure-num">${i + 1}</span>
       <span class="mt-measure-text">${esc(m)}</span>
     </button>`
   ).join('');
-  list.querySelectorAll('.mt-crew-measure-btn').forEach((btn, i) => {
-    btn.addEventListener('click', () => applyCrewMeasure(measures[i]));
-  });
 }
 
 async function applyCrewMeasure(text) {
@@ -691,6 +691,16 @@ $('mtGmAskInput')?.addEventListener('keydown', e => {
 $('mtCaptainBtn')?.addEventListener('click', saveCaptain);
 $('mtCaptainInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') saveCaptain(); });
 
+$('mtCrewMeasuresList')?.addEventListener('click', e => {
+  const btn = e.target.closest('.mt-crew-measure-btn');
+  if (!btn || !_crewMeasures) return;
+  const idx = parseInt(btn.dataset.idx, 10);
+  if (idx >= 0 && idx < _crewMeasures.length) {
+    document.querySelectorAll('.mt-crew-measure-btn').forEach(b => b.classList.remove('mt-measure-active'));
+    btn.classList.add('mt-measure-active');
+    applyCrewMeasure(_crewMeasures[idx]);
+  }
+});
 $('mtCrewMeasureCustomBtn')?.addEventListener('click', () => {
   const inp = $('mtCrewMeasureCustom');
   if (inp?.value.trim()) { applyCrewMeasure(inp.value.trim()); inp.value = ''; }

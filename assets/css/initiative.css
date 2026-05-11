@@ -561,3 +561,7 @@
   .init-swap-btn:hover { border-color:var(--im-ink-bright); color:var(--im-ink-bright); background:rgba(216,178,107,0.14); box-shadow:0 0 12px rgba(216,178,107,0.3); }
   .init-swap-btn.cancel { border-color:var(--im-red); color:var(--im-red); background:rgba(214,106,90,0.08); box-shadow:0 0 6px rgba(214,106,90,0.2); }
   .init-swap-btn.cancel:hover { background:rgba(214,106,90,0.18); box-shadow:0 0 12px rgba(214,106,90,0.35); }
+  .init-swap-gm { border-color:rgba(204,136,255,0.5); color:#cc88ff; background:rgba(204,136,255,0.05); margin-left:6px; }
+  .init-swap-gm:hover { border-color:#cc88ff; background:rgba(204,136,255,0.14); box-shadow:0 0 10px rgba(204,136,255,0.3); color:#cc88ff; }
+  .init-swap-gm-reset { border-color:rgba(214,106,90,0.4); color:var(--im-red); background:none; margin-left:6px; }
+  .init-swap-gm-reset:hover { border-color:var(--im-red); background:rgba(214,106,90,0.12); box-shadow:none; color:var(--im-red); }

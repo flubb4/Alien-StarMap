@@ -40,6 +40,7 @@ window.closeInitiative = function() {
 window.dealInitiative = function() {
   if (!window.isGM) return;
   pendingSwapName = null;
+  pendingGmSwapName = null;
 
   // Get online players
   const now = Date.now();
@@ -121,6 +122,7 @@ window.dealInitiative = function() {
 window.clearInitiative = function() {
   if (!window.isGM) return;
   pendingSwapName = null;
+  pendingGmSwapName = null;
   stopAlienHunt();
   alienHuntSavedPos = {};
   remove(initiativeRef);
@@ -152,7 +154,8 @@ let gmPickingForNpc = null;    // NPC entry the GM is currently picking a card f
 let lastPickTableData = null;  // cached data for NPC-selection re-renders
 let lastAlienHuntData = null;  // cached data for alien hunt NPC re-renders
 let lastInitiativeData = null; // cached data for swap re-renders
-let pendingSwapName = null;    // player name currently in swap-selection mode
+let pendingSwapName   = null;  // player name currently in swap-selection mode
+let pendingGmSwapName = null;  // GM override swap — no direction restriction, no flag consumption
 
 // Alien Hunt movement state (persists across Firebase re-renders)
 let alienHuntAnimFrame  = null;
@@ -667,25 +670,28 @@ function renderSwapSection(area, participants, data, style) {
   const wrap = document.createElement('div');
   wrap.className = 'hunt-order-reveal';
 
-  const pendingEntry = pendingSwapName ? participants.find(x => x.name === pendingSwapName) : null;
+  const pendingEntry   = pendingSwapName   ? participants.find(x => x.name === pendingSwapName)   : null;
+  const pendingGmEntry = pendingGmSwapName ? participants.find(x => x.name === pendingGmSwapName) : null;
 
   participants.forEach((p, i) => {
     const isMe         = p.name === window.myName;
     const isNpcForGM   = window.isGM && p.type === 'npc';
     const hasSwapped   = swaps[p.name] === true;
     const isPending    = pendingSwapName === p.name;
-    // Only show as swap target if this player has WORSE (higher) initiative than the initiator
-    const isTarget     = !!pendingSwapName && pendingSwapName !== p.name
+    const isPendingGm  = pendingGmSwapName === p.name;
+    // Normal target: direction-restricted (must have worse/higher val)
+    const isTarget     = !!pendingSwapName && !pendingGmSwapName && pendingSwapName !== p.name
                          && pendingEntry && p.val > pendingEntry.val;
-    // Only allow initiating a swap if there is at least one later target available
+    // GM override target: any other entry, no direction restriction
+    const isGmTarget   = window.isGM && !!pendingGmSwapName && pendingGmSwapName !== p.name;
     const hasLaterTarget = participants.some(o => o.name !== p.name && !swaps[o.name] && o.val > p.val);
-    const canAct       = (isMe || isNpcForGM) && !hasSwapped && hasLaterTarget;
+    const canAct       = (isMe || isNpcForGM) && !hasSwapped && hasLaterTarget && !pendingGmSwapName;
 
     const row = document.createElement('div');
     row.className = 'hunt-order-row';
-    if (isPending)
+    if (isPending || isPendingGm)
       row.style.cssText = `border-color:${p.color};background:rgba(255,200,0,0.07);animation-delay:${i*60}ms`;
-    else if (isTarget)
+    else if (isTarget || isGmTarget)
       row.style.cssText = `border-color:#cc88ff66;background:rgba(200,100,255,0.1);cursor:pointer;animation-delay:${i*60}ms`;
     else
       row.style.cssText = `border-color:${p.color}33;animation-delay:${i*60}ms`;
@@ -703,6 +709,12 @@ function renderSwapSection(area, participants, data, style) {
       hint.textContent = '⇄ SWAP HERE';
       row.appendChild(hint);
       row.addEventListener('click', () => executeInitiativeSwap(pendingSwapName, p.name, data, style));
+    } else if (isGmTarget) {
+      const hint = document.createElement('span');
+      hint.style.cssText = 'font-size:9px;color:#cc88ff;letter-spacing:1px;margin-left:auto;flex-shrink:0';
+      hint.textContent = '⇄ HIERHER';
+      row.appendChild(hint);
+      row.addEventListener('click', () => executeGmOverrideSwap(pendingGmSwapName, p.name, data, style));
     }
 
     if (canAct) {
@@ -724,9 +736,78 @@ function renderSwapSection(area, participants, data, style) {
       row.appendChild(used);
     }
 
+    // ── GM-only controls ────────────────────────────────────────────────────
+    if (window.isGM && !pendingSwapName) {
+      // Reset flag button on used swaps
+      if (hasSwapped) {
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'init-swap-btn init-swap-gm-reset';
+        resetBtn.textContent = '× RESET';
+        resetBtn.title = 'Swap-Flag zurücksetzen (Spieler kann erneut tauschen)';
+        resetBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          remove(ref(window.db, `session/initiative/swaps/${p.name}`));
+        });
+        row.appendChild(resetBtn);
+      }
+      // GM override swap button (all entries, no direction/flag restrictions)
+      const gmBtn = document.createElement('button');
+      gmBtn.className = 'init-swap-btn init-swap-gm' + (isPendingGm ? ' cancel' : '');
+      gmBtn.textContent = isPendingGm ? '✕ CANCEL' : '⇄ GM';
+      gmBtn.title = isPendingGm ? 'GM-Tausch abbrechen' : 'GM: Initiative-Werte frei tauschen (kein Token-Verbrauch)';
+      gmBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        pendingGmSwapName = isPendingGm ? null : p.name;
+        const a = document.getElementById('initCardsArea');
+        if (a && lastInitiativeData) { a.innerHTML = ''; renderInitiative(lastInitiativeData); }
+      });
+      row.appendChild(gmBtn);
+    }
+
     wrap.appendChild(row);
   });
   area.appendChild(wrap);
+}
+
+function executeGmOverrideSwap(nameA, nameB, data, style) {
+  const updates = {};
+  if (style === 'alienhunt') {
+    const players = data.players || {};
+    const entA = Object.entries(players).find(([,p]) => p.name === nameA);
+    const entB = Object.entries(players).find(([,p]) => p.name === nameB);
+    if (!entA || !entB) return;
+    const [keyA, pA] = entA; const [keyB, pB] = entB;
+    updates['players/'+keyA+'/alienIndex'] = pB.alienIndex;
+    updates['players/'+keyB+'/alienIndex'] = pA.alienIndex;
+    const aliens = data.aliens || {};
+    const akA = Object.keys(aliens).find(k => aliens[k].index === pA.alienIndex);
+    const akB = Object.keys(aliens).find(k => aliens[k].index === pB.alienIndex);
+    if (akA) updates['aliens/'+akA+'/takenBy'] = pB.name;
+    if (akB) updates['aliens/'+akB+'/takenBy'] = pA.name;
+  } else if (style === 'picktable') {
+    const players = data.players || {};
+    const entA = Object.entries(players).find(([,p]) => p.name === nameA);
+    const entB = Object.entries(players).find(([,p]) => p.name === nameB);
+    if (!entA || !entB) return;
+    const [keyA, pA] = entA; const [keyB, pB] = entB;
+    const deck = data.deck || {};
+    updates['players/'+keyA+'/cardIndex'] = pB.cardIndex;
+    updates['players/'+keyB+'/cardIndex'] = pA.cardIndex;
+    const ckA = Object.keys(deck).find(k => deck[k].index === pA.cardIndex);
+    const ckB = Object.keys(deck).find(k => deck[k].index === pB.cardIndex);
+    if (ckA) updates['deck/'+ckA+'/takenBy'] = pB.name;
+    if (ckB) updates['deck/'+ckB+'/takenBy'] = pA.name;
+  } else {
+    const entries = data.entries || {};
+    const entA = Object.entries(entries).find(([,e]) => e.name === nameA);
+    const entB = Object.entries(entries).find(([,e]) => e.name === nameB);
+    if (!entA || !entB) return;
+    const [keyA, eA] = entA; const [keyB, eB] = entB;
+    updates['entries/'+keyA+'/card'] = eB.card;
+    updates['entries/'+keyB+'/card'] = eA.card;
+  }
+  // No swaps flag — GM override doesn't consume a player's swap token
+  update(ref(window.db, 'session/initiative'), updates).then(() => { pendingGmSwapName = null; });
 }
 
 function executeInitiativeSwap(nameA, nameB, data, style) {

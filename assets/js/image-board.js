@@ -21,6 +21,7 @@ var ibStaged             = false;
 var ibFogPreviewMode     = false;
 var ibStressUnsub        = null;
 var ibLoadedImageKey     = null;  // fingerprint of currently loaded image to detect real changes
+var ibAllDrawnStrokes    = [];    // ordered annotation stroke list for full replay after canvas clear
 
 function ibGetOverlay()      { return document.getElementById('imageBoardOverlay'); }
 function ibGetCanvas()       { return document.getElementById('ibCanvas'); }
@@ -31,17 +32,25 @@ function ibGetCoverCtx()     { return ibGetCoverCanvas().getContext('2d'); }
 function ibGetWrap()         { return document.getElementById('ibCanvasWrap'); }
 function ibGetPH()           { return document.getElementById('ibPlaceholder'); }
 
+function ibRedrawAnnotationLayer() {
+  var c = ibGetCanvas();
+  ibGetCtx().clearRect(0, 0, c.width, c.height);
+  ibAllDrawnStrokes.forEach(function(s) { ibDrawStroke(s); });
+}
+
 function ibResizeCanvas() {
   var wrap = ibGetWrap();
   var newW = wrap.clientWidth;
   var newH = wrap.clientHeight;
   var c = ibGetCanvas();
-  // Setting canvas dimensions always clears it — skip if unchanged to preserve strokes
-  if (c.width !== newW || c.height !== newH) { c.width = newW; c.height = newH; }
   var cc = ibGetCoverCanvas();
+  var dimensionsChanged = (c.width !== newW || c.height !== newH);
+  // Setting canvas dimensions always clears it — skip if unchanged to preserve strokes
+  if (dimensionsChanged) { c.width = newW; c.height = newH; }
   if (cc.width !== newW || cc.height !== newH) { cc.width = newW; cc.height = newH; }
   if (window.mtResize) window.mtResize();
   ibRedrawFogLayer();
+  if (dimensionsChanged) ibRedrawAnnotationLayer();
 }
 
 function ibDrawCoverImage(callback) {
@@ -233,6 +242,7 @@ function ibStartListeners() {
   ibLocalStrokes.clear();
   ibLocalCoverStrokes.clear();
   ibAllCoverStrokes = [];
+  ibAllDrawnStrokes = [];
 
   // Image data
   ibListeners.push(onValue(ref(window.db, 'session/imageBoard/imageData'), function(snap) {
@@ -251,6 +261,7 @@ function ibStartListeners() {
         var c = ibGetCanvas();
         ibGetCtx().clearRect(0, 0, c.width, c.height);
         ibLocalStrokes.clear();
+        ibAllDrawnStrokes = [];
       }
     } else {
       img.src = '';
@@ -259,6 +270,7 @@ function ibStartListeners() {
       if (changed) {
         ibGetCtx().clearRect(0, 0, ibGetCanvas().width, ibGetCanvas().height);
         ibLocalStrokes.clear();
+        ibAllDrawnStrokes = [];
       }
     }
   }));
@@ -267,7 +279,9 @@ function ibStartListeners() {
   ibListeners.push(onChildAdded(window.ibStrokesRef, function(snap) {
     if (!ibIsOpen) return;
     if (ibLocalStrokes.has(snap.key)) return;
-    ibDrawStroke(snap.val());
+    var stroke = snap.val();
+    ibAllDrawnStrokes.push(stroke);
+    ibDrawStroke(stroke);
   }));
 
   // Strokes cleared by GM
@@ -276,6 +290,7 @@ function ibStartListeners() {
     if (!snap.exists()) {
       ibGetCtx().clearRect(0, 0, ibGetCanvas().width, ibGetCanvas().height);
       ibLocalStrokes.clear();
+      ibAllDrawnStrokes = [];
     }
   }));
 
@@ -329,6 +344,7 @@ function ibSetupDrawing() {
 function ibDoOpen() {
   if (ibIsOpen) return;
   ibIsOpen = true;
+  ibAllDrawnStrokes = [];
   var ov = ibGetOverlay();
   ov.style.display = 'flex';
   document.querySelectorAll('.ib-gm-only').forEach(function(el) {
@@ -744,6 +760,7 @@ function ibPointerUp() {
     var newCoverRef = push(window.ibFogCoverRef, stroke);
     ibLocalCoverStrokes.add(newCoverRef.key);
   } else {
+    ibAllDrawnStrokes.push(stroke);  // cache for redraw after canvas clear (e.g. window resize)
     var newRef = push(window.ibStrokesRef, stroke);
     ibLocalStrokes.add(newRef.key);
     // Auto-detect inappropriate content after short delay (allow stroke to register locally)

@@ -426,7 +426,7 @@ function updateCrewMeasures(measures) {
 
 async function applyCrewMeasure(text) {
   if (!text?.trim() || !_bayId) return;
-  await writeMsg(_bayId, 'muthur', `MASSNAHME INITIIERT:\n${text.trim()}`);
+  await writeMsg(_bayId, 'muthur', `[ MASSNAHME INITIIERT ] ${text.trim()}`);
 }
 
 // ── Verdict ───────────────────────────────────────────────────────────────────

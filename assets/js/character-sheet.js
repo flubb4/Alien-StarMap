@@ -149,7 +149,7 @@ const DEBUFF_MAP = [
 function _csRender(pn, data) {
   const body = document.getElementById('csBody');
   if (!body) return;
-  const ro = window.isGM && pn !== window.myName;
+  const ro = !window.isGM && pn !== window.myName;
 
   // ── primitive helpers ─────────────────────────────────────────
   const fi = (path, ph='') =>
@@ -609,7 +609,7 @@ function _csUpdateEncFill(data) {
 function _csPatchDerived(pn, data) {
   const body = document.getElementById('csBody');
   if (!body) return;
-  const ro = window.isGM && pn !== window.myName;
+  const ro = !window.isGM && pn !== window.myName;
 
   // Source of truth: the live checkbox DOM. Firebase echoes can briefly
   // carry stale snapshots that would revive a debuff the user just cleared.

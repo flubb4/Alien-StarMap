@@ -20,6 +20,7 @@ var ibAllCoverStrokes    = [];         // ordered fog+reveal stroke list for ful
 var ibStaged             = false;
 var ibFogPreviewMode     = false;
 var ibStressUnsub        = null;
+var ibLoadedImageKey     = null;  // fingerprint of currently loaded image to detect real changes
 
 function ibGetOverlay()      { return document.getElementById('imageBoardOverlay'); }
 function ibGetCanvas()       { return document.getElementById('ibCanvas'); }
@@ -235,22 +236,29 @@ function ibStartListeners() {
   // Image data
   ibListeners.push(onValue(ref(window.db, 'session/imageBoard/imageData'), function(snap) {
     if (!ibIsOpen) return;
-    var data = snap.val();
+    var data = snap.val() || null;
+    var key = data ? (data.length + ':' + data.slice(0, 50)) : null;
+    var changed = (key !== ibLoadedImageKey);
+    ibLoadedImageKey = key;
     var img = ibGetImage();
     var ph  = ibGetPH();
     if (data) {
       img.src = data;
       img.style.display = 'block';
       ph.style.display  = 'none';
-      var c = ibGetCanvas();
-      ibGetCtx().clearRect(0, 0, c.width, c.height);
-      ibLocalStrokes.clear();
+      if (changed) {
+        var c = ibGetCanvas();
+        ibGetCtx().clearRect(0, 0, c.width, c.height);
+        ibLocalStrokes.clear();
+      }
     } else {
       img.src = '';
       img.style.display = 'none';
       ph.style.display  = 'block';
-      ibGetCtx().clearRect(0, 0, ibGetCanvas().width, ibGetCanvas().height);
-      ibLocalStrokes.clear();
+      if (changed) {
+        ibGetCtx().clearRect(0, 0, ibGetCanvas().width, ibGetCanvas().height);
+        ibLocalStrokes.clear();
+      }
     }
   }));
 

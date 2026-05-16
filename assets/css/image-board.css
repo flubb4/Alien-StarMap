@@ -231,3 +231,123 @@
     text-shadow: 0 0 6px rgba(57,255,20,.4);
   }
   .ib-release-btn:hover { background: rgba(57,255,20,.16) !important; }
+
+  /* ── PLAYER MARKERS + GM PINS ───────────────────────────────────
+     Mirrors the Corvus marker visuals. Layer sits on top of the canvas;
+     becomes interactive only while marker/pin mode is active. */
+  .ib-marker-layer {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 60;
+  }
+  .ib-canvas-wrap.ib-marker-mode .ib-marker-layer,
+  .ib-canvas-wrap.ib-pin-mode    .ib-marker-layer {
+    pointer-events: all;
+  }
+  .ib-canvas-wrap.ib-marker-mode { cursor: crosshair; }
+  .ib-canvas-wrap.ib-pin-mode    { cursor: copy; }
+
+  .ib-marker {
+    --ib-mk-color: #ff9a3c;
+    position: absolute;
+    transform: translate(-50%, -100%);
+    pointer-events: all;
+    cursor: pointer;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.85));
+    z-index: 2;
+  }
+  .ib-marker-dot {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--ib-mk-color);
+    border: 2px solid #07100c;
+    box-shadow: 0 0 0 1px var(--ib-mk-color), 0 0 10px var(--ib-mk-color);
+    margin: 0 auto;
+    transition: transform .12s;
+  }
+  .ib-marker:hover .ib-marker-dot { transform: scale(1.18); }
+  .ib-marker-label {
+    position: absolute;
+    left: 50%; top: 100%;
+    transform: translate(-50%, 4px);
+    background: rgba(7,16,12,0.92);
+    border: 1px solid var(--ib-mk-color);
+    color: #f0e6d2;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 2px 6px;
+    white-space: nowrap;
+    text-shadow: 0 0 4px rgba(0,0,0,.8);
+  }
+  .ib-marker.is-mine .ib-marker-dot {
+    animation: ibmkMineGlow 1.4s ease-in-out infinite;
+  }
+  .ib-marker.is-mine::after {
+    content: 'YOU';
+    position: absolute;
+    left: 50%; bottom: 100%;
+    transform: translate(-50%, -3px);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--ib-mk-color);
+    text-shadow: 0 0 4px rgba(0,0,0,.9);
+    white-space: nowrap;
+  }
+  @keyframes ibmkMineGlow {
+    0%, 100% { box-shadow: 0 0 0 1px var(--ib-mk-color), 0 0 6px var(--ib-mk-color); }
+    50%      { box-shadow: 0 0 0 2px var(--ib-mk-color), 0 0 14px var(--ib-mk-color); }
+  }
+
+  .ib-gmpin {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    pointer-events: all;
+    cursor: pointer;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.85));
+    z-index: 3;
+  }
+  .ib-gmpin-dot {
+    width: 16px; height: 16px;
+    background: #c64225;
+    border: 2px solid #07100c;
+    box-shadow: 0 0 0 1px #c64225, 0 0 10px #c64225;
+    transform: rotate(45deg);
+    margin: 0 auto;
+    animation: ibmkPinPulse 1.8s ease-in-out infinite;
+    transition: transform .12s;
+  }
+  .ib-gmpin:hover .ib-gmpin-dot { transform: rotate(45deg) scale(1.18); }
+  @keyframes ibmkPinPulse {
+    0%, 100% { box-shadow: 0 0 0 1px #c64225, 0 0 6px #c64225; }
+    50%      { box-shadow: 0 0 0 2px #c64225, 0 0 14px #c64225; }
+  }
+  .ib-gmpin-label {
+    position: absolute;
+    left: 50%; top: 100%;
+    transform: translate(-50%, 4px);
+    background: rgba(7,16,12,0.92);
+    border: 1px solid #c64225;
+    color: #f0e6d2;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 2px 6px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    text-shadow: 0 0 4px rgba(0,0,0,.9);
+  }
+
+  /* "+ PIN" button: rust accent so it reads as GM-only/different */
+  #ibPinBtn {
+    border-color: rgba(198,66,37,0.5);
+    color: #c64225;
+  }
+  #ibPinBtn:hover { border-color: #c64225; color: #ff7a4a; background: rgba(198,66,37,0.08); }
+  #ibPinBtn.active {
+    border-color: #c64225; color: #ff7a4a;
+    background: rgba(198,66,37,0.18);
+    box-shadow: 0 0 10px rgba(198,66,37,.45);
+  }

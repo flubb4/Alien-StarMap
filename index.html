@@ -828,6 +828,8 @@
       <button class="ib-tool-btn ib-gm-only" onclick="document.getElementById('coverImageFileInput').click()">🗺 Load Cover</button>
       <button class="ib-tool-btn ib-gm-only" id="ibFogMenuBtn" onclick="ibToggleFogPanel()">🌫 Fog ▾</button>
       <button class="ib-tool-btn ib-gm-only ib-release-btn" id="ibReleaseBtn" onclick="ibRelease()" style="display:none">✅ FREIGEBEN</button>
+      <button class="ib-tool-btn" id="ibMarkerBtn" onclick="ibmkToggleMode()" title="Marker auf dem Bild setzen">📍 Marker</button>
+      <button class="ib-tool-btn ib-gm-only" id="ibPinBtn" onclick="ibmkTogglePinMode()" title="GM: beschrifteten Pin setzen">+ PIN</button>
       <button class="ib-tool-btn" id="mtTrackerBtn" onclick="mtToggleTrackerPlacement()">📡 Motion Tracker</button>
       <button class="ib-tool-btn ib-gm-only" id="mtBlipBtn" onclick="mtToggleBlipMode()">🎯 Blip setzen</button>
       <button class="ib-tool-btn ib-gm-only" id="mtClearBtn" onclick="mtClearTrackers()" title="Rechtsklick auf einen Tracker löscht ihn einzeln">🗑 Tracker leeren</button>
@@ -876,6 +878,7 @@
     <div class="ib-placeholder" id="ibPlaceholder">Waiting for GM to load an image...</div>
     <div id="ibStressPanel" class="ib-gm-only"></div>
     <div id="ibFogRectPreview" style="display:none"></div>
+    <div id="ibMarkerLayer" class="ib-marker-layer"></div>
   </div>
   <div class="ib-staging-overlay" id="ibStagingOverlay" style="display:none">
     <div class="ib-staging-icon">■ ■ ■</div>
@@ -1268,6 +1271,7 @@
 <script type="module" src="assets/js/wuerfel-duerfel.js"></script>
 <script type="module" src="assets/js/black-veil.js"></script>
 <script type="module" src="assets/js/image-board.js"></script>
+<script type="module" src="assets/js/image-board-markers.js"></script>
 <script type="module" src="assets/js/motion-tracker.js"></script>
 <script type="module" src="assets/js/xp.js"></script>
 <script type="module" src="assets/js/youtube-player.js"></script>

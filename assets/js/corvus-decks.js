@@ -3,7 +3,7 @@
 // Firebase. The right-hand profile strip shows who is on each deck.
 
 import {
-  ref, onValue, set, remove, serverTimestamp,
+  ref, onValue, set, remove, push, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const CV_DECKS = [
@@ -39,12 +39,29 @@ let cvDragPanY   = 0;
 let cvKeyHandlerBound = false;
 let cvClockTimer = null;
 
-let cvMarkers     = {};        // { uid: { name, color, deck, x, y, ts } }
-let cvMarkersUnsub = null;     // Firebase off() callback
+let cvMarkers       = {};      // { uid: { name, color, deck, x, y, ts } }
+let cvGMPins        = {};      // { pinId: { label, deck, x, y, ts } }
+let cvMarkersUnsub  = null;
+let cvGMPinsUnsub   = null;
+let cvPinMode       = false;   // GM-only: next click drops a labeled pin
 
 function cvEl(id) { return document.getElementById(id); }
-function cvMarkersRef() { return ref(window.db, 'session/corvusMarkers'); }
-function cvMyMarkerRef() { return ref(window.db, 'session/corvusMarkers/' + window.myId); }
+function cvMarkersRef()  { return ref(window.db, 'session/corvusMarkers'); }
+function cvGMPinsRef()   { return ref(window.db, 'session/corvusGMPins'); }
+
+function cvIdentity() {
+  // Robust identity lookup — falls back gracefully if globals aren't fully wired.
+  let id    = window.myId;
+  let name  = window.myName;
+  let color = window.selectedColor;
+  if (!id && name) id = 'user_' + String(name).toUpperCase().replace(/[^A-Z0-9]/g, '_');
+  if (!id) {
+    console.warn('[Corvus] cannot place marker — window.myId not set. Are you logged in?');
+    return null;
+  }
+  return { id, name: name || 'OPERATIVE', color: color || '#ff9a3c' };
+}
+function cvMyMarkerRef(id) { return ref(window.db, 'session/corvusMarkers/' + id); }
 
 // ── Build overlay ──────────────────────────────────────────────────────────
 function cvBuildOverlay() {
@@ -136,6 +153,8 @@ function cvBuildOverlay() {
               <button class="cv-zoom-btn cv-reset" id="cvZoomReset" type="button" title="Reset (R)">RESET</button>
               <span class="cv-zoom-sep"></span>
               <button class="cv-zoom-btn cv-clear-btn" id="cvClearMarker" type="button" title="Remove your marker">✕ MEIN MARKER</button>
+              <span class="cv-zoom-sep cv-gm-only" id="cvPinSep" style="display:none"></span>
+              <button class="cv-zoom-btn cv-pin-btn cv-gm-only" id="cvPinBtn" type="button" title="GM: drop a labeled pin" style="display:none">+ PIN (GM)</button>
             </div>
           </div>
 
@@ -163,6 +182,7 @@ function cvBuildOverlay() {
           <kbd>DRAG</kbd> PAN ·
           <kbd>R</kbd> RESET ·
           <kbd>ESC</kbd> CLOSE
+          <span class="cv-gm-only" style="display:none"> · GM: <kbd>+ PIN</kbd> für NPC/Threat</span>
         </div>
         <div>WEYLAND-YUTANI CORP · CLASSIFIED · 2183</div>
       </footer>
@@ -198,6 +218,7 @@ function cvBindEvents() {
   cvEl('cvZoomOut').addEventListener('click',   () => cvSetZoom(cvZoom / 1.25));
   cvEl('cvZoomReset').addEventListener('click', cvResetView);
   cvEl('cvClearMarker').addEventListener('click', cvRemoveMyMarker);
+  cvEl('cvPinBtn').addEventListener('click', cvTogglePinMode);
 
   const stage = cvEl('cvStageWrap');
 
@@ -234,19 +255,36 @@ function cvBindEvents() {
     stage.classList.remove('dragging');
   });
 
-  // Click on the deck = drop my marker at that spot.
-  // Click on a marker that's mine = remove it.
+  // Click on the deck:
+  //   – Pin-mode (GM): drop a labeled pin
+  //   – Click on own marker: remove
+  //   – Click on GM-pin (as GM): remove
+  //   – Click on empty deck: drop/move my own marker
   cvEl('cvDeckFrame').addEventListener('click', (e) => {
     if (cvDragMoved) return;
 
-    const ownMarker = e.target.closest('.cv-marker.is-mine');
-    if (ownMarker) {
-      cvRemoveMyMarker();
+    // GM pin removal
+    const gmPinEl = e.target.closest('.cv-gmpin');
+    if (gmPinEl && window.isGM) {
+      const pinId = gmPinEl.dataset.pinId;
+      const label = (cvGMPins[pinId] || {}).label || 'pin';
+      if (window.confirm(`Pin "${label}" entfernen?`)) cvRemoveGMPin(pinId);
       return;
     }
-    // Click on someone else's marker: do nothing (don't reposition through them)
+    if (gmPinEl) return; // non-GM clicking a pin: no-op
+
+    // GM pin-drop mode: any click on empty deck = drop labeled pin
+    if (cvPinMode && window.isGM) {
+      cvDropGMPin(e);
+      return;
+    }
+
+    // Click on own marker = remove
+    if (e.target.closest('.cv-marker.is-mine')) { cvRemoveMyMarker(); return; }
+    // Click on someone else's marker = no-op
     if (e.target.closest('.cv-marker')) return;
 
+    // Drop/move my own marker
     cvDropMyMarker(e);
   });
 
@@ -330,37 +368,72 @@ function cvEventToNorm(e) {
 }
 
 async function cvDropMyMarker(e) {
-  if (!window.myId || !window.db) return;
+  const me = cvIdentity();
+  if (!me || !window.db) return;
   const { x, y } = cvEventToNorm(e);
   const deck = CV_DECKS[cvCurrent].id;
   try {
-    await set(cvMyMarkerRef(), {
-      name:  window.myName || 'OPERATIVE',
-      color: window.selectedColor || '#ff9a3c',
-      deck, x, y,
+    await set(cvMyMarkerRef(me.id), {
+      name: me.name, color: me.color, deck, x, y,
       ts: serverTimestamp(),
     });
   } catch (err) {
-    console.warn('Could not set Corvus marker:', err);
+    console.warn('[Corvus] Could not set marker:', err);
   }
 }
 
 async function cvRemoveMyMarker() {
-  if (!window.myId || !window.db) return;
-  try { await remove(cvMyMarkerRef()); }
-  catch (err) { console.warn('Could not remove Corvus marker:', err); }
+  const me = cvIdentity();
+  if (!me || !window.db) return;
+  try { await remove(cvMyMarkerRef(me.id)); }
+  catch (err) { console.warn('[Corvus] Could not remove marker:', err); }
+}
+
+async function cvDropGMPin(e) {
+  if (!window.isGM || !window.db) return;
+  const label = (window.prompt('Pin-Label? (z.B. „Alien", „NPC: Silas")') || '').trim();
+  if (!label) return;
+  const { x, y } = cvEventToNorm(e);
+  const deck = CV_DECKS[cvCurrent].id;
+  try {
+    await push(cvGMPinsRef(), { label, deck, x, y, ts: serverTimestamp() });
+  } catch (err) {
+    console.warn('[Corvus] Could not add GM pin:', err);
+  }
+}
+
+async function cvRemoveGMPin(pinId) {
+  if (!window.isGM || !window.db || !pinId) return;
+  try { await remove(ref(window.db, 'session/corvusGMPins/' + pinId)); }
+  catch (err) { console.warn('[Corvus] Could not remove pin:', err); }
+}
+
+function cvTogglePinMode() {
+  if (!window.isGM) return;
+  cvPinMode = !cvPinMode;
+  cvEl('cvPinBtn').classList.toggle('active', cvPinMode);
+  cvEl('cvStageWrap').classList.toggle('pin-mode', cvPinMode);
 }
 
 function cvSubscribeMarkers() {
-  if (cvMarkersUnsub) return;
-  cvMarkersUnsub = onValue(cvMarkersRef(), (snap) => {
-    cvMarkers = snap.val() || {};
-    cvRenderMarkers();
-    cvRenderRoster();
-  });
+  if (!cvMarkersUnsub) {
+    cvMarkersUnsub = onValue(cvMarkersRef(), (snap) => {
+      cvMarkers = snap.val() || {};
+      cvRenderMarkers();
+      cvRenderRoster();
+    });
+  }
+  if (!cvGMPinsUnsub) {
+    cvGMPinsUnsub = onValue(cvGMPinsRef(), (snap) => {
+      cvGMPins = snap.val() || {};
+      cvRenderMarkers();
+      cvRenderRoster();
+    });
+  }
 }
 function cvUnsubscribeMarkers() {
   if (cvMarkersUnsub) { cvMarkersUnsub(); cvMarkersUnsub = null; }
+  if (cvGMPinsUnsub)  { cvGMPinsUnsub();  cvGMPinsUnsub  = null; }
 }
 
 function cvRenderMarkers() {
@@ -368,14 +441,17 @@ function cvRenderMarkers() {
   if (!layer) return;
   layer.innerHTML = '';
   const currentDeckId = CV_DECKS[cvCurrent].id;
+  const me = cvIdentity();
+  const myId = me ? me.id : null;
 
+  // Player markers
   Object.entries(cvMarkers).forEach(([uid, m]) => {
     if (!m || m.deck !== currentDeckId) return;
-    const mine = uid === window.myId;
+    const mine = uid === myId;
     const el = document.createElement('div');
     el.className = 'cv-marker' + (mine ? ' is-mine' : '');
-    el.style.left  = (m.x * 100) + '%';
-    el.style.top   = (m.y * 100) + '%';
+    el.style.left = (m.x * 100) + '%';
+    el.style.top  = (m.y * 100) + '%';
     el.style.setProperty('--cv-mk-color', m.color || '#ff9a3c');
     el.title = m.name + (mine ? ' (du)' : '');
     el.innerHTML = `
@@ -384,16 +460,45 @@ function cvRenderMarkers() {
     `;
     layer.appendChild(el);
   });
+
+  // GM pins (NPCs / threats / objects)
+  Object.entries(cvGMPins).forEach(([pinId, p]) => {
+    if (!p || p.deck !== currentDeckId) return;
+    const el = document.createElement('div');
+    el.className = 'cv-gmpin';
+    el.dataset.pinId = pinId;
+    el.style.left = (p.x * 100) + '%';
+    el.style.top  = (p.y * 100) + '%';
+    el.title = (window.isGM ? '(GM) click = remove · ' : '') + p.label;
+    el.innerHTML = `
+      <div class="cv-gmpin-dot"></div>
+      <div class="cv-gmpin-label">${cvEsc(p.label || 'PIN')}</div>
+    `;
+    layer.appendChild(el);
+  });
 }
 
 function cvRenderRoster() {
-  const counts = {}; // deckId -> [{name, color, mine}]
+  const me = cvIdentity();
+  const myId = me ? me.id : null;
+  const counts = {}; // deckId -> [{ kind, name, color, mine }]
+
   Object.entries(cvMarkers).forEach(([uid, m]) => {
     if (!m || !m.deck) return;
     (counts[m.deck] = counts[m.deck] || []).push({
+      kind: 'player',
       name: m.name || 'OP',
       color: m.color || '#ff9a3c',
-      mine: uid === window.myId,
+      mine: uid === myId,
+    });
+  });
+  Object.entries(cvGMPins).forEach(([, p]) => {
+    if (!p || !p.deck) return;
+    (counts[p.deck] = counts[p.deck] || []).push({
+      kind: 'pin',
+      name: p.label || 'PIN',
+      color: '#c64225',
+      mine: false,
     });
   });
 
@@ -405,7 +510,7 @@ function cvRenderRoster() {
       return;
     }
     node.innerHTML = list.map(p => `
-      <span class="cv-roster-pill${p.mine ? ' is-mine' : ''}" style="--cv-pill-color:${p.color}">
+      <span class="cv-roster-pill${p.mine ? ' is-mine' : ''}${p.kind === 'pin' ? ' is-pin' : ''}" style="--cv-pill-color:${p.color}">
         <span class="cv-roster-dot"></span>${cvEsc(p.name)}
       </span>
     `).join('');
@@ -443,6 +548,11 @@ window.openCorvusDecks = function openCorvusDecks(startDeck) {
   cvBuildOverlay();
   const ov = cvEl('corvusOverlay');
   ov.classList.add('open');
+
+  // Reveal GM-only controls whenever the panel opens (isGM may flip post-build)
+  document.querySelectorAll('#corvusOverlay .cv-gm-only').forEach(el => {
+    el.style.display = window.isGM ? '' : 'none';
+  });
 
   let idx = 0;
   if (typeof startDeck === 'string') {

@@ -354,10 +354,71 @@
   border-color: var(--cv-rust); color: var(--cv-rust);
   background: rgba(198,66,37,0.08);
 }
+.cv-zoom-btn.cv-pin-btn {
+  width: auto; padding: 0 12px;
+  font-size: 10px; letter-spacing: 2px;
+  border-color: rgba(198,66,37,0.5); color: var(--cv-rust);
+}
+.cv-zoom-btn.cv-pin-btn:hover {
+  border-color: var(--cv-rust); color: #ff7a4a;
+  background: rgba(198,66,37,0.12);
+}
+.cv-zoom-btn.cv-pin-btn.active {
+  border-color: var(--cv-rust); color: #ff7a4a;
+  background: rgba(198,66,37,0.18);
+  box-shadow: 0 0 10px var(--cv-rust-glow);
+}
 
 /* Default cursor over deck = pointer (it's interactive) */
 .cv-deck-frame { cursor: crosshair; }
 .cv-stage-wrap.dragging .cv-deck-frame { cursor: grabbing; }
+.cv-stage-wrap.pin-mode .cv-deck-frame { cursor: copy; }
+
+/* ── GM pins (NPCs / threats / objects) ───────────────────────── */
+.cv-gmpin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: all;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.85));
+  z-index: 6;
+}
+.cv-gmpin-dot {
+  width: 16px; height: 16px;
+  background: var(--cv-rust);
+  border: 2px solid #07100c;
+  box-shadow: 0 0 0 1px var(--cv-rust), 0 0 10px var(--cv-rust);
+  transform: rotate(45deg);
+  margin: 0 auto;
+  animation: cvPinPulse 1.8s ease-in-out infinite;
+  transition: transform .12s;
+}
+.cv-gmpin:hover .cv-gmpin-dot { transform: rotate(45deg) scale(1.18); }
+@keyframes cvPinPulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--cv-rust), 0 0 6px var(--cv-rust); }
+  50%      { box-shadow: 0 0 0 2px var(--cv-rust), 0 0 14px var(--cv-rust); }
+}
+.cv-gmpin-label {
+  position: absolute;
+  left: 50%; top: 100%;
+  transform: translate(-50%, 4px);
+  background: rgba(7,16,12,0.92);
+  border: 1px solid var(--cv-rust);
+  color: var(--cv-bone);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  text-shadow: 0 0 4px rgba(0,0,0,.9);
+}
+
+/* Roster pill: GM-pin style */
+.cv-roster-pill.is-pin {
+  background: rgba(198,66,37,0.10);
+  color: var(--cv-bone);
+}
 
 /* ── Profile column (right side cross-section) ─────────────────── */
 .cv-profile {

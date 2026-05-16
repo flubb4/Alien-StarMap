@@ -17,6 +17,7 @@ Alien StarMap/
 │   │   ├── xp.css
 │   │   ├── handout.css     GM-Panel + CRT-Overlay
 │   │   ├── image-board.css
+│   │   ├── corvus-decks.css  CM-90 Deck-Viewer (A–E, Pan/Zoom)
 │   │   └── black-veil.css
 │   ├── js/                 ein File pro System (Phase 2–4)
 │   │   ├── firebase-init.js   SYNC laden (kein defer), alle Refs
@@ -28,9 +29,11 @@ Alien StarMap/
 │   │   ├── wuerfel-duerfel.js
 │   │   ├── handout.js
 │   │   ├── image-board.js
+│   │   ├── corvus-decks.js   Interaktiver Corvus-Deck-Viewer (A–E)
 │   │   └── black-veil.js
 │   └── images/
-│       └── starmap.jpg     Sternenkarten-Hintergrundbild
+│       ├── starmap.jpg     Sternenkarten-Hintergrundbild
+│       └── corvus/         CM-90 Deck-Schematics (deck-a.png … deck-e.png)
 │
 ├── docs/
 │   ├── structure.md        diese Datei

@@ -1,87 +1,52 @@
 // ── CM-90 CORVUS — Interactive Deck Viewer ──────────────────────────────────
-// Player-facing: lets the crew browse the ship deck-by-deck with pan/zoom.
+// Players drop one marker per person to say "I'm here". Markers sync live via
+// Firebase. The right-hand profile strip shows who is on each deck.
 
-// Each deck has clickable rooms in NORMALIZED coords (0–1) of the deck image.
-// Defaults are intentionally sparse — use the EDIT button in the viewer to draw
-// the rest accurately. User edits persist in localStorage and survive reload.
+import {
+  ref, onValue, set, remove, serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
 const CV_DECKS = [
-  {
-    id: 'A', name: 'UPPER EMERGENCY', sub: 'LIFE SUPPORT · ESCAPE PODS',
-    file: 'assets/images/corvus/deck-a.png',
-    rooms: [],
-  },
-  {
-    id: 'B', name: 'CARGO BAY', sub: 'MAIN HOLD · LOADING RAMP',
-    file: 'assets/images/corvus/deck-b.png',
-    rooms: [],
-  },
-  {
-    id: 'C', name: 'HABITATION', sub: 'CREW QUARTERS · CATWALK',
-    file: 'assets/images/corvus/deck-c.png',
-    rooms: [],
-  },
-  {
-    id: 'D', name: 'COMMAND', sub: 'BRIDGE · GALLEY · UPPER ENG',
-    file: 'assets/images/corvus/deck-d.png',
-    rooms: [],
-  },
-  {
-    id: 'E', name: 'ENGINEERING', sub: 'REACTOR · HANGAR · MED',
-    file: 'assets/images/corvus/deck-e.png',
-    rooms: [],
-  },
+  { id: 'A', name: 'UPPER EMERGENCY', sub: 'LIFE SUPPORT · ESCAPE PODS',  file: 'assets/images/corvus/deck-a.png' },
+  { id: 'B', name: 'CARGO BAY',       sub: 'MAIN HOLD · LOADING RAMP',    file: 'assets/images/corvus/deck-b.png' },
+  { id: 'C', name: 'HABITATION',      sub: 'CREW QUARTERS · CATWALK',     file: 'assets/images/corvus/deck-c.png' },
+  { id: 'D', name: 'COMMAND',         sub: 'BRIDGE · GALLEY · UPPER ENG', file: 'assets/images/corvus/deck-d.png' },
+  { id: 'E', name: 'ENGINEERING',     sub: 'REACTOR · HANGAR · MED',      file: 'assets/images/corvus/deck-e.png' },
 ];
 
 const CV_STATS = [
-  ['CLASS',    'CM-90'],
-  ['TYPE',     'COMM. SALVAGE'],
-  ['CREW',     '6 MAX'],
-  ['LENGTH',   '32.5 M'],
-  ['HEIGHT',   '11.2 M'],
-  ['MASS',     '210 T'],
-  ['POWER',    'FUSION'],
-  ['MANUF.',   'GEMINI APEX'],
+  ['CLASS',  'CM-90'],
+  ['TYPE',   'COMM. SALVAGE'],
+  ['CREW',   '6 MAX'],
+  ['LENGTH', '32.5 M'],
+  ['HEIGHT', '11.2 M'],
+  ['MASS',   '210 T'],
+  ['POWER',  'FUSION'],
+  ['MANUF.', 'GEMINI APEX'],
 ];
 
-let cvCurrent = 0;     // index into CV_DECKS
-let cvZoom    = 1;
-let cvPanX    = 0;
-let cvPanY    = 0;
-let cvDragging = false;
-let cvDragMoved = false;
+// ── State ──────────────────────────────────────────────────────────────────
+let cvCurrent    = 0;
+let cvZoom       = 1;
+let cvPanX       = 0;
+let cvPanY       = 0;
+let cvDragging   = false;
+let cvDragMoved  = false;
 let cvDragStartX = 0;
 let cvDragStartY = 0;
-let cvDragPanX = 0;
-let cvDragPanY = 0;
+let cvDragPanX   = 0;
+let cvDragPanY   = 0;
 let cvKeyHandlerBound = false;
 let cvClockTimer = null;
-let cvSelectedRoom = null;   // { deckIdx, roomId } or null
-const CV_SVG_NS = 'http://www.w3.org/2000/svg';
 
-// ── Edit mode (drag-rect to define rooms) ────────────────────────────────
-let cvEditMode    = false;
-let cvDrawing     = false;
-let cvDrawStart   = null;    // { x, y } normalized
-let cvDrawingEl   = null;    // SVG rect element being drawn
-
-const CV_LS_PREFIX = 'corvus-rooms-';
-
-function cvLoadAllRooms() {
-  CV_DECKS.forEach(d => {
-    try {
-      const raw = localStorage.getItem(CV_LS_PREFIX + d.id);
-      if (raw) d.rooms = JSON.parse(raw);
-    } catch (e) { /* ignore */ }
-  });
-}
-function cvSaveRooms(deck) {
-  try { localStorage.setItem(CV_LS_PREFIX + deck.id, JSON.stringify(deck.rooms || [])); }
-  catch (e) { /* ignore */ }
-}
-cvLoadAllRooms();
+let cvMarkers     = {};        // { uid: { name, color, deck, x, y, ts } }
+let cvMarkersUnsub = null;     // Firebase off() callback
 
 function cvEl(id) { return document.getElementById(id); }
+function cvMarkersRef() { return ref(window.db, 'session/corvusMarkers'); }
+function cvMyMarkerRef() { return ref(window.db, 'session/corvusMarkers/' + window.myId); }
 
+// ── Build overlay ──────────────────────────────────────────────────────────
 function cvBuildOverlay() {
   if (cvEl('corvusOverlay')) return;
 
@@ -94,8 +59,11 @@ function cvBuildOverlay() {
 
   const profile = CV_DECKS.map((d, i) => `
     <div class="cv-cross-deck" data-idx="${i}">
-      <div class="cv-cd-id">DECK ${d.id}</div>
-      <div class="cv-cd-name">${d.name}</div>
+      <div class="cv-cd-head">
+        <span class="cv-cd-id">DECK ${d.id}</span>
+        <span class="cv-cd-name">${d.name}</span>
+      </div>
+      <div class="cv-cd-roster" data-deck="${d.id}"></div>
     </div>
   `).join('');
 
@@ -140,7 +108,7 @@ function cvBuildOverlay() {
             <div class="cv-sheet-sub">
               <span id="cvSheetSub">UPPER EMERGENCY · LIFE SUPPORT</span>
               <span class="cv-tag" id="cvSheetLevel">LEVEL 5/5</span>
-              <span class="cv-tag cv-tag--room" id="cvSelectedRoomTag" style="display:none">— SELECT ROOM —</span>
+              <span class="cv-tag cv-tag--hint">CLICK TO DROP MARKER</span>
             </div>
           </div>
 
@@ -157,7 +125,7 @@ function cvBuildOverlay() {
             <div class="cv-stage" id="cvStage">
               <div class="cv-deck-frame" id="cvDeckFrame">
                 <img id="cvDeckImg" alt="Corvus deck schematic" draggable="false">
-                <svg id="cvRooms" class="cv-rooms" viewBox="0 0 1 1" preserveAspectRatio="none"></svg>
+                <div id="cvMarkerLayer" class="cv-marker-layer"></div>
               </div>
             </div>
 
@@ -167,8 +135,7 @@ function cvBuildOverlay() {
               <button class="cv-zoom-btn" id="cvZoomIn" type="button" title="Zoom in">+</button>
               <button class="cv-zoom-btn cv-reset" id="cvZoomReset" type="button" title="Reset (R)">RESET</button>
               <span class="cv-zoom-sep"></span>
-              <button class="cv-zoom-btn cv-edit-btn" id="cvEditBtn" type="button" title="Toggle edit mode (E)">✎ EDIT</button>
-              <button class="cv-zoom-btn cv-edit-btn" id="cvExportBtn" type="button" title="Copy all rooms as JSON" style="display:none">⇪ EXPORT</button>
+              <button class="cv-zoom-btn cv-clear-btn" id="cvClearMarker" type="button" title="Remove your marker">✕ MEIN MARKER</button>
             </div>
           </div>
 
@@ -176,8 +143,8 @@ function cvBuildOverlay() {
 
         <aside class="cv-profile">
           <div class="cv-profile-head">
-            <div class="cv-profile-title">VERTICAL PROFILE</div>
-            <div class="cv-profile-sub">// SECTION VIEW · DECKS A–E</div>
+            <div class="cv-profile-title">CREW POSITIONS</div>
+            <div class="cv-profile-sub">// VERTICAL PROFILE · DECKS A–E</div>
           </div>
           <div class="cv-cross" id="cvCross">${profile}</div>
           <div class="cv-spec">
@@ -189,12 +156,11 @@ function cvBuildOverlay() {
 
       <footer class="cv-footer">
         <div class="cv-hint">
-          <kbd>CLICK</kbd> ROOM ·
+          <kbd>CLICK</kbd> DROP MARKER ·
           <kbd>↑</kbd><kbd>↓</kbd> DECK ·
           <kbd>1</kbd>–<kbd>5</kbd> JUMP ·
           <kbd>WHEEL</kbd> ZOOM ·
           <kbd>DRAG</kbd> PAN ·
-          <kbd>E</kbd> EDIT ·
           <kbd>R</kbd> RESET ·
           <kbd>ESC</kbd> CLOSE
         </div>
@@ -210,6 +176,7 @@ function cvBuildOverlay() {
   cvBindEvents();
 }
 
+// ── Event wiring ───────────────────────────────────────────────────────────
 function cvBindEvents() {
   cvEl('cvCloseBtn').addEventListener('click', closeCorvusDecks);
 
@@ -222,65 +189,15 @@ function cvBindEvents() {
   cvEl('cvCross').addEventListener('click', (e) => {
     const row = e.target.closest('.cv-cross-deck');
     if (!row) return;
+    // ignore clicks on roster pills (they have their own purpose)
+    if (e.target.closest('.cv-roster-pill')) return;
     cvSwitchDeck(+row.dataset.idx);
   });
 
   cvEl('cvZoomIn').addEventListener('click',    () => cvSetZoom(cvZoom * 1.25));
   cvEl('cvZoomOut').addEventListener('click',   () => cvSetZoom(cvZoom / 1.25));
   cvEl('cvZoomReset').addEventListener('click', cvResetView);
-  cvEl('cvEditBtn').addEventListener('click',   cvToggleEdit);
-  cvEl('cvExportBtn').addEventListener('click', cvExportRooms);
-
-  // ── Drag-to-draw rect in edit mode ──
-  const frame = cvEl('cvDeckFrame');
-  frame.addEventListener('mousedown', (e) => {
-    if (!cvEditMode || e.button !== 0) return;
-    e.stopPropagation();
-    e.preventDefault();
-    const n = cvEventToNorm(e);
-    cvDrawing = true;
-    cvDrawStart = n;
-    cvDrawingEl = document.createElementNS(CV_SVG_NS, 'rect');
-    cvDrawingEl.setAttribute('class', 'cv-room cv-drawing');
-    cvDrawingEl.setAttribute('x', n.x);
-    cvDrawingEl.setAttribute('y', n.y);
-    cvDrawingEl.setAttribute('width', 0);
-    cvDrawingEl.setAttribute('height', 0);
-    cvEl('cvRooms').appendChild(cvDrawingEl);
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    if (!cvDrawing) return;
-    const n = cvEventToNorm(e);
-    const x = Math.max(0, Math.min(1, Math.min(cvDrawStart.x, n.x)));
-    const y = Math.max(0, Math.min(1, Math.min(cvDrawStart.y, n.y)));
-    const w = Math.max(0, Math.min(1 - x, Math.abs(n.x - cvDrawStart.x)));
-    const h = Math.max(0, Math.min(1 - y, Math.abs(n.y - cvDrawStart.y)));
-    cvDrawingEl.setAttribute('x', x);
-    cvDrawingEl.setAttribute('y', y);
-    cvDrawingEl.setAttribute('width', w);
-    cvDrawingEl.setAttribute('height', h);
-  });
-
-  window.addEventListener('mouseup', () => {
-    if (!cvDrawing) return;
-    const x = parseFloat(cvDrawingEl.getAttribute('x'));
-    const y = parseFloat(cvDrawingEl.getAttribute('y'));
-    const w = parseFloat(cvDrawingEl.getAttribute('width'));
-    const h = parseFloat(cvDrawingEl.getAttribute('height'));
-    cvDrawingEl.remove();
-    cvDrawingEl = null;
-    cvDrawing = false;
-    if (w < 0.01 || h < 0.01) return;
-    const name = (window.prompt('Raum-Name?') || '').trim();
-    if (!name) return;
-    const deck = CV_DECKS[cvCurrent];
-    const id = `${deck.id.toLowerCase()}-${Date.now().toString(36)}`;
-    deck.rooms = deck.rooms || [];
-    deck.rooms.push({ id, name, x, y, w, h });
-    cvSaveRooms(deck);
-    cvRenderRooms(deck);
-  });
+  cvEl('cvClearMarker').addEventListener('click', cvRemoveMyMarker);
 
   const stage = cvEl('cvStageWrap');
 
@@ -292,12 +209,12 @@ function cvBindEvents() {
 
   stage.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
-    cvDragging = true;
-    cvDragMoved = false;
+    cvDragging   = true;
+    cvDragMoved  = false;
     cvDragStartX = e.clientX;
     cvDragStartY = e.clientY;
-    cvDragPanX = cvPanX;
-    cvDragPanY = cvPanY;
+    cvDragPanX   = cvPanX;
+    cvDragPanY   = cvPanY;
     stage.classList.add('dragging');
   });
 
@@ -317,38 +234,24 @@ function cvBindEvents() {
     stage.classList.remove('dragging');
   });
 
-  // Room click (delegated).
-  cvEl('cvRooms').addEventListener('click', (e) => {
-    const rect = e.target.closest('.cv-room');
-    if (!rect) return;
-    e.stopPropagation();
+  // Click on the deck = drop my marker at that spot.
+  // Click on a marker that's mine = remove it.
+  cvEl('cvDeckFrame').addEventListener('click', (e) => {
     if (cvDragMoved) return;
-    const id = rect.dataset.id;
-    const deck = CV_DECKS[cvCurrent];
 
-    if (cvEditMode) {
-      const room = (deck.rooms || []).find(r => r.id === id);
-      if (room && window.confirm(`Raum "${room.name}" löschen?`)) {
-        deck.rooms = deck.rooms.filter(r => r.id !== id);
-        cvSaveRooms(deck);
-        cvRenderRooms(deck);
-      }
+    const ownMarker = e.target.closest('.cv-marker.is-mine');
+    if (ownMarker) {
+      cvRemoveMyMarker();
       return;
     }
+    // Click on someone else's marker: do nothing (don't reposition through them)
+    if (e.target.closest('.cv-marker')) return;
 
-    if (cvSelectedRoom && cvSelectedRoom.roomId === id) cvClearRoomSelection();
-    else cvSelectRoom(id);
-  });
-
-  // Click on empty stage = deselect (only if not a drag)
-  stage.addEventListener('click', (e) => {
-    if (cvDragMoved) return;
-    if (e.target.closest('.cv-room')) return;
-    cvClearRoomSelection();
+    cvDropMyMarker(e);
   });
 
   stage.addEventListener('dblclick', (e) => {
-    if (e.target.closest('.cv-room')) return;
+    if (e.target.closest('.cv-marker')) return;
     cvResetView();
   });
 
@@ -361,25 +264,19 @@ function cvBindEvents() {
 function cvOnKey(e) {
   const ov = cvEl('corvusOverlay');
   if (!ov || !ov.classList.contains('open')) return;
-  // ignore when typing in an input
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
 
-  if (e.key === 'Escape') {
-    e.preventDefault();
-    if (cvSelectedRoom) cvClearRoomSelection();
-    else closeCorvusDecks();
-    return;
-  }
-  if (e.key === 'ArrowUp')      { e.preventDefault(); cvSwitchDeck(cvCurrent - 1); return; }
-  if (e.key === 'ArrowDown')    { e.preventDefault(); cvSwitchDeck(cvCurrent + 1); return; }
-  if (e.key === 'r' || e.key === 'R') { e.preventDefault(); cvResetView(); return; }
-  if (e.key === 'e' || e.key === 'E') { e.preventDefault(); cvToggleEdit(); return; }
-  if (e.key === '+' || e.key === '=') { e.preventDefault(); cvSetZoom(cvZoom * 1.25); return; }
-  if (e.key === '-' || e.key === '_') { e.preventDefault(); cvSetZoom(cvZoom / 1.25); return; }
-  if (/^[1-5]$/.test(e.key))    { e.preventDefault(); cvSwitchDeck(+e.key - 1); return; }
+  if (e.key === 'Escape')             { e.preventDefault(); closeCorvusDecks(); return; }
+  if (e.key === 'ArrowUp')             { e.preventDefault(); cvSwitchDeck(cvCurrent - 1); return; }
+  if (e.key === 'ArrowDown')           { e.preventDefault(); cvSwitchDeck(cvCurrent + 1); return; }
+  if (e.key === 'r' || e.key === 'R')  { e.preventDefault(); cvResetView(); return; }
+  if (e.key === '+' || e.key === '=')  { e.preventDefault(); cvSetZoom(cvZoom * 1.25); return; }
+  if (e.key === '-' || e.key === '_')  { e.preventDefault(); cvSetZoom(cvZoom / 1.25); return; }
+  if (/^[1-5]$/.test(e.key))           { e.preventDefault(); cvSwitchDeck(+e.key - 1); return; }
 }
 
+// ── Deck switching ─────────────────────────────────────────────────────────
 function cvSwitchDeck(idx) {
   if (idx < 0 || idx >= CV_DECKS.length) return;
   cvCurrent = idx;
@@ -393,114 +290,29 @@ function cvSwitchDeck(idx) {
   img.src = d.file;
 
   cvEl('cvSheetTitle').textContent = `DECK ${d.id}`;
-  cvEl('cvSheetSub').textContent = `${d.name} · ${d.sub}`;
+  cvEl('cvSheetSub').textContent   = `${d.name} · ${d.sub}`;
   cvEl('cvSheetLevel').textContent = `LEVEL ${CV_DECKS.length - idx}/${CV_DECKS.length}`;
-  cvEl('cvHudDeck').textContent = d.id;
-  cvEl('cvHudFrame').textContent = `DK-${d.id}/01`;
+  cvEl('cvHudDeck').textContent    = d.id;
+  cvEl('cvHudFrame').textContent   = `DK-${d.id}/01`;
 
-  document.querySelectorAll('#cvTabs .cv-tab').forEach((b, i) => {
-    b.classList.toggle('active', i === idx);
-  });
-  document.querySelectorAll('#cvCross .cv-cross-deck').forEach((b, i) => {
-    b.classList.toggle('active', i === idx);
-  });
+  document.querySelectorAll('#cvTabs .cv-tab').forEach((b, i) => b.classList.toggle('active', i === idx));
+  document.querySelectorAll('#cvCross .cv-cross-deck').forEach((b, i) => b.classList.toggle('active', i === idx));
 
-  cvRenderRooms(d);
-  cvClearRoomSelection();
+  cvRenderMarkers();
   cvResetView();
 }
 
-function cvRenderRooms(deck) {
-  const svg = cvEl('cvRooms');
-  svg.innerHTML = '';
-  (deck.rooms || []).forEach(r => {
-    const rect = document.createElementNS(CV_SVG_NS, 'rect');
-    rect.setAttribute('x', r.x);
-    rect.setAttribute('y', r.y);
-    rect.setAttribute('width', r.w);
-    rect.setAttribute('height', r.h);
-    rect.setAttribute('class', 'cv-room');
-    rect.dataset.id = r.id;
-    rect.dataset.name = r.name;
-    // SVG <title> gives a native tooltip on hover
-    const title = document.createElementNS(CV_SVG_NS, 'title');
-    title.textContent = r.name;
-    rect.appendChild(title);
-    svg.appendChild(rect);
-  });
-}
-
-function cvSelectRoom(roomId) {
-  const deck = CV_DECKS[cvCurrent];
-  const room = (deck.rooms || []).find(r => r.id === roomId);
-  if (!room) return;
-  cvSelectedRoom = { deckIdx: cvCurrent, roomId };
-  document.querySelectorAll('#cvRooms .cv-room').forEach(el => {
-    el.classList.toggle('selected', el.dataset.id === roomId);
-  });
-  const tag = cvEl('cvSelectedRoomTag');
-  tag.textContent = `▸ ${room.name.toUpperCase()}`;
-  tag.style.display = '';
-}
-
-function cvClearRoomSelection() {
-  cvSelectedRoom = null;
-  document.querySelectorAll('#cvRooms .cv-room').forEach(el => el.classList.remove('selected'));
-  const tag = cvEl('cvSelectedRoomTag');
-  if (tag) tag.style.display = 'none';
-}
-
-// Convert a pointer event to normalized (0–1) coords relative to the deck frame.
-function cvEventToNorm(e) {
-  const frame = cvEl('cvDeckFrame');
-  const r = frame.getBoundingClientRect();
-  return {
-    x: (e.clientX - r.left) / r.width,
-    y: (e.clientY - r.top)  / r.height,
-  };
-}
-
-function cvToggleEdit() {
-  cvEditMode = !cvEditMode;
-  cvEl('cvEditBtn').classList.toggle('active', cvEditMode);
-  cvEl('cvExportBtn').style.display = cvEditMode ? '' : 'none';
-  cvEl('cvStageWrap').classList.toggle('edit-mode', cvEditMode);
-  cvClearRoomSelection();
-}
-
-function cvExportRooms() {
-  const payload = CV_DECKS.map(d => ({
-    id: d.id,
-    rooms: (d.rooms || []).map(r => ({
-      id: r.id, name: r.name,
-      x: +r.x.toFixed(4), y: +r.y.toFixed(4),
-      w: +r.w.toFixed(4), h: +r.h.toFixed(4),
-    })),
-  }));
-  const text = JSON.stringify(payload, null, 2);
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(
-      () => window.alert('Alle Räume als JSON ins Clipboard kopiert.'),
-      () => { console.log('CORVUS ROOMS EXPORT:\n' + text); window.alert('Clipboard nicht verfügbar — JSON liegt in der Konsole.'); }
-    );
-  } else {
-    console.log('CORVUS ROOMS EXPORT:\n' + text);
-    window.alert('JSON in die Konsole geschrieben.');
-  }
-}
-
+// ── Zoom / pan ─────────────────────────────────────────────────────────────
 function cvSetZoom(z) {
   cvZoom = Math.max(0.5, Math.min(5, z));
   cvApplyTransform();
   cvEl('cvZoomReadout').textContent = Math.round(cvZoom * 100) + '%';
 }
-
 function cvApplyTransform() {
   const stage = cvEl('cvStage');
   if (!stage) return;
   stage.style.transform = `translate(${cvPanX}px, ${cvPanY}px) scale(${cvZoom})`;
 }
-
 function cvResetView() {
   cvZoom = 1; cvPanX = 0; cvPanY = 0;
   cvApplyTransform();
@@ -508,6 +320,105 @@ function cvResetView() {
   if (r) r.textContent = '100%';
 }
 
+// ── Marker logic ───────────────────────────────────────────────────────────
+function cvEventToNorm(e) {
+  const frame = cvEl('cvDeckFrame');
+  const r = frame.getBoundingClientRect();
+  const x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+  const y = Math.max(0, Math.min(1, (e.clientY - r.top)  / r.height));
+  return { x, y };
+}
+
+async function cvDropMyMarker(e) {
+  if (!window.myId || !window.db) return;
+  const { x, y } = cvEventToNorm(e);
+  const deck = CV_DECKS[cvCurrent].id;
+  try {
+    await set(cvMyMarkerRef(), {
+      name:  window.myName || 'OPERATIVE',
+      color: window.selectedColor || '#ff9a3c',
+      deck, x, y,
+      ts: serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn('Could not set Corvus marker:', err);
+  }
+}
+
+async function cvRemoveMyMarker() {
+  if (!window.myId || !window.db) return;
+  try { await remove(cvMyMarkerRef()); }
+  catch (err) { console.warn('Could not remove Corvus marker:', err); }
+}
+
+function cvSubscribeMarkers() {
+  if (cvMarkersUnsub) return;
+  cvMarkersUnsub = onValue(cvMarkersRef(), (snap) => {
+    cvMarkers = snap.val() || {};
+    cvRenderMarkers();
+    cvRenderRoster();
+  });
+}
+function cvUnsubscribeMarkers() {
+  if (cvMarkersUnsub) { cvMarkersUnsub(); cvMarkersUnsub = null; }
+}
+
+function cvRenderMarkers() {
+  const layer = cvEl('cvMarkerLayer');
+  if (!layer) return;
+  layer.innerHTML = '';
+  const currentDeckId = CV_DECKS[cvCurrent].id;
+
+  Object.entries(cvMarkers).forEach(([uid, m]) => {
+    if (!m || m.deck !== currentDeckId) return;
+    const mine = uid === window.myId;
+    const el = document.createElement('div');
+    el.className = 'cv-marker' + (mine ? ' is-mine' : '');
+    el.style.left  = (m.x * 100) + '%';
+    el.style.top   = (m.y * 100) + '%';
+    el.style.setProperty('--cv-mk-color', m.color || '#ff9a3c');
+    el.title = m.name + (mine ? ' (du)' : '');
+    el.innerHTML = `
+      <div class="cv-marker-dot"></div>
+      <div class="cv-marker-label">${cvEsc(m.name || 'OP')}</div>
+    `;
+    layer.appendChild(el);
+  });
+}
+
+function cvRenderRoster() {
+  const counts = {}; // deckId -> [{name, color, mine}]
+  Object.entries(cvMarkers).forEach(([uid, m]) => {
+    if (!m || !m.deck) return;
+    (counts[m.deck] = counts[m.deck] || []).push({
+      name: m.name || 'OP',
+      color: m.color || '#ff9a3c',
+      mine: uid === window.myId,
+    });
+  });
+
+  document.querySelectorAll('#cvCross .cv-cd-roster').forEach((node) => {
+    const deckId = node.dataset.deck;
+    const list = counts[deckId] || [];
+    if (list.length === 0) {
+      node.innerHTML = '<span class="cv-roster-empty">— empty —</span>';
+      return;
+    }
+    node.innerHTML = list.map(p => `
+      <span class="cv-roster-pill${p.mine ? ' is-mine' : ''}" style="--cv-pill-color:${p.color}">
+        <span class="cv-roster-dot"></span>${cvEsc(p.name)}
+      </span>
+    `).join('');
+  });
+}
+
+function cvEsc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+// ── Clock ──────────────────────────────────────────────────────────────────
 function cvStartClock() {
   if (cvClockTimer) return;
   const tick = () => {
@@ -523,7 +434,6 @@ function cvStartClock() {
   tick();
   cvClockTimer = setInterval(tick, 1000);
 }
-
 function cvStopClock() {
   if (cvClockTimer) { clearInterval(cvClockTimer); cvClockTimer = null; }
 }
@@ -543,10 +453,14 @@ window.openCorvusDecks = function openCorvusDecks(startDeck) {
   }
   cvSwitchDeck(idx);
   cvStartClock();
+
+  // Wait for anon-auth before subscribing (Firebase rules require auth != null)
+  (window._authReadyPromise || Promise.resolve()).then(cvSubscribeMarkers);
 };
 
 window.closeCorvusDecks = function closeCorvusDecks() {
   const ov = cvEl('corvusOverlay');
   if (ov) ov.classList.remove('open');
   cvStopClock();
+  cvUnsubscribeMarkers();
 };

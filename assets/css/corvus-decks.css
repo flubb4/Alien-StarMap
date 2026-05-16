@@ -240,45 +240,70 @@
   pointer-events: none;
 }
 
-/* SVG overlay of clickable room hit-boxes */
-.cv-rooms {
+/* Layer that holds player position markers */
+.cv-marker-layer {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
-  pointer-events: none;   /* let the stage receive drag; only rects opt in */
-  overflow: visible;
+  pointer-events: none;
 }
-.cv-room {
-  fill: rgba(255,154,60,0.00);
-  stroke: rgba(255,154,60,0.00);
-  stroke-width: 0.004;
-  vector-effect: non-scaling-stroke;
-  cursor: pointer;
+.cv-marker {
+  --cv-mk-color: var(--cv-amber);
+  position: absolute;
+  transform: translate(-50%, -100%);
   pointer-events: all;
-  transition: fill 0.12s, stroke 0.12s;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.8));
+  z-index: 5;
 }
-.cv-room:hover {
-  fill: rgba(255,154,60,0.06);
-  stroke: rgba(255,154,60,0.55);
-  stroke-width: 0.005;
+.cv-marker-dot {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--cv-mk-color);
+  border: 2px solid #07100c;
+  box-shadow: 0 0 0 1px var(--cv-mk-color), 0 0 10px var(--cv-mk-color);
+  margin: 0 auto;
+  transition: transform .12s;
 }
-.cv-room.selected {
-  fill: rgba(255,154,60,0.18);
-  stroke: var(--cv-amber);
-  stroke-width: 0.007;
-  filter: drop-shadow(0 0 6px var(--cv-amber));
-  animation: cvRoomPulse 1.6s ease-in-out infinite;
+.cv-marker:hover .cv-marker-dot { transform: scale(1.18); }
+.cv-marker-label {
+  position: absolute;
+  left: 50%; top: 100%;
+  transform: translate(-50%, 4px);
+  background: rgba(7,16,12,0.92);
+  border: 1px solid var(--cv-mk-color);
+  color: var(--cv-bone);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  text-shadow: 0 0 4px rgba(0,0,0,.8);
 }
-@keyframes cvRoomPulse {
-  0%, 100% { fill: rgba(255,154,60,0.18); }
-  50%      { fill: rgba(255,154,60,0.32); }
+.cv-marker.is-mine .cv-marker-dot {
+  animation: cvMineGlow 1.4s ease-in-out infinite;
+}
+.cv-marker.is-mine::after {
+  content: 'YOU';
+  position: absolute;
+  left: 50%; bottom: 100%;
+  transform: translate(-50%, -3px);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--cv-mk-color);
+  text-shadow: 0 0 4px rgba(0,0,0,.9);
+  white-space: nowrap;
+}
+@keyframes cvMineGlow {
+  0%, 100% { box-shadow: 0 0 0 1px var(--cv-mk-color), 0 0 6px var(--cv-mk-color); }
+  50%      { box-shadow: 0 0 0 2px var(--cv-mk-color), 0 0 14px var(--cv-mk-color); }
 }
 
-/* Selected-room tag (in title block) */
-.cv-tag.cv-tag--room {
-  border-color: var(--cv-amber);
-  color: var(--cv-amber);
-  background: var(--cv-amber-soft);
-  text-shadow: 0 0 6px var(--cv-amber-glow);
+/* Hint tag in title block */
+.cv-tag.cv-tag--hint {
+  border-color: var(--cv-hair);
+  color: var(--cv-dim);
+  letter-spacing: 2.5px;
 }
 
 /* Stage HUD overlays */
@@ -321,44 +346,18 @@
 .cv-zoom-sep {
   width: 1px; align-self: stretch; background: var(--cv-hair); margin: 0 4px;
 }
-.cv-zoom-btn.cv-edit-btn {
+.cv-zoom-btn.cv-clear-btn {
   width: auto; padding: 0 12px;
   font-size: 10px; letter-spacing: 2px;
 }
-.cv-zoom-btn.cv-edit-btn.active {
-  border-color: var(--cv-amber);
-  color: var(--cv-amber);
-  background: var(--cv-amber-soft);
-  box-shadow: 0 0 8px var(--cv-amber-soft);
+.cv-zoom-btn.cv-clear-btn:hover {
+  border-color: var(--cv-rust); color: var(--cv-rust);
+  background: rgba(198,66,37,0.08);
 }
 
-/* ── Edit mode ────────────────────────────────────────────────── */
-.cv-stage-wrap.edit-mode { cursor: crosshair; }
-.cv-stage-wrap.edit-mode .cv-deck-frame { cursor: crosshair; }
-.cv-stage-wrap.edit-mode .cv-room {
-  fill: rgba(255,154,60,0.05);
-  stroke: rgba(255,154,60,0.45);
-  stroke-width: 0.004;
-  cursor: pointer;
-}
-.cv-stage-wrap.edit-mode .cv-room:hover {
-  fill: rgba(198,66,37,0.20);
-  stroke: var(--cv-rust);
-  stroke-width: 0.006;
-  filter: drop-shadow(0 0 4px var(--cv-rust));
-  animation: none;
-}
-.cv-stage-wrap.edit-mode .cv-room.selected { animation: none; }
-
-/* Live drawing preview */
-.cv-room.cv-drawing {
-  fill: rgba(255,154,60,0.20);
-  stroke: var(--cv-amber);
-  stroke-width: 0.005;
-  stroke-dasharray: 0.012 0.008;
-  pointer-events: none;
-  animation: none;
-}
+/* Default cursor over deck = pointer (it's interactive) */
+.cv-deck-frame { cursor: crosshair; }
+.cv-stage-wrap.dragging .cv-deck-frame { cursor: grabbing; }
 
 /* ── Profile column (right side cross-section) ─────────────────── */
 .cv-profile {
@@ -389,15 +388,17 @@
   gap: 4px;
 }
 .cv-cross-deck {
-  flex: 1;
+  flex: 1; min-height: 60px;
   border: 1px solid var(--cv-hair);
   background: var(--cv-panel-2);
   position: relative;
   cursor: pointer;
   transition: all 0.15s;
-  padding: 6px 12px;
+  padding: 6px 10px;
   display: flex; flex-direction: column; justify-content: center;
+  gap: 4px;
 }
+.cv-cd-head { display: flex; align-items: baseline; gap: 8px; }
 .cv-cross-deck::before {
   content: ''; position: absolute; left: -7px; top: 50%;
   transform: translateY(-50%);
@@ -426,9 +427,40 @@
 }
 .cv-cross-deck .cv-cd-name {
   font-size: 8px; letter-spacing: 2px; color: var(--cv-dim);
-  margin-top: 2px;
 }
 .cv-cross-deck.active .cv-cd-name { color: var(--cv-bone); }
+
+/* Roster pills inside the deck row */
+.cv-cd-roster {
+  display: flex; flex-wrap: wrap; gap: 3px;
+  min-height: 0;
+}
+.cv-roster-empty {
+  font-size: 8px; letter-spacing: 2px; color: var(--cv-dim-2);
+}
+.cv-roster-pill {
+  --cv-pill-color: var(--cv-amber);
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 6px 1px 4px;
+  border: 1px solid var(--cv-pill-color);
+  background: rgba(7,16,12,0.6);
+  color: var(--cv-bone);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; letter-spacing: 1.5px;
+  max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cv-roster-pill.is-mine {
+  background: rgba(255,154,60,0.10);
+  box-shadow: 0 0 6px rgba(255,154,60,0.30);
+}
+.cv-roster-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--cv-pill-color);
+  box-shadow: 0 0 4px var(--cv-pill-color);
+  flex-shrink: 0;
+}
 
 /* Vessel spec block */
 .cv-spec {

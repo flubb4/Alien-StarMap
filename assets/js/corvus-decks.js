@@ -60,74 +60,87 @@ function cvBuildOverlay() {
 
       <header class="cv-header">
         <div class="cv-mark">
-          <svg viewBox="0 0 40 40" width="38" height="38">
-            <polygon points="20,3 35,11 35,29 20,37 5,29 5,11" fill="none" stroke="#f5a623" stroke-width="1.4"/>
-            <circle cx="20" cy="20" r="7" fill="none" stroke="#f5a623" stroke-width="1"/>
-            <circle cx="20" cy="20" r="2.4" fill="#f5a623"/>
-            <line x1="6" y1="34" x2="34" y2="6" stroke="#f5a623" stroke-width="1" opacity=".55"/>
+          <svg viewBox="0 0 40 40" width="34" height="34">
+            <polygon points="20,3 35,11 35,29 20,37 5,29 5,11" fill="none" stroke="#ff9a3c" stroke-width="1.4"/>
+            <circle cx="20" cy="20" r="7" fill="none" stroke="#ff9a3c" stroke-width="1"/>
+            <circle cx="20" cy="20" r="2.4" fill="#ff9a3c"/>
+            <line x1="6" y1="34" x2="34" y2="6" stroke="#ff9a3c" stroke-width="1" opacity=".55"/>
           </svg>
         </div>
         <div class="cv-title-block">
-          <div class="cv-eyebrow">// CORVUS SALVAGE &amp; RECOVERY // SCHEMATICS</div>
-          <div class="cv-title">CM-90 CORVUS</div>
-          <div class="cv-subtitle">COMMERCIAL SALVAGE VESSEL · <span id="cvDeckSub">DECK A · UPPER EMERGENCY</span></div>
+          <div class="cv-header-title">CM-90 CORVUS · SCHEMATICS</div>
+          <div class="cv-header-sub">// CORVUS SALVAGE &amp; RECOVERY · COMMERCIAL SALVAGE VESSEL</div>
         </div>
         <div class="cv-hdr-right">
           <div class="cv-clock" id="cvClock">2183.000 · 00:00:00 SHIP-TIME</div>
           <div class="cv-pill">SCHEMATIC ONLINE</div>
         </div>
-        <button class="cv-close-btn" id="cvCloseBtn" type="button">[ ESC ] CLOSE</button>
+        <button class="cv-close" id="cvCloseBtn" type="button">[ ESC ] CLOSE</button>
       </header>
 
       <div class="cv-tabs" id="cvTabs">${tabs}</div>
 
       <div class="cv-body">
-        <div class="cv-stage-wrap" id="cvStageWrap">
-          <span class="cv-stage-corner tl"></span>
-          <span class="cv-stage-corner tr"></span>
-          <span class="cv-stage-corner bl"></span>
-          <span class="cv-stage-corner br"></span>
+        <div class="cv-stage-col">
 
-          <div class="cv-stage-hud tl">
-            <div>// DECK <span class="v" id="cvHudDeck">A</span></div>
-            <div>// LEVEL <span class="v" id="cvHudLevel">5/5</span></div>
-          </div>
-          <div class="cv-stage-hud br">
-            <div>FRAME REF · <span class="v">DK-A/01</span></div>
-            <div>SCAN INTEGRITY · <span class="v">98.4%</span></div>
-          </div>
-
-          <div class="cv-stage" id="cvStage">
-            <img id="cvDeckImg" alt="Corvus deck schematic" draggable="false">
+          <div class="cv-title-card">
+            <span class="cv-corner tl"></span>
+            <span class="cv-corner tr"></span>
+            <span class="cv-corner bl"></span>
+            <span class="cv-corner br"></span>
+            <div class="cv-sheet-title" id="cvSheetTitle">DECK A</div>
+            <div class="cv-sheet-sub">
+              <span id="cvSheetSub">UPPER EMERGENCY · LIFE SUPPORT</span>
+              <span class="cv-tag" id="cvSheetLevel">LEVEL 5/5</span>
+              <span class="cv-tag">SECTION VIEW</span>
+            </div>
           </div>
 
-          <div class="cv-zoom-bar">
-            <button class="cv-zoom-btn" id="cvZoomOut" type="button" title="Zoom out">−</button>
-            <span class="cv-zoom-readout" id="cvZoomReadout">100%</span>
-            <button class="cv-zoom-btn" id="cvZoomIn" type="button" title="Zoom in">+</button>
-            <button class="cv-zoom-btn" id="cvZoomReset" type="button" title="Reset (R)" style="width:auto;padding:0 10px;font-size:10px;letter-spacing:2px;">RESET</button>
+          <div class="cv-stage-wrap" id="cvStageWrap">
+            <div class="cv-stage-hud tl">
+              <div>// DECK <span class="v" id="cvHudDeck">A</span></div>
+              <div>// FRAME <span class="v" id="cvHudFrame">DK-A/01</span></div>
+            </div>
+            <div class="cv-stage-hud br">
+              <div>SCAN INTEGRITY · <span class="v">98.4%</span></div>
+              <div>SCHEMATIC REV · <span class="v">04.21</span></div>
+            </div>
+
+            <div class="cv-stage" id="cvStage">
+              <img id="cvDeckImg" alt="Corvus deck schematic" draggable="false">
+            </div>
+
+            <div class="cv-zoom-bar">
+              <button class="cv-zoom-btn" id="cvZoomOut" type="button" title="Zoom out">−</button>
+              <span class="cv-zoom-readout" id="cvZoomReadout">100%</span>
+              <button class="cv-zoom-btn" id="cvZoomIn" type="button" title="Zoom in">+</button>
+              <button class="cv-zoom-btn cv-reset" id="cvZoomReset" type="button" title="Reset (R)">RESET</button>
+            </div>
           </div>
+
         </div>
 
         <aside class="cv-profile">
-          <div class="cv-profile-title">// VERTICAL PROFILE</div>
-          <div class="cv-profile-sub">SECTION VIEW · DECKS A–E</div>
+          <div class="cv-profile-head">
+            <div class="cv-profile-title">VERTICAL PROFILE</div>
+            <div class="cv-profile-sub">// SECTION VIEW · DECKS A–E</div>
+          </div>
           <div class="cv-cross" id="cvCross">${profile}</div>
-          <div class="cv-ship-silhouette">
-            <div class="lbl">// VESSEL SPEC</div>
-            <div class="cv-ship-stats">${stats}</div>
+          <div class="cv-spec">
+            <div class="cv-spec-title">// VESSEL SPEC</div>
+            <div class="cv-spec-grid">${stats}</div>
           </div>
         </aside>
       </div>
 
       <footer class="cv-footer">
         <div class="cv-hint">
-          <kbd>↑</kbd><kbd>↓</kbd> deck ·
-          <kbd>1</kbd>–<kbd>5</kbd> jump ·
-          <kbd>wheel</kbd> zoom ·
-          <kbd>drag</kbd> pan ·
-          <kbd>R</kbd> reset ·
-          <kbd>ESC</kbd> close
+          <kbd>↑</kbd><kbd>↓</kbd> DECK ·
+          <kbd>1</kbd>–<kbd>5</kbd> JUMP ·
+          <kbd>WHEEL</kbd> ZOOM ·
+          <kbd>DRAG</kbd> PAN ·
+          <kbd>R</kbd> RESET ·
+          <kbd>ESC</kbd> CLOSE
         </div>
         <div>WEYLAND-YUTANI CORP · CLASSIFIED · 2183</div>
       </footer>
@@ -221,9 +234,11 @@ function cvSwitchDeck(idx) {
   const d = CV_DECKS[idx];
 
   cvEl('cvDeckImg').src = d.file;
-  cvEl('cvDeckSub').textContent = `DECK ${d.id} · ${d.name}`;
+  cvEl('cvSheetTitle').textContent = `DECK ${d.id}`;
+  cvEl('cvSheetSub').textContent = `${d.name} · ${d.sub}`;
+  cvEl('cvSheetLevel').textContent = `LEVEL ${CV_DECKS.length - idx}/${CV_DECKS.length}`;
   cvEl('cvHudDeck').textContent = d.id;
-  cvEl('cvHudLevel').textContent = `${CV_DECKS.length - idx}/${CV_DECKS.length}`;
+  cvEl('cvHudFrame').textContent = `DK-${d.id}/01`;
 
   document.querySelectorAll('#cvTabs .cv-tab').forEach((b, i) => {
     b.classList.toggle('active', i === idx);

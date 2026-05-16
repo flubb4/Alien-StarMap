@@ -351,3 +351,65 @@
     background: rgba(198,66,37,0.18);
     box-shadow: 0 0 10px rgba(198,66,37,.45);
   }
+
+  /* "📍 MARKER" button: cyan/amber accent — player-facing primary action */
+  .ib-marker-btn-style {
+    border-color: rgba(255,154,60,0.6) !important;
+    color: #ffc370 !important;
+    font-weight: 700;
+    letter-spacing: 2px !important;
+  }
+  .ib-marker-btn-style:hover {
+    border-color: #ff9a3c !important;
+    color: #ffd99a !important;
+    background: rgba(255,154,60,0.10) !important;
+    box-shadow: 0 0 10px rgba(255,154,60,0.30);
+  }
+  .ib-marker-btn-style.active {
+    border-color: #ff9a3c !important;
+    color: #ff9a3c !important;
+    background: rgba(255,154,60,0.20) !important;
+    box-shadow: 0 0 12px rgba(255,154,60,0.50);
+    animation: ibmkBtnGlow 1.4s ease-in-out infinite;
+  }
+  @keyframes ibmkBtnGlow {
+    0%, 100% { box-shadow: 0 0 8px rgba(255,154,60,0.4); }
+    50%      { box-shadow: 0 0 16px rgba(255,154,60,0.7); }
+  }
+  .ib-tool-sep {
+    display: inline-block;
+    width: 1px; height: 18px;
+    background: var(--border, #333);
+    margin: 0 4px;
+    vertical-align: middle;
+  }
+
+  /* Active-mode hint banner overlay on the canvas */
+  .ib-marker-hint {
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 65;
+    display: none;
+    padding: 6px 16px;
+    background: rgba(7,16,12,0.92);
+    border: 1px solid #ff9a3c;
+    color: #ffc370;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    text-shadow: 0 0 6px rgba(255,154,60,.5);
+    pointer-events: none;
+    animation: ibmkHintPulse 1.6s ease-in-out infinite;
+    white-space: nowrap;
+  }
+  .ib-marker-hint[data-kind="pin"] {
+    border-color: #c64225;
+    color: #ff7a4a;
+    text-shadow: 0 0 6px rgba(198,66,37,.5);
+  }
+  @keyframes ibmkHintPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(255,154,60,0.35); }
+    50%      { box-shadow: 0 0 16px rgba(255,154,60,0.65); }
+  }

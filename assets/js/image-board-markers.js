@@ -208,6 +208,21 @@ function ibmkUpdateUI() {
   const pinBtn = document.getElementById('ibPinBtn');
   if (mkBtn)  mkBtn.classList.toggle('active',  ibmkMode === 'marker');
   if (pinBtn) pinBtn.classList.toggle('active', ibmkMode === 'pin');
+
+  const hint = document.getElementById('ibMarkerHint');
+  if (hint) {
+    if (ibmkMode === 'marker') {
+      hint.textContent = '📍 MARKER-MODUS — Klick aufs Bild um deinen Punkt zu setzen';
+      hint.dataset.kind = 'marker';
+      hint.style.display = '';
+    } else if (ibmkMode === 'pin') {
+      hint.textContent = '+ PIN-MODUS — Klick aufs Bild um einen beschrifteten Pin zu setzen';
+      hint.dataset.kind = 'pin';
+      hint.style.display = '';
+    } else {
+      hint.style.display = 'none';
+    }
+  }
 }
 
 window.ibmkToggleMode = function() {

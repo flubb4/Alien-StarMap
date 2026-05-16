@@ -1,70 +1,34 @@
 // ── CM-90 CORVUS — Interactive Deck Viewer ──────────────────────────────────
 // Player-facing: lets the crew browse the ship deck-by-deck with pan/zoom.
 
-// Each deck has clickable rooms defined in NORMALIZED coordinates (0–1) of the
-// deck image. Adjust x/y/w/h here to refine room hit-boxes. Origin = top-left.
+// Each deck has clickable rooms in NORMALIZED coords (0–1) of the deck image.
+// Defaults are intentionally sparse — use the EDIT button in the viewer to draw
+// the rest accurately. User edits persist in localStorage and survive reload.
 const CV_DECKS = [
   {
     id: 'A', name: 'UPPER EMERGENCY', sub: 'LIFE SUPPORT · ESCAPE PODS',
     file: 'assets/images/corvus/deck-a.png',
-    rooms: [
-      { id: 'a-scrub',  name: 'Air Scrubbers',     x: 0.470, y: 0.110, w: 0.090, h: 0.090 },
-      { id: 'a-svc-w',  name: 'Service Access W',  x: 0.380, y: 0.260, w: 0.080, h: 0.170 },
-      { id: 'a-svc-e',  name: 'Airlock Control',   x: 0.560, y: 0.260, w: 0.080, h: 0.170 },
-      { id: 'a-ualock', name: 'Upper Airlock',     x: 0.470, y: 0.275, w: 0.090, h: 0.105 },
-      { id: 'a-stor',   name: 'Storage',           x: 0.470, y: 0.430, w: 0.090, h: 0.090 },
-      { id: 'a-alock',  name: 'Airlock',           x: 0.470, y: 0.535, w: 0.090, h: 0.090 },
-      { id: 'a-eev',    name: 'E.E.V. (Escape Pod)', x: 0.445, y: 0.660, w: 0.140, h: 0.200 },
-    ],
+    rooms: [],
   },
   {
     id: 'B', name: 'CARGO BAY', sub: 'MAIN HOLD · LOADING RAMP',
     file: 'assets/images/corvus/deck-b.png',
-    rooms: [
-      { id: 'b-alock-n', name: 'Top Airlock',       x: 0.470, y: 0.070, w: 0.090, h: 0.090 },
-      { id: 'b-cargo',   name: 'Cargo Bay',         x: 0.420, y: 0.190, w: 0.190, h: 0.560 },
-      { id: 'b-svc-w',   name: 'Service Corridor W',x: 0.345, y: 0.250, w: 0.075, h: 0.420 },
-      { id: 'b-svc-e',   name: 'Service Corridor E',x: 0.610, y: 0.250, w: 0.075, h: 0.420 },
-      { id: 'b-ramp',    name: 'Loading Ramp / Airlock', x: 0.430, y: 0.770, w: 0.170, h: 0.120 },
-    ],
+    rooms: [],
   },
   {
     id: 'C', name: 'HABITATION', sub: 'CREW QUARTERS · CATWALK',
     file: 'assets/images/corvus/deck-c.png',
-    rooms: [
-      { id: 'c-cq-w',  name: 'Crew Quarters (West)',  x: 0.330, y: 0.140, w: 0.140, h: 0.180 },
-      { id: 'c-cq-e',  name: 'Crew Quarters (East)',  x: 0.530, y: 0.140, w: 0.140, h: 0.180 },
-      { id: 'c-cw-n',  name: 'Catwalk (North)',       x: 0.470, y: 0.140, w: 0.060, h: 0.180 },
-      { id: 'c-cw-w',  name: 'Catwalk (West)',        x: 0.330, y: 0.330, w: 0.080, h: 0.380 },
-      { id: 'c-cw-e',  name: 'Catwalk (East)',        x: 0.590, y: 0.330, w: 0.080, h: 0.380 },
-      { id: 'c-open',  name: 'Open to Deck D',        x: 0.410, y: 0.330, w: 0.180, h: 0.380 },
-      { id: 'c-cw-s',  name: 'Catwalk (South)',       x: 0.380, y: 0.710, w: 0.240, h: 0.090 },
-    ],
+    rooms: [],
   },
   {
     id: 'D', name: 'COMMAND', sub: 'BRIDGE · GALLEY · UPPER ENG',
     file: 'assets/images/corvus/deck-d.png',
-    rooms: [
-      { id: 'd-stor',  name: 'Storage Overlook',     x: 0.440, y: 0.130, w: 0.130, h: 0.150 },
-      { id: 'd-open',  name: 'Open Deck',            x: 0.560, y: 0.130, w: 0.110, h: 0.150 },
-      { id: 'd-galley',name: 'Galley',               x: 0.330, y: 0.280, w: 0.160, h: 0.220 },
-      { id: 'd-corr',  name: 'Corridor',             x: 0.490, y: 0.280, w: 0.180, h: 0.220 },
-      { id: 'd-open-e',name: 'Open to Deck E',       x: 0.380, y: 0.520, w: 0.260, h: 0.300 },
-      { id: 'd-svc-w', name: 'Service Door W',       x: 0.290, y: 0.520, w: 0.080, h: 0.300 },
-      { id: 'd-svc-e', name: 'Service Door E',       x: 0.650, y: 0.520, w: 0.080, h: 0.300 },
-    ],
+    rooms: [],
   },
   {
     id: 'E', name: 'ENGINEERING', sub: 'REACTOR · HANGAR · MED',
     file: 'assets/images/corvus/deck-e.png',
-    rooms: [
-      { id: 'e-motion',  name: 'Motion Tracker Room', x: 0.460, y: 0.140, w: 0.110, h: 0.090 },
-      { id: 'e-reactor', name: 'Reactor Compartment', x: 0.420, y: 0.250, w: 0.180, h: 0.150 },
-      { id: 'e-med',     name: 'Medical Facility',    x: 0.310, y: 0.310, w: 0.110, h: 0.190 },
-      { id: 'e-eng',     name: 'Engineering',         x: 0.600, y: 0.310, w: 0.110, h: 0.190 },
-      { id: 'e-hangar',  name: 'Hangar',              x: 0.340, y: 0.510, w: 0.350, h: 0.300 },
-      { id: 'e-ramp',    name: 'Ramp / Airlock',      x: 0.430, y: 0.820, w: 0.170, h: 0.070 },
-    ],
+    rooms: [],
   },
 ];
 
@@ -93,6 +57,28 @@ let cvKeyHandlerBound = false;
 let cvClockTimer = null;
 let cvSelectedRoom = null;   // { deckIdx, roomId } or null
 const CV_SVG_NS = 'http://www.w3.org/2000/svg';
+
+// ── Edit mode (drag-rect to define rooms) ────────────────────────────────
+let cvEditMode    = false;
+let cvDrawing     = false;
+let cvDrawStart   = null;    // { x, y } normalized
+let cvDrawingEl   = null;    // SVG rect element being drawn
+
+const CV_LS_PREFIX = 'corvus-rooms-';
+
+function cvLoadAllRooms() {
+  CV_DECKS.forEach(d => {
+    try {
+      const raw = localStorage.getItem(CV_LS_PREFIX + d.id);
+      if (raw) d.rooms = JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+  });
+}
+function cvSaveRooms(deck) {
+  try { localStorage.setItem(CV_LS_PREFIX + deck.id, JSON.stringify(deck.rooms || [])); }
+  catch (e) { /* ignore */ }
+}
+cvLoadAllRooms();
 
 function cvEl(id) { return document.getElementById(id); }
 
@@ -180,6 +166,9 @@ function cvBuildOverlay() {
               <span class="cv-zoom-readout" id="cvZoomReadout">100%</span>
               <button class="cv-zoom-btn" id="cvZoomIn" type="button" title="Zoom in">+</button>
               <button class="cv-zoom-btn cv-reset" id="cvZoomReset" type="button" title="Reset (R)">RESET</button>
+              <span class="cv-zoom-sep"></span>
+              <button class="cv-zoom-btn cv-edit-btn" id="cvEditBtn" type="button" title="Toggle edit mode (E)">✎ EDIT</button>
+              <button class="cv-zoom-btn cv-edit-btn" id="cvExportBtn" type="button" title="Copy all rooms as JSON" style="display:none">⇪ EXPORT</button>
             </div>
           </div>
 
@@ -205,6 +194,7 @@ function cvBuildOverlay() {
           <kbd>1</kbd>–<kbd>5</kbd> JUMP ·
           <kbd>WHEEL</kbd> ZOOM ·
           <kbd>DRAG</kbd> PAN ·
+          <kbd>E</kbd> EDIT ·
           <kbd>R</kbd> RESET ·
           <kbd>ESC</kbd> CLOSE
         </div>
@@ -238,6 +228,59 @@ function cvBindEvents() {
   cvEl('cvZoomIn').addEventListener('click',    () => cvSetZoom(cvZoom * 1.25));
   cvEl('cvZoomOut').addEventListener('click',   () => cvSetZoom(cvZoom / 1.25));
   cvEl('cvZoomReset').addEventListener('click', cvResetView);
+  cvEl('cvEditBtn').addEventListener('click',   cvToggleEdit);
+  cvEl('cvExportBtn').addEventListener('click', cvExportRooms);
+
+  // ── Drag-to-draw rect in edit mode ──
+  const frame = cvEl('cvDeckFrame');
+  frame.addEventListener('mousedown', (e) => {
+    if (!cvEditMode || e.button !== 0) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const n = cvEventToNorm(e);
+    cvDrawing = true;
+    cvDrawStart = n;
+    cvDrawingEl = document.createElementNS(CV_SVG_NS, 'rect');
+    cvDrawingEl.setAttribute('class', 'cv-room cv-drawing');
+    cvDrawingEl.setAttribute('x', n.x);
+    cvDrawingEl.setAttribute('y', n.y);
+    cvDrawingEl.setAttribute('width', 0);
+    cvDrawingEl.setAttribute('height', 0);
+    cvEl('cvRooms').appendChild(cvDrawingEl);
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!cvDrawing) return;
+    const n = cvEventToNorm(e);
+    const x = Math.max(0, Math.min(1, Math.min(cvDrawStart.x, n.x)));
+    const y = Math.max(0, Math.min(1, Math.min(cvDrawStart.y, n.y)));
+    const w = Math.max(0, Math.min(1 - x, Math.abs(n.x - cvDrawStart.x)));
+    const h = Math.max(0, Math.min(1 - y, Math.abs(n.y - cvDrawStart.y)));
+    cvDrawingEl.setAttribute('x', x);
+    cvDrawingEl.setAttribute('y', y);
+    cvDrawingEl.setAttribute('width', w);
+    cvDrawingEl.setAttribute('height', h);
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!cvDrawing) return;
+    const x = parseFloat(cvDrawingEl.getAttribute('x'));
+    const y = parseFloat(cvDrawingEl.getAttribute('y'));
+    const w = parseFloat(cvDrawingEl.getAttribute('width'));
+    const h = parseFloat(cvDrawingEl.getAttribute('height'));
+    cvDrawingEl.remove();
+    cvDrawingEl = null;
+    cvDrawing = false;
+    if (w < 0.01 || h < 0.01) return;
+    const name = (window.prompt('Raum-Name?') || '').trim();
+    if (!name) return;
+    const deck = CV_DECKS[cvCurrent];
+    const id = `${deck.id.toLowerCase()}-${Date.now().toString(36)}`;
+    deck.rooms = deck.rooms || [];
+    deck.rooms.push({ id, name, x, y, w, h });
+    cvSaveRooms(deck);
+    cvRenderRooms(deck);
+  });
 
   const stage = cvEl('cvStageWrap');
 
@@ -274,14 +317,25 @@ function cvBindEvents() {
     stage.classList.remove('dragging');
   });
 
-  // Room click (delegated). SVG rects fire click before stage; if it was a real
-  // click (no drag), select the room.
+  // Room click (delegated).
   cvEl('cvRooms').addEventListener('click', (e) => {
     const rect = e.target.closest('.cv-room');
     if (!rect) return;
     e.stopPropagation();
     if (cvDragMoved) return;
     const id = rect.dataset.id;
+    const deck = CV_DECKS[cvCurrent];
+
+    if (cvEditMode) {
+      const room = (deck.rooms || []).find(r => r.id === id);
+      if (room && window.confirm(`Raum "${room.name}" löschen?`)) {
+        deck.rooms = deck.rooms.filter(r => r.id !== id);
+        cvSaveRooms(deck);
+        cvRenderRooms(deck);
+      }
+      return;
+    }
+
     if (cvSelectedRoom && cvSelectedRoom.roomId === id) cvClearRoomSelection();
     else cvSelectRoom(id);
   });
@@ -320,6 +374,7 @@ function cvOnKey(e) {
   if (e.key === 'ArrowUp')      { e.preventDefault(); cvSwitchDeck(cvCurrent - 1); return; }
   if (e.key === 'ArrowDown')    { e.preventDefault(); cvSwitchDeck(cvCurrent + 1); return; }
   if (e.key === 'r' || e.key === 'R') { e.preventDefault(); cvResetView(); return; }
+  if (e.key === 'e' || e.key === 'E') { e.preventDefault(); cvToggleEdit(); return; }
   if (e.key === '+' || e.key === '=') { e.preventDefault(); cvSetZoom(cvZoom * 1.25); return; }
   if (e.key === '-' || e.key === '_') { e.preventDefault(); cvSetZoom(cvZoom / 1.25); return; }
   if (/^[1-5]$/.test(e.key))    { e.preventDefault(); cvSwitchDeck(+e.key - 1); return; }
@@ -393,6 +448,45 @@ function cvClearRoomSelection() {
   document.querySelectorAll('#cvRooms .cv-room').forEach(el => el.classList.remove('selected'));
   const tag = cvEl('cvSelectedRoomTag');
   if (tag) tag.style.display = 'none';
+}
+
+// Convert a pointer event to normalized (0–1) coords relative to the deck frame.
+function cvEventToNorm(e) {
+  const frame = cvEl('cvDeckFrame');
+  const r = frame.getBoundingClientRect();
+  return {
+    x: (e.clientX - r.left) / r.width,
+    y: (e.clientY - r.top)  / r.height,
+  };
+}
+
+function cvToggleEdit() {
+  cvEditMode = !cvEditMode;
+  cvEl('cvEditBtn').classList.toggle('active', cvEditMode);
+  cvEl('cvExportBtn').style.display = cvEditMode ? '' : 'none';
+  cvEl('cvStageWrap').classList.toggle('edit-mode', cvEditMode);
+  cvClearRoomSelection();
+}
+
+function cvExportRooms() {
+  const payload = CV_DECKS.map(d => ({
+    id: d.id,
+    rooms: (d.rooms || []).map(r => ({
+      id: r.id, name: r.name,
+      x: +r.x.toFixed(4), y: +r.y.toFixed(4),
+      w: +r.w.toFixed(4), h: +r.h.toFixed(4),
+    })),
+  }));
+  const text = JSON.stringify(payload, null, 2);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(
+      () => window.alert('Alle Räume als JSON ins Clipboard kopiert.'),
+      () => { console.log('CORVUS ROOMS EXPORT:\n' + text); window.alert('Clipboard nicht verfügbar — JSON liegt in der Konsole.'); }
+    );
+  } else {
+    console.log('CORVUS ROOMS EXPORT:\n' + text);
+    window.alert('JSON in die Konsole geschrieben.');
+  }
 }
 
 function cvSetZoom(z) {

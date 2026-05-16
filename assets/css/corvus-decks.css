@@ -318,6 +318,47 @@
   min-width: 60px; justify-content: center;
 }
 .cv-zoom-btn.cv-reset { width: auto; padding: 0 12px; font-size: 10px; letter-spacing: 2px; }
+.cv-zoom-sep {
+  width: 1px; align-self: stretch; background: var(--cv-hair); margin: 0 4px;
+}
+.cv-zoom-btn.cv-edit-btn {
+  width: auto; padding: 0 12px;
+  font-size: 10px; letter-spacing: 2px;
+}
+.cv-zoom-btn.cv-edit-btn.active {
+  border-color: var(--cv-amber);
+  color: var(--cv-amber);
+  background: var(--cv-amber-soft);
+  box-shadow: 0 0 8px var(--cv-amber-soft);
+}
+
+/* ── Edit mode ────────────────────────────────────────────────── */
+.cv-stage-wrap.edit-mode { cursor: crosshair; }
+.cv-stage-wrap.edit-mode .cv-deck-frame { cursor: crosshair; }
+.cv-stage-wrap.edit-mode .cv-room {
+  fill: rgba(255,154,60,0.05);
+  stroke: rgba(255,154,60,0.45);
+  stroke-width: 0.004;
+  cursor: pointer;
+}
+.cv-stage-wrap.edit-mode .cv-room:hover {
+  fill: rgba(198,66,37,0.20);
+  stroke: var(--cv-rust);
+  stroke-width: 0.006;
+  filter: drop-shadow(0 0 4px var(--cv-rust));
+  animation: none;
+}
+.cv-stage-wrap.edit-mode .cv-room.selected { animation: none; }
+
+/* Live drawing preview */
+.cv-room.cv-drawing {
+  fill: rgba(255,154,60,0.20);
+  stroke: var(--cv-amber);
+  stroke-width: 0.005;
+  stroke-dasharray: 0.012 0.008;
+  pointer-events: none;
+  animation: none;
+}
 
 /* ── Profile column (right side cross-section) ─────────────────── */
 .cv-profile {

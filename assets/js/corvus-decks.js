@@ -1,12 +1,71 @@
 // ── CM-90 CORVUS — Interactive Deck Viewer ──────────────────────────────────
 // Player-facing: lets the crew browse the ship deck-by-deck with pan/zoom.
 
+// Each deck has clickable rooms defined in NORMALIZED coordinates (0–1) of the
+// deck image. Adjust x/y/w/h here to refine room hit-boxes. Origin = top-left.
 const CV_DECKS = [
-  { id: 'A', name: 'UPPER EMERGENCY',  sub: 'LIFE SUPPORT · ESCAPE PODS',     file: 'assets/images/corvus/deck-a.png' },
-  { id: 'B', name: 'CARGO BAY',        sub: 'MAIN HOLD · LOADING RAMP',       file: 'assets/images/corvus/deck-b.png' },
-  { id: 'C', name: 'HABITATION',       sub: 'CREW QUARTERS · CATWALK',        file: 'assets/images/corvus/deck-c.png' },
-  { id: 'D', name: 'COMMAND',          sub: 'BRIDGE · GALLEY · UPPER ENG',    file: 'assets/images/corvus/deck-d.png' },
-  { id: 'E', name: 'ENGINEERING',      sub: 'REACTOR · HANGAR · MED',         file: 'assets/images/corvus/deck-e.png' },
+  {
+    id: 'A', name: 'UPPER EMERGENCY', sub: 'LIFE SUPPORT · ESCAPE PODS',
+    file: 'assets/images/corvus/deck-a.png',
+    rooms: [
+      { id: 'a-scrub',  name: 'Air Scrubbers',     x: 0.470, y: 0.110, w: 0.090, h: 0.090 },
+      { id: 'a-svc-w',  name: 'Service Access W',  x: 0.380, y: 0.260, w: 0.080, h: 0.170 },
+      { id: 'a-svc-e',  name: 'Airlock Control',   x: 0.560, y: 0.260, w: 0.080, h: 0.170 },
+      { id: 'a-ualock', name: 'Upper Airlock',     x: 0.470, y: 0.275, w: 0.090, h: 0.105 },
+      { id: 'a-stor',   name: 'Storage',           x: 0.470, y: 0.430, w: 0.090, h: 0.090 },
+      { id: 'a-alock',  name: 'Airlock',           x: 0.470, y: 0.535, w: 0.090, h: 0.090 },
+      { id: 'a-eev',    name: 'E.E.V. (Escape Pod)', x: 0.445, y: 0.660, w: 0.140, h: 0.200 },
+    ],
+  },
+  {
+    id: 'B', name: 'CARGO BAY', sub: 'MAIN HOLD · LOADING RAMP',
+    file: 'assets/images/corvus/deck-b.png',
+    rooms: [
+      { id: 'b-alock-n', name: 'Top Airlock',       x: 0.470, y: 0.070, w: 0.090, h: 0.090 },
+      { id: 'b-cargo',   name: 'Cargo Bay',         x: 0.420, y: 0.190, w: 0.190, h: 0.560 },
+      { id: 'b-svc-w',   name: 'Service Corridor W',x: 0.345, y: 0.250, w: 0.075, h: 0.420 },
+      { id: 'b-svc-e',   name: 'Service Corridor E',x: 0.610, y: 0.250, w: 0.075, h: 0.420 },
+      { id: 'b-ramp',    name: 'Loading Ramp / Airlock', x: 0.430, y: 0.770, w: 0.170, h: 0.120 },
+    ],
+  },
+  {
+    id: 'C', name: 'HABITATION', sub: 'CREW QUARTERS · CATWALK',
+    file: 'assets/images/corvus/deck-c.png',
+    rooms: [
+      { id: 'c-cq-w',  name: 'Crew Quarters (West)',  x: 0.330, y: 0.140, w: 0.140, h: 0.180 },
+      { id: 'c-cq-e',  name: 'Crew Quarters (East)',  x: 0.530, y: 0.140, w: 0.140, h: 0.180 },
+      { id: 'c-cw-n',  name: 'Catwalk (North)',       x: 0.470, y: 0.140, w: 0.060, h: 0.180 },
+      { id: 'c-cw-w',  name: 'Catwalk (West)',        x: 0.330, y: 0.330, w: 0.080, h: 0.380 },
+      { id: 'c-cw-e',  name: 'Catwalk (East)',        x: 0.590, y: 0.330, w: 0.080, h: 0.380 },
+      { id: 'c-open',  name: 'Open to Deck D',        x: 0.410, y: 0.330, w: 0.180, h: 0.380 },
+      { id: 'c-cw-s',  name: 'Catwalk (South)',       x: 0.380, y: 0.710, w: 0.240, h: 0.090 },
+    ],
+  },
+  {
+    id: 'D', name: 'COMMAND', sub: 'BRIDGE · GALLEY · UPPER ENG',
+    file: 'assets/images/corvus/deck-d.png',
+    rooms: [
+      { id: 'd-stor',  name: 'Storage Overlook',     x: 0.440, y: 0.130, w: 0.130, h: 0.150 },
+      { id: 'd-open',  name: 'Open Deck',            x: 0.560, y: 0.130, w: 0.110, h: 0.150 },
+      { id: 'd-galley',name: 'Galley',               x: 0.330, y: 0.280, w: 0.160, h: 0.220 },
+      { id: 'd-corr',  name: 'Corridor',             x: 0.490, y: 0.280, w: 0.180, h: 0.220 },
+      { id: 'd-open-e',name: 'Open to Deck E',       x: 0.380, y: 0.520, w: 0.260, h: 0.300 },
+      { id: 'd-svc-w', name: 'Service Door W',       x: 0.290, y: 0.520, w: 0.080, h: 0.300 },
+      { id: 'd-svc-e', name: 'Service Door E',       x: 0.650, y: 0.520, w: 0.080, h: 0.300 },
+    ],
+  },
+  {
+    id: 'E', name: 'ENGINEERING', sub: 'REACTOR · HANGAR · MED',
+    file: 'assets/images/corvus/deck-e.png',
+    rooms: [
+      { id: 'e-motion',  name: 'Motion Tracker Room', x: 0.460, y: 0.140, w: 0.110, h: 0.090 },
+      { id: 'e-reactor', name: 'Reactor Compartment', x: 0.420, y: 0.250, w: 0.180, h: 0.150 },
+      { id: 'e-med',     name: 'Medical Facility',    x: 0.310, y: 0.310, w: 0.110, h: 0.190 },
+      { id: 'e-eng',     name: 'Engineering',         x: 0.600, y: 0.310, w: 0.110, h: 0.190 },
+      { id: 'e-hangar',  name: 'Hangar',              x: 0.340, y: 0.510, w: 0.350, h: 0.300 },
+      { id: 'e-ramp',    name: 'Ramp / Airlock',      x: 0.430, y: 0.820, w: 0.170, h: 0.070 },
+    ],
+  },
 ];
 
 const CV_STATS = [
@@ -25,12 +84,15 @@ let cvZoom    = 1;
 let cvPanX    = 0;
 let cvPanY    = 0;
 let cvDragging = false;
+let cvDragMoved = false;
 let cvDragStartX = 0;
 let cvDragStartY = 0;
 let cvDragPanX = 0;
 let cvDragPanY = 0;
 let cvKeyHandlerBound = false;
 let cvClockTimer = null;
+let cvSelectedRoom = null;   // { deckIdx, roomId } or null
+const CV_SVG_NS = 'http://www.w3.org/2000/svg';
 
 function cvEl(id) { return document.getElementById(id); }
 
@@ -92,7 +154,7 @@ function cvBuildOverlay() {
             <div class="cv-sheet-sub">
               <span id="cvSheetSub">UPPER EMERGENCY · LIFE SUPPORT</span>
               <span class="cv-tag" id="cvSheetLevel">LEVEL 5/5</span>
-              <span class="cv-tag">SECTION VIEW</span>
+              <span class="cv-tag cv-tag--room" id="cvSelectedRoomTag" style="display:none">— SELECT ROOM —</span>
             </div>
           </div>
 
@@ -107,7 +169,10 @@ function cvBuildOverlay() {
             </div>
 
             <div class="cv-stage" id="cvStage">
-              <img id="cvDeckImg" alt="Corvus deck schematic" draggable="false">
+              <div class="cv-deck-frame" id="cvDeckFrame">
+                <img id="cvDeckImg" alt="Corvus deck schematic" draggable="false">
+                <svg id="cvRooms" class="cv-rooms" viewBox="0 0 1 1" preserveAspectRatio="none"></svg>
+              </div>
             </div>
 
             <div class="cv-zoom-bar">
@@ -135,6 +200,7 @@ function cvBuildOverlay() {
 
       <footer class="cv-footer">
         <div class="cv-hint">
+          <kbd>CLICK</kbd> ROOM ·
           <kbd>↑</kbd><kbd>↓</kbd> DECK ·
           <kbd>1</kbd>–<kbd>5</kbd> JUMP ·
           <kbd>WHEEL</kbd> ZOOM ·
@@ -184,6 +250,7 @@ function cvBindEvents() {
   stage.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
     cvDragging = true;
+    cvDragMoved = false;
     cvDragStartX = e.clientX;
     cvDragStartY = e.clientY;
     cvDragPanX = cvPanX;
@@ -193,8 +260,11 @@ function cvBindEvents() {
 
   window.addEventListener('mousemove', (e) => {
     if (!cvDragging) return;
-    cvPanX = cvDragPanX + (e.clientX - cvDragStartX);
-    cvPanY = cvDragPanY + (e.clientY - cvDragStartY);
+    const dx = e.clientX - cvDragStartX;
+    const dy = e.clientY - cvDragStartY;
+    if (!cvDragMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) cvDragMoved = true;
+    cvPanX = cvDragPanX + dx;
+    cvPanY = cvDragPanY + dy;
     cvApplyTransform();
   });
 
@@ -204,7 +274,29 @@ function cvBindEvents() {
     stage.classList.remove('dragging');
   });
 
-  stage.addEventListener('dblclick', cvResetView);
+  // Room click (delegated). SVG rects fire click before stage; if it was a real
+  // click (no drag), select the room.
+  cvEl('cvRooms').addEventListener('click', (e) => {
+    const rect = e.target.closest('.cv-room');
+    if (!rect) return;
+    e.stopPropagation();
+    if (cvDragMoved) return;
+    const id = rect.dataset.id;
+    if (cvSelectedRoom && cvSelectedRoom.roomId === id) cvClearRoomSelection();
+    else cvSelectRoom(id);
+  });
+
+  // Click on empty stage = deselect (only if not a drag)
+  stage.addEventListener('click', (e) => {
+    if (cvDragMoved) return;
+    if (e.target.closest('.cv-room')) return;
+    cvClearRoomSelection();
+  });
+
+  stage.addEventListener('dblclick', (e) => {
+    if (e.target.closest('.cv-room')) return;
+    cvResetView();
+  });
 
   if (!cvKeyHandlerBound) {
     document.addEventListener('keydown', cvOnKey);
@@ -219,7 +311,12 @@ function cvOnKey(e) {
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
 
-  if (e.key === 'Escape')       { e.preventDefault(); closeCorvusDecks(); return; }
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    if (cvSelectedRoom) cvClearRoomSelection();
+    else closeCorvusDecks();
+    return;
+  }
   if (e.key === 'ArrowUp')      { e.preventDefault(); cvSwitchDeck(cvCurrent - 1); return; }
   if (e.key === 'ArrowDown')    { e.preventDefault(); cvSwitchDeck(cvCurrent + 1); return; }
   if (e.key === 'r' || e.key === 'R') { e.preventDefault(); cvResetView(); return; }
@@ -233,7 +330,13 @@ function cvSwitchDeck(idx) {
   cvCurrent = idx;
   const d = CV_DECKS[idx];
 
-  cvEl('cvDeckImg').src = d.file;
+  const img = cvEl('cvDeckImg');
+  img.onload = () => {
+    const frame = cvEl('cvDeckFrame');
+    frame.style.setProperty('--cv-deck-ratio', `${img.naturalWidth} / ${img.naturalHeight}`);
+  };
+  img.src = d.file;
+
   cvEl('cvSheetTitle').textContent = `DECK ${d.id}`;
   cvEl('cvSheetSub').textContent = `${d.name} · ${d.sub}`;
   cvEl('cvSheetLevel').textContent = `LEVEL ${CV_DECKS.length - idx}/${CV_DECKS.length}`;
@@ -247,7 +350,49 @@ function cvSwitchDeck(idx) {
     b.classList.toggle('active', i === idx);
   });
 
+  cvRenderRooms(d);
+  cvClearRoomSelection();
   cvResetView();
+}
+
+function cvRenderRooms(deck) {
+  const svg = cvEl('cvRooms');
+  svg.innerHTML = '';
+  (deck.rooms || []).forEach(r => {
+    const rect = document.createElementNS(CV_SVG_NS, 'rect');
+    rect.setAttribute('x', r.x);
+    rect.setAttribute('y', r.y);
+    rect.setAttribute('width', r.w);
+    rect.setAttribute('height', r.h);
+    rect.setAttribute('class', 'cv-room');
+    rect.dataset.id = r.id;
+    rect.dataset.name = r.name;
+    // SVG <title> gives a native tooltip on hover
+    const title = document.createElementNS(CV_SVG_NS, 'title');
+    title.textContent = r.name;
+    rect.appendChild(title);
+    svg.appendChild(rect);
+  });
+}
+
+function cvSelectRoom(roomId) {
+  const deck = CV_DECKS[cvCurrent];
+  const room = (deck.rooms || []).find(r => r.id === roomId);
+  if (!room) return;
+  cvSelectedRoom = { deckIdx: cvCurrent, roomId };
+  document.querySelectorAll('#cvRooms .cv-room').forEach(el => {
+    el.classList.toggle('selected', el.dataset.id === roomId);
+  });
+  const tag = cvEl('cvSelectedRoomTag');
+  tag.textContent = `▸ ${room.name.toUpperCase()}`;
+  tag.style.display = '';
+}
+
+function cvClearRoomSelection() {
+  cvSelectedRoom = null;
+  document.querySelectorAll('#cvRooms .cv-room').forEach(el => el.classList.remove('selected'));
+  const tag = cvEl('cvSelectedRoomTag');
+  if (tag) tag.style.display = 'none';
 }
 
 function cvSetZoom(z) {

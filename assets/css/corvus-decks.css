@@ -222,13 +222,63 @@
   will-change: transform;
   z-index: 1;
 }
-.cv-stage img {
-  max-width: 94%; max-height: 94%;
-  object-fit: contain;
+/* Frame holds img + room SVG, sized to deck aspect-ratio.
+   --cv-deck-ratio is set by JS once the image's natural dimensions are known. */
+.cv-deck-frame {
+  position: relative;
+  max-width: 94%;
+  max-height: 94%;
+  aspect-ratio: var(--cv-deck-ratio, 16 / 9);
   filter: drop-shadow(0 8px 30px rgba(0,0,0,0.85));
+}
+.cv-deck-frame img {
+  display: block;
+  width: 100%; height: 100%;
+  object-fit: fill;
   user-select: none;
   -webkit-user-drag: none;
   pointer-events: none;
+}
+
+/* SVG overlay of clickable room hit-boxes */
+.cv-rooms {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;   /* let the stage receive drag; only rects opt in */
+  overflow: visible;
+}
+.cv-room {
+  fill: rgba(255,154,60,0.00);
+  stroke: rgba(255,154,60,0.00);
+  stroke-width: 0.004;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+  pointer-events: all;
+  transition: fill 0.12s, stroke 0.12s;
+}
+.cv-room:hover {
+  fill: rgba(255,154,60,0.06);
+  stroke: rgba(255,154,60,0.55);
+  stroke-width: 0.005;
+}
+.cv-room.selected {
+  fill: rgba(255,154,60,0.18);
+  stroke: var(--cv-amber);
+  stroke-width: 0.007;
+  filter: drop-shadow(0 0 6px var(--cv-amber));
+  animation: cvRoomPulse 1.6s ease-in-out infinite;
+}
+@keyframes cvRoomPulse {
+  0%, 100% { fill: rgba(255,154,60,0.18); }
+  50%      { fill: rgba(255,154,60,0.32); }
+}
+
+/* Selected-room tag (in title block) */
+.cv-tag.cv-tag--room {
+  border-color: var(--cv-amber);
+  color: var(--cv-amber);
+  background: var(--cv-amber-soft);
+  text-shadow: 0 0 6px var(--cv-amber-glow);
 }
 
 /* Stage HUD overlays */

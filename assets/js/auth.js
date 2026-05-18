@@ -150,6 +150,7 @@ function _doLogin(nameUpper) {
       window.bvInit?.();
       window.startGlobalIbWatcher?.();
       window.startHandoutWatcher?.();
+      window.startPrputEvolveWatcher?.();
       window.startSupplyPanel?.();
       window.startRationsPanel?.();
       window.startXPChestWatcher?.();

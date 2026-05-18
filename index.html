@@ -590,41 +590,51 @@
       </div>
     </div>
 
-    <div class="pe-stage" id="peStage" data-phase="old">
-      <div class="pe-scanlines"></div>
-      <div class="pe-scanline-sweep"></div>
-      <div class="pe-static"></div>
+    <div class="pe-stage" id="peStage" data-phase="idle">
+      <div class="pe-scan-sweep"></div>
 
-      <div class="pe-img-slot">
-        <div class="pe-img-label">SOURCE // RPG MANUAL</div>
-        <img id="prputImgOld" src="assets/images/prput-original.png" alt="PR-PUT Uplink Terminal (baseline)">
-        <div class="pe-img-rev pe-rev-old">REV 5.x // BASELINE</div>
-      </div>
+      <div class="pe-unit-area">
+        <!-- Old image shards (built by JS) -->
+        <div class="pe-shatter pe-shatter-old" id="peShatterOld"></div>
 
-      <div class="pe-arrow">▶▶▶</div>
+        <!-- New image shards (built by JS) -->
+        <div class="pe-shatter pe-shatter-new" id="peShatterNew"></div>
 
-      <div class="pe-img-slot">
-        <div class="pe-img-label">FIELD MODIFIED UNIT</div>
-        <img id="prputImgNew" src="assets/images/prput-modified.png" alt="PR-PUT Uplink Terminal (modified)">
-        <div class="pe-img-rev pe-rev-new">REV 6.2 // AUTHORIZED</div>
+        <!-- Metadata callouts over baseline document -->
+        <div class="pe-callout right" data-delay="1" style="top:14%; left:80%;">REV 5.x</div>
+        <div class="pe-callout left"  data-delay="2" style="top:48%; right:80%;">PILOTING ONLY</div>
+        <div class="pe-callout right" data-delay="3" style="top:82%; left:80%;">BASELINE LOADOUT</div>
+
+        <!-- Component additions list (compose phase) -->
+        <div class="pe-compose">
+          <div class="pe-compose-line"><span class="pe-compose-mark">+</span>DRONE CONTROL MODULE</div>
+          <div class="pe-compose-line"><span class="pe-compose-mark">+</span>APC / VEHICLE REMOTE PILOT</div>
+          <div class="pe-compose-line"><span class="pe-compose-mark">+</span>EMI SHIELDING</div>
+          <div class="pe-compose-line"><span class="pe-compose-mark">+</span>ARMORED &middot; WATERPROOF HOUSING</div>
+          <div class="pe-compose-line"><span class="pe-compose-mark">+</span>NEURAL INTERFACE RELAY</div>
+        </div>
+
         <div class="pe-stamp">AUTHORIZED</div>
       </div>
     </div>
 
     <div class="pe-hud" id="peHud">
       <div class="pe-hud-title">
-        <span>// UPLINK SCHEMA UPDATE</span>
+        <span>// SCHEMATIC RECOMPILE</span>
         <span class="pe-doc-id">DOC ID: RO-77-PRPUT-MOD</span>
       </div>
-      <div class="pe-hud-line" id="peLine1">&gt; <span class="pe-key">SCAN:</span> PORTABLE REMOTE PILOT UPLINK TERMINAL // PR-PUT</div>
-      <div class="pe-hud-line" id="peLine2">&gt; <span class="pe-key">FIELD MODIFICATION DETECTED</span> — diverging from baseline schema…</div>
-      <div class="pe-hud-line" id="peLine3">&gt; <span class="pe-key">RECOMPILING UPLINK FIRMWARE</span> <span class="pe-val-warn">[ REV 5.x → REV 6.2 ]</span></div>
-      <div class="pe-hud-line" id="peLine4">&gt; <span class="pe-key">VERIFYING CHAIN OF CUSTODY</span> // W-Y REMOTE OPS DIVISION</div>
-      <div class="pe-hud-line" id="peLine5">&gt; <span class="pe-key">LOADOUT:</span> <span class="pe-val-old">REMOTE PILOTING</span> → <span class="pe-val-ok">DRONE / APC / ORBITAL SHIP REMOTE PILOT</span></div>
-      <div class="pe-hud-line" id="peLine6">&gt; <span class="pe-key">HARDENING:</span> <span class="pe-val-ok">ARMORED · WATERPROOF · EMI SHIELDED</span></div>
-      <div class="pe-hud-line" id="peLine7">&gt; <span class="pe-key">RISKS:</span> <span class="pe-val-warn">SIGNAL TRACE · NEURAL FEEDBACK · LINK LOSS</span></div>
-      <div class="pe-hud-line" id="peLine8">&gt; <span class="pe-key">STATUS:</span> <span class="pe-val-ok">FIELD MOD AUTHORIZED ✓</span> — see updated dossier<span class="pe-cursor"></span></div>
-      <div class="pe-progress-wrap"><div class="pe-progress-bar"></div></div>
+      <div class="pe-hud-lines">
+        <div class="pe-hud-line" id="peLine1">&gt; <span class="pe-key">SCAN:</span> PORTABLE REMOTE PILOT UPLINK TERMINAL // PR-PUT</div>
+        <div class="pe-hud-line" id="peLine2">&gt; <span class="pe-key">BASELINE LOADOUT:</span> <span class="pe-val-old">REMOTE PILOTING ONLY</span></div>
+        <div class="pe-hud-line" id="peLine3">&gt; <span class="pe-key">FIELD MODIFICATION DETECTED</span> — schema divergence</div>
+        <div class="pe-hud-line" id="peLine4">&gt; <span class="pe-key">DECOMPOSING BASELINE SCHEMATIC…</span> <span class="pe-val-warn">REV 5.x ✗</span></div>
+        <div class="pe-hud-line" id="peLine5">&gt; <span class="pe-key">INSTALLING COMPONENTS:</span> drone / APC / shielding / housing</div>
+        <div class="pe-hud-line" id="peLine6">&gt; <span class="pe-key">NEURAL INTERFACE RELAY:</span> <span class="pe-val-ok">LINKED</span></div>
+        <div class="pe-hud-line" id="peLine7">&gt; <span class="pe-key">CHAIN OF CUSTODY:</span> W-Y REMOTE OPS DIVISION</div>
+        <div class="pe-hud-line" id="peLine8">&gt; <span class="pe-key">REASSEMBLING UNIT…</span> <span class="pe-val-warn">REV 6.2</span></div>
+        <div class="pe-hud-line" id="peLine9">&gt; <span class="pe-key">VERIFYING SCHEMATIC INTEGRITY…</span> <span class="pe-val-ok">OK</span></div>
+        <div class="pe-hud-line" id="peLine10">&gt; <span class="pe-key">STATUS:</span> <span class="pe-val-ok">FIELD MOD AUTHORIZED ✓</span><span class="pe-cursor"></span></div>
+      </div>
     </div>
 
     <div class="pe-footer">

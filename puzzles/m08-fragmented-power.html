@@ -24,7 +24,6 @@
   --glow-red: 0 0 14px rgba(255,58,58,.45);
   --glow-amber: 0 0 10px rgba(255,184,48,.30);
 }
-
 * { box-sizing: border-box; }
 html, body {
   margin: 0; padding: 0;
@@ -34,8 +33,6 @@ html, body {
   min-height: 100vh;
   overflow-x: hidden;
 }
-
-/* CRT scanlines overlay */
 body::before {
   content: '';
   position: fixed; inset: 0;
@@ -55,10 +52,8 @@ body::after {
   pointer-events: none;
   z-index: 99;
 }
-
 .wrap { max-width: 900px; margin: 0 auto; padding: 30px 24px 60px; }
 
-/* ── BOOT SCREEN ─────────────────────────── */
 #boot {
   min-height: 90vh;
   display: flex;
@@ -79,7 +74,6 @@ body::after {
 }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* ── HEADER ─────────────────────────── */
 #main { display: none; }
 .term-head {
   border: 1px solid var(--green-dim);
@@ -105,7 +99,6 @@ body::after {
 }
 .term-head .meta strong { color: var(--amber); font-weight: normal; }
 
-/* ── STATUS BAR ─────────────────────────── */
 .status-bar {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -137,7 +130,6 @@ body::after {
   50% { opacity: 0.65; }
 }
 
-/* ── KERN-PANELS ─────────────────────────── */
 .kerne {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -188,7 +180,6 @@ body::after {
 .kern.state-locked { border-color: var(--red-dim); box-shadow: var(--glow-red); }
 .kern.state-locked .state { color: var(--red); }
 .kern.state-locked .sym { color: var(--red); text-shadow: var(--glow-red); }
-
 .kern .btn {
   display: block;
   width: 100%;
@@ -215,7 +206,6 @@ body::after {
   color: var(--text-dim);
 }
 
-/* ── CONSOLE OUTPUT ─────────────────────────── */
 .console {
   border: 1px solid var(--green-dim);
   background: var(--bg2);
@@ -242,7 +232,6 @@ body::after {
 .console .line.err .msg { color: var(--red); text-shadow: 0 0 4px rgba(255,58,58,.4); }
 .console .line.system .msg { color: var(--text); }
 
-/* ── GM PANEL ─────────────────────────── */
 #gm-panel {
   position: fixed;
   top: 10px; right: 10px;
@@ -283,7 +272,6 @@ body::after {
   line-height: 1.4;
 }
 
-/* ── SUCCESS SCREEN ─────────────────────────── */
 #success {
   display: none;
   min-height: 80vh;
@@ -319,7 +307,22 @@ body::after {
   line-height: 1.7;
 }
 
-/* ── INFO BAR ─────────────────────────── */
+/* Player-Mode: keine Buttons, kein GM-Panel, Observer-Badge */
+body.role-player .kern .btn { display: none; }
+body.role-player #gm-panel { display: none !important; }
+.observer-badge {
+  position: fixed; top: 10px; left: 10px;
+  background: rgba(0,0,0,.7);
+  border: 1px solid var(--amber-dim);
+  color: var(--amber);
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 4px 10px;
+  z-index: 200;
+  display: none;
+}
+body.role-player .observer-badge { display: block; }
+
 .info-row {
   font-size: 10px;
   color: var(--text-dim);
@@ -334,8 +337,8 @@ body::after {
   color: var(--amber);
   margin: 0 2px;
 }
+body.role-player .info-row { display: none; }
 
-/* Responsive */
 @media (max-width: 720px) {
   .status-bar, .kerne { grid-template-columns: 1fr; }
   .term-head .ascii { font-size: 9px; }
@@ -343,6 +346,8 @@ body::after {
 </style>
 </head>
 <body>
+
+<div class="observer-badge">⟁ BEOBACHTER · NUR GM KANN AKTIVIEREN</div>
 
 <!-- ═══ BOOT SCREEN ═══ -->
 <div class="wrap" id="boot">
@@ -363,7 +368,6 @@ body::after {
 
 <!-- ═══ MAIN INTERFACE ═══ -->
 <div class="wrap" id="main">
-
   <div class="term-head">
     <div class="ascii">╔══════════════════════════════════════════════════════════════╗
 ║  RLS HERMES-7 — FRAGMENTED POWER NETWORK / EMERGENCY BUS    ║
@@ -371,7 +375,7 @@ body::after {
 ╚══════════════════════════════════════════════════════════════╝</div>
     <div class="meta">
       <span>NODE: <strong>HERMES-7-CORE</strong></span>
-      <span>OPERATOR: <strong>UNAUTHORIZED</strong></span>
+      <span>OPERATOR: <strong id="op-label">UNAUTHORIZED</strong></span>
       <span>SYSTEM TIME: <strong id="sys-clock">--:--:--</strong></span>
     </div>
   </div>
@@ -415,10 +419,7 @@ body::after {
     </div>
   </div>
 
-  <div class="console" id="console">
-    <div class="line system"><span class="ts">[INIT]</span><span class="who">SYS</span><span class="msg">Notnetz fragmentiert. Drei dezentrale Knoten erkannt. Sequenz entscheidend.</span></div>
-    <div class="line warn"><span class="ts">[INIT]</span><span class="who">HINT</span><span class="msg">Hinweise sind über die Station verteilt — Wartungszettel, Logs, Symbole, Farbcodes.</span></div>
-  </div>
+  <div class="console" id="console"></div>
 
   <div class="info-row">
     <span class="key">G</span> Spielleiter-Panel · <span class="key">R</span> Reset · <span class="key">ESC</span> Schließen
@@ -433,9 +434,6 @@ body::after {
     Lichter springen sektionsweise an. Türen klicken. Irgendwo weit hinten startet ein schweres System — als würde ein Herz wieder schlagen.<br><br>
     <strong style="color:var(--amber)">CORE CORRIDOR FREIGESCHALTET.</strong><br>
     <strong style="color:var(--amber)">COMMAND ROOM: ACCESS AUTHORIZED.</strong>
-  </div>
-  <div class="info-row" style="margin-top:30px;">
-    Spielleiter: weiter mit <strong style="color:var(--green)">Rätsel 2 — Memory Core</strong>
   </div>
 </div>
 
@@ -455,139 +453,247 @@ body::after {
 </div>
 
 <script>
-// ─── STATE ───
+// ─── ROLE (gm | player | standalone) ──────────────────────────────────────
+const params = new URLSearchParams(location.search);
+const ROLE = params.get('role') || 'standalone';
+const IS_EMBEDDED = ROLE === 'gm' || ROLE === 'player';
+const CAN_EMIT = ROLE === 'gm' || ROLE === 'standalone';
+const CAN_ACT  = ROLE === 'gm' || ROLE === 'standalone';
+document.body.classList.add('role-' + ROLE);
+document.getElementById('op-label').textContent =
+  ROLE === 'gm' ? 'GAME MASTER' : (ROLE === 'player' ? 'OBSERVER' : 'UNAUTHORIZED');
+
+// ─── STATE (single source of truth) ───────────────────────────────────────
+const SEQUENCE = ['A', 'B', 'C'];
 const state = {
-  sequence: ['A', 'B', 'C'],   // korrekte Reihenfolge
-  progress: [],                 // bereits aktivierte Knoten (in Reihenfolge)
+  view: 'boot',
+  kernStates: {A:'dormant', B:'dormant', C:'dormant'},
+  progress: [],
   stab: 0,
   errors: 0,
-  locked: false,                // wenn Sequence bricht → reset nötig
+  atmos: {text:'STABIL', cls:'warn'},
+  sec:   {text:'GELB',   cls:''},
+  log: [],
+  busy: false,
+  collapsing: false,
 };
 
-// ─── BOOT ANIMATION ───
+let applyingRemote = false;
+let serial = 0;
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────
+function nowTs() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' +
+         String(d.getMinutes()).padStart(2,'0') + ':' +
+         String(d.getSeconds()).padStart(2,'0');
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ─── LOG / CONSOLE ──────────────────────────────────────────────────────
+function log(type, who, msg) {
+  state.log.push({type, who, msg, ts: nowTs()});
+  if (state.log.length > 80) state.log.shift();
+  renderConsole();
+  emitState();
+}
+function renderConsole() {
+  const con = document.getElementById('console');
+  if (!con) return;
+  con.innerHTML = state.log.map(l =>
+    '<div class="line ' + l.type + '">' +
+    '<span class="ts">[' + l.ts + ']</span>' +
+    '<span class="who">' + escapeHtml(l.who) + '</span>' +
+    '<span class="msg">' + escapeHtml(l.msg) + '</span>' +
+    '</div>'
+  ).join('');
+  con.scrollTop = con.scrollHeight;
+}
+
+// ─── VIEW SWITCHERS ─────────────────────────────────────────────────────
+function showMain() {
+  document.getElementById('boot').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  document.getElementById('success').classList.remove('show');
+  document.body.style.animation = '';
+}
+function renderAll() {
+  if (state.view === 'boot') {
+    document.getElementById('boot').style.display = '';
+    document.getElementById('main').style.display = 'none';
+    document.getElementById('success').classList.remove('show');
+    document.body.style.animation = '';
+  } else if (state.view === 'main') {
+    showMain();
+  } else if (state.view === 'success') {
+    document.getElementById('boot').style.display = 'none';
+    document.getElementById('main').style.display = 'none';
+    document.getElementById('success').classList.add('show');
+    document.body.style.animation = '';
+  } else if (state.view === 'collapse') {
+    document.getElementById('boot').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    document.getElementById('success').classList.remove('show');
+    document.body.style.animation = state.collapsing ? 'pulseRed 0.4s infinite' : '';
+  }
+
+  ['A','B','C'].forEach(id => {
+    const el = document.getElementById('kern-' + id.toLowerCase());
+    if (!el) return;
+    el.className = 'kern state-' + state.kernStates[id];
+    const stateEl = el.querySelector('.state');
+    const stateText = {dormant:'DORMANT', activating:'ACTIVATING…', online:'ONLINE', locked:'LOCKED'}[state.kernStates[id]];
+    if (stateEl) stateEl.textContent = stateText;
+    const btn = el.querySelector('.btn');
+    if (btn) {
+      if (state.kernStates[id] === 'online') {
+        btn.disabled = true; btn.textContent = '◆ ONLINE';
+      } else if (state.kernStates[id] === 'locked') {
+        btn.disabled = true; btn.textContent = '✕ LOCKED';
+      } else if (state.busy) {
+        btn.disabled = true; btn.textContent = '▶ REKONSTRUIEREN';
+      } else {
+        btn.disabled = false; btn.textContent = '▶ REKONSTRUIEREN';
+      }
+    }
+  });
+
+  document.getElementById('stab').textContent = state.stab;
+  const atmosCell = document.getElementById('atmos-cell');
+  atmosCell.classList.remove('warn','danger');
+  if (state.atmos.cls) atmosCell.classList.add(state.atmos.cls);
+  document.getElementById('atmos').textContent = state.atmos.text;
+  const secCell = document.getElementById('sec-cell');
+  secCell.classList.remove('warn','danger');
+  if (state.sec.cls) secCell.classList.add(state.sec.cls);
+  document.getElementById('seclevel').textContent = state.sec.text;
+
+  renderConsole();
+}
+
+// ─── EMIT (GM/standalone → parent) ──────────────────────────────────────
+function emitState() {
+  if (!CAN_EMIT || applyingRemote || !IS_EMBEDDED) return;
+  serial++;
+  try {
+    parent.postMessage({
+      type: 'm08fp-state',
+      role: ROLE,
+      serial,
+      snap: JSON.parse(JSON.stringify(state))
+    }, '*');
+  } catch (e) {}
+}
+
+// ─── APPLY (incoming from parent) ───────────────────────────────────────
+function applyState(snap) {
+  applyingRemote = true;
+  try {
+    state.view = snap.view || 'main';
+    state.kernStates = Object.assign({A:'dormant',B:'dormant',C:'dormant'}, snap.kernStates || {});
+    state.progress = Array.isArray(snap.progress) ? snap.progress.slice() : [];
+    state.stab = snap.stab|0;
+    state.errors = snap.errors|0;
+    state.atmos = snap.atmos || {text:'STABIL', cls:'warn'};
+    state.sec   = snap.sec   || {text:'GELB',   cls:''};
+    state.log = Array.isArray(snap.log) ? snap.log.slice(-80) : [];
+    state.busy = !!snap.busy;
+    state.collapsing = !!snap.collapsing;
+    renderAll();
+  } finally {
+    applyingRemote = false;
+  }
+}
+
+// ─── BOOT ANIMATION ─────────────────────────────────────────────────────
 function runBoot() {
+  if (state.view !== 'boot') { renderAll(); return; }
   const lines = document.querySelectorAll('#boot .boot-line');
   lines.forEach(line => {
     const delay = parseInt(line.dataset.delay, 10);
     setTimeout(() => line.classList.add('show'), delay);
   });
   setTimeout(() => {
-    document.getElementById('boot').style.display = 'none';
-    document.getElementById('main').style.display = 'block';
-    startClock();
-    log('system', 'SYS', 'Interface bereit. Erwarte Eingabe.');
+    if (state.view !== 'boot') return;
+    state.view = 'main';
+    renderAll();
+    if (state.log.length === 0) {
+      log('system', 'SYS', 'Notnetz fragmentiert. Drei dezentrale Knoten erkannt. Sequenz entscheidend.');
+      log('warn', 'HINT', 'Hinweise sind über die Station verteilt — Wartungszettel, Logs, Symbole, Farbcodes.');
+      log('system', 'SYS', 'Interface bereit. Erwarte Eingabe.');
+    } else {
+      emitState();
+    }
   }, 6200);
 }
 
-// ─── CLOCK ───
+// ─── CLOCK ──────────────────────────────────────────────────────────────
 function startClock() {
   const el = document.getElementById('sys-clock');
   function tick() {
-    const d = new Date();
-    el.textContent = '2184.290 / ' +
-      String(d.getHours()).padStart(2,'0') + ':' +
-      String(d.getMinutes()).padStart(2,'0') + ':' +
-      String(d.getSeconds()).padStart(2,'0');
+    el.textContent = '2184.290 / ' + nowTs();
   }
   tick(); setInterval(tick, 1000);
 }
+startClock();
 
-// ─── CONSOLE LOG ───
-function log(type, who, msg) {
-  const con = document.getElementById('console');
-  const d = new Date();
-  const ts = '[' + String(d.getHours()).padStart(2,'0') + ':' +
-                  String(d.getMinutes()).padStart(2,'0') + ':' +
-                  String(d.getSeconds()).padStart(2,'0') + ']';
-  const line = document.createElement('div');
-  line.className = 'line ' + type;
-  line.innerHTML = '<span class="ts">' + ts + '</span>' +
-                   '<span class="who">' + who + '</span>' +
-                   '<span class="msg">' + msg + '</span>';
-  con.appendChild(line);
-  con.scrollTop = con.scrollHeight;
-}
-
-// ─── ACTIVATE NODE ───
+// ─── ACTIVATE NODE ─────────────────────────────────────────────────────
 function activate(node) {
+  if (!CAN_ACT) return;
+  if (state.view !== 'main') return;
+  if (state.busy) return;
   if (state.progress.includes(node)) {
     log('warn', node, 'Knoten bereits ONLINE. Erneute Aktivierung verweigert.');
     return;
   }
-
-  const kernEl = document.getElementById('kern-' + node.toLowerCase());
-  kernEl.classList.remove('state-dormant');
-  kernEl.classList.add('state-activating');
-  kernEl.querySelector('.state').textContent = 'ACTIVATING…';
-  setButtonsDisabled(true);
-
+  state.busy = true;
+  state.kernStates[node] = 'activating';
+  renderAll();
   log('system', node, 'Vor-Ort-Eingriff registriert. Starte Aktivierungs-Sequenz…');
 
   setTimeout(() => {
-    const expected = state.sequence[state.progress.length];
+    const expected = SEQUENCE[state.progress.length];
     if (node === expected) {
-      // RICHTIGE Reihenfolge
       state.progress.push(node);
       state.stab++;
-      kernEl.classList.remove('state-activating');
-      kernEl.classList.add('state-online');
-      kernEl.querySelector('.state').textContent = 'ONLINE';
-      kernEl.querySelector('.btn').disabled = true;
-      kernEl.querySelector('.btn').textContent = '◆ ONLINE';
-      updateStatus();
+      state.kernStates[node] = 'online';
+      state.busy = false;
+      renderAll();
       onSuccessNode(node);
-
       if (state.stab === 3) {
-        setTimeout(showSuccess, 1500);
-      } else {
-        setButtonsDisabled(false);
+        setTimeout(() => {
+          state.view = 'success';
+          renderAll();
+          emitState();
+        }, 1500);
       }
+      emitState();
     } else {
-      // FALSCHE Reihenfolge
       state.errors++;
-      kernEl.classList.remove('state-activating');
-      kernEl.classList.add('state-locked');
-      kernEl.querySelector('.state').textContent = 'LOCKED';
+      state.kernStates[node] = 'locked';
+      renderAll();
       onSequenceError(node, expected);
-      updateStatus();
+      emitState();
       setTimeout(() => resetAfterError(), 2400);
     }
   }, 1800);
 }
 
-function setButtonsDisabled(val) {
-  // Online-Knoten bleiben IMMER disabled. Nur DORMANT-Knoten werden umgeschaltet.
-  document.querySelectorAll('.kern').forEach(k => {
-    const id = k.id.replace('kern-', '').toUpperCase();
-    if (state.progress.includes(id)) return; // bereits online → nicht anfassen
-    k.querySelector('.btn').disabled = val;
-  });
-}
-
-// ─── SUCCESS PER NODE ───
+// ─── SUCCESS PER NODE ──────────────────────────────────────────────────
 function onSuccessNode(node) {
   const msgs = {
-    'A': [
-      ['ok', 'E-KERN A', 'STABILIZER ONLINE. Kühlfluss nominal.'],
-      ['system', 'SYS', 'Stromfluss stabilisiert. Spannung im Normbereich.']
-    ],
-    'B': [
-      ['ok', 'E-KERN B', 'BIO-SHIELD ONLINE. Filter springen an.'],
-      ['system', 'SYS', 'Atmosphäre klart auf. Luftqualität: akzeptabel.']
-    ],
-    'C': [
-      ['ok', 'E-KERN C', 'POWER-ROUTING ONLINE. Verteilung aktiv.'],
-      ['system', 'SYS', 'Netz teilweise wiederhergestellt. Kommandozentrale bootet…']
-    ]
+    'A': [['ok','E-KERN A','STABILIZER ONLINE. Kühlfluss nominal.'], ['system','SYS','Stromfluss stabilisiert. Spannung im Normbereich.']],
+    'B': [['ok','E-KERN B','BIO-SHIELD ONLINE. Filter springen an.'], ['system','SYS','Atmosphäre klart auf. Luftqualität: akzeptabel.']],
+    'C': [['ok','E-KERN C','POWER-ROUTING ONLINE. Verteilung aktiv.'], ['system','SYS','Netz teilweise wiederhergestellt. Kommandozentrale bootet…']]
   };
-  msgs[node].forEach(([t, w, m]) => log(t, w, m));
+  msgs[node].forEach(([t,w,m]) => log(t,w,m));
 }
 
-// ─── ERROR HANDLER ───
+// ─── ERROR HANDLING ─────────────────────────────────────────────────────
 function onSequenceError(triedNode, expectedNode) {
   log('err', 'SYS', 'SEQUENZFEHLER — KNOTEN ' + triedNode + ' AKTIVIERT OHNE VORLAUF.');
-
-  // Eskalation je nach Fehleranzahl
   const escalations = [
     () => {
       log('err', 'SYS', 'Stromstoß registriert. Sicherheitsverriegelung 10s.');
@@ -597,8 +703,10 @@ function onSequenceError(triedNode, expectedNode) {
     () => {
       log('err', 'SYS', 'SICHERHEITSLEVEL: ROT. Schotts in Korridor C-3 schließen.');
       log('warn', 'SYS', '[SL-Hinweis] Gruppe wird ggf. getrennt. Atmosphäre sinkt in einem Modul.');
-      setStatus('atmos', 'SINKEND', 'danger');
-      setStatus('sec', 'ROT', 'danger');
+      state.atmos = {text:'SINKEND', cls:'danger'};
+      state.sec   = {text:'ROT',     cls:'danger'};
+      renderAll();
+      emitState();
     },
     () => {
       log('err', 'SYS', 'AUTOMATISCHE FEUERLÖSCHUNG / DROHNEN-PING aktiv.');
@@ -606,110 +714,96 @@ function onSequenceError(triedNode, expectedNode) {
       log('warn', 'SYS', '[SL-Hinweis] Drohne als Stresselement (kein Bossfight). Sicht eingeschränkt.');
     }
   ];
-
   const idx = Math.min(state.errors - 1, escalations.length - 1);
   setTimeout(() => escalations[idx](), 500);
-
   if (state.errors >= 6) {
     setTimeout(showCollapse, 2000);
   }
 }
 
-// ─── RESET AFTER ERROR ───
 function resetAfterError() {
   state.progress = [];
   state.stab = 0;
-  ['a', 'b', 'c'].forEach(id => {
-    const k = document.getElementById('kern-' + id);
-    k.className = 'kern state-dormant';
-    k.querySelector('.state').textContent = 'DORMANT';
-    const btn = k.querySelector('.btn');
-    btn.disabled = false;
-    btn.textContent = '▶ REKONSTRUIEREN';
-  });
-  updateStatus();
+  state.kernStates = {A:'dormant', B:'dormant', C:'dormant'};
+  state.busy = false;
+  renderAll();
   log('warn', 'SYS', 'Knoten in Bereitschaft zurückgesetzt. Sequenz neu beginnen.');
+  emitState();
 }
 
-// ─── STATUS UI ───
-function updateStatus() {
-  document.getElementById('stab').textContent = state.stab;
-}
-function setStatus(id, text, cls) {
-  const cell = document.getElementById(id + '-cell');
-  if (!cell) return;
-  cell.classList.remove('warn', 'danger');
-  if (cls) cell.classList.add(cls);
-  document.getElementById(id === 'atmos' ? 'atmos' : 'seclevel').textContent = text;
-}
-
-// ─── SUCCESS ───
-function showSuccess() {
-  document.getElementById('main').style.display = 'none';
-  document.getElementById('success').classList.add('show');
-}
-
-// ─── COLLAPSE (bei 6 Fehlern) ───
 function showCollapse() {
   log('err', 'SYS', '*** CORE FAILURE — EVACUATE IMMEDIATELY ***');
-  document.body.style.animation = 'pulseRed 0.4s infinite';
-  document.querySelectorAll('.kern').forEach(k => {
-    k.className = 'kern state-locked';
-    k.querySelector('.state').textContent = 'LOCKED';
-    k.querySelector('.btn').disabled = true;
-  });
+  state.view = 'collapse';
+  state.collapsing = true;
+  state.kernStates = {A:'locked', B:'locked', C:'locked'};
+  renderAll();
+  emitState();
 }
 
-// ─── GM PANEL ───
-function toggleGM() {
-  document.getElementById('gm-panel').classList.toggle('show');
-}
+// ─── GM CONTROLS ───────────────────────────────────────────────────────
+function toggleGM() { document.getElementById('gm-panel').classList.toggle('show'); }
+
 function gmReset() {
+  if (!CAN_ACT) return;
   state.progress = [];
   state.stab = 0;
   state.errors = 0;
-  document.body.style.animation = '';
-  ['a', 'b', 'c'].forEach(id => {
-    const k = document.getElementById('kern-' + id);
-    k.className = 'kern state-dormant';
-    k.querySelector('.state').textContent = 'DORMANT';
-    const btn = k.querySelector('.btn');
-    btn.disabled = false;
-    btn.textContent = '▶ REKONSTRUIEREN';
-  });
-  setStatus('atmos', 'STABIL', 'warn');
-  setStatus('sec', 'GELB', '');
-  document.getElementById('main').style.display = 'block';
-  document.getElementById('success').classList.remove('show');
-  updateStatus();
+  state.kernStates = {A:'dormant', B:'dormant', C:'dormant'};
+  state.atmos = {text:'STABIL', cls:'warn'};
+  state.sec   = {text:'GELB',   cls:''};
+  state.view = 'main';
+  state.collapsing = false;
+  state.busy = false;
+  state.log = [];
+  renderAll();
   log('warn', 'GM', 'Full reset.');
-}
-function gmForceSolve() {
-  state.progress = ['A', 'B', 'C'];
-  state.stab = 3;
-  ['a', 'b', 'c'].forEach(id => {
-    const k = document.getElementById('kern-' + id);
-    k.className = 'kern state-online';
-    k.querySelector('.state').textContent = 'ONLINE';
-    const btn = k.querySelector('.btn');
-    btn.disabled = true;
-    btn.textContent = '◆ ONLINE';
-  });
-  updateStatus();
-  setTimeout(showSuccess, 800);
-}
-function gmEscalate() {
-  state.errors++;
-  onSequenceError('GM', '-');
+  emitState();
 }
 
-// ─── KEYBOARD ───
+function gmForceSolve() {
+  if (!CAN_ACT) return;
+  state.progress = ['A','B','C'];
+  state.stab = 3;
+  state.kernStates = {A:'online', B:'online', C:'online'};
+  state.busy = false;
+  renderAll();
+  emitState();
+  setTimeout(() => {
+    state.view = 'success';
+    renderAll();
+    emitState();
+  }, 800);
+}
+
+function gmEscalate() {
+  if (!CAN_ACT) return;
+  state.errors++;
+  onSequenceError('GM','-');
+  emitState();
+}
+
+// ─── KEYBOARD ──────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
+  if (!CAN_ACT) return;
   if (e.key === 'g' || e.key === 'G') toggleGM();
   if (e.key === 'r' || e.key === 'R') gmReset();
 });
 
-// ─── BOOT ───
+// ─── POSTMESSAGE BRIDGE ────────────────────────────────────────────────
+window.addEventListener('message', e => {
+  const m = e.data;
+  if (!m || typeof m !== 'object') return;
+  if (m.type === 'm08fp-apply' && m.snap) {
+    applyState(m.snap);
+  } else if (m.type === 'm08fp-request-state') {
+    if (CAN_EMIT) emitState();
+  }
+});
+
+// ─── INIT ──────────────────────────────────────────────────────────────
+if (IS_EMBEDDED) {
+  try { parent.postMessage({type:'m08fp-ready', role: ROLE}, '*'); } catch(e) {}
+}
 runBoot();
 </script>
 

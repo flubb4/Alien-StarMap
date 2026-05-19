@@ -88,7 +88,7 @@
           <button class="gm-dd-btn gm-submenu-toggle" onclick="document.getElementById('gmRaetselMenu').classList.toggle('open')">⚙ RÄTSEL <span class="gm-submenu-arrow">▸</span></button>
           <div class="gm-submenu-items">
             <button class="gm-dd-btn gm-dd-sub" onclick="openReactorGMPanel();closeGMTools()">Atlas Reaktor</button>
-            <button class="gm-dd-btn gm-dd-sub" onclick="window.open('puzzles/m08-fragmented-power.html','_blank','noopener');closeGMTools()">Van Maanen — Fragmented Power</button>
+            <button class="gm-dd-btn gm-dd-sub" onclick="openM08FpPuzzle();closeGMTools()">Van Maanen — Fragmented Power</button>
           </div>
         </div>
         <div class="gm-dropdown-divider"></div>
@@ -1486,6 +1486,39 @@ Recalculating."</div>
     <div class="rp-puz-prompt" style="color:#82a494;font-size:11px;letter-spacing:2px">GM wählt Konsequenzen …</div>
   </div>
 </div>
+
+<!-- ══ M08 FRAGMENTED POWER — Embedded Puzzle Modal ══ -->
+<div id="m08FpOverlay" style="position:fixed;inset:0;background:rgba(3,8,5,.94);z-index:5500;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="display:flex;flex-direction:column;width:100%;max-width:1100px;height:92vh;background:#050805;border:1px solid #2a8a4d;border-top:2px solid #ffb830;box-shadow:0 0 60px rgba(77,255,145,.25), inset 0 0 50px rgba(0,0,0,.4);">
+    <div style="flex:0 0 auto;background:#0a100a;border-bottom:1px solid #1a3020;padding:6px 12px;display:flex;justify-content:space-between;align-items:center;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#6a886a;">
+      <span>VAN MAANEN'S STAR · RLS HERMES-7 · FRAGMENTED POWER NETWORK</span>
+      <button onclick="closeM08FpPuzzle()" style="background:transparent;border:1px solid #8a1a1a;color:#ff3a3a;font-family:inherit;font-size:10px;letter-spacing:2px;padding:3px 10px;cursor:pointer;">✕ CLOSE</button>
+    </div>
+    <iframe id="m08FpFrame" src="about:blank" style="flex:1 1 auto;width:100%;border:0;background:#050805;"></iframe>
+  </div>
+</div>
+
+<script>
+function openM08FpPuzzle() {
+  const ov = document.getElementById('m08FpOverlay');
+  const iframe = document.getElementById('m08FpFrame');
+  iframe.src = 'puzzles/m08-fragmented-power.html?t=' + Date.now();
+  ov.style.display = 'flex';
+  setTimeout(() => { try { iframe.contentWindow.focus(); } catch (e) {} }, 200);
+}
+function closeM08FpPuzzle() {
+  const ov = document.getElementById('m08FpOverlay');
+  const iframe = document.getElementById('m08FpFrame');
+  ov.style.display = 'none';
+  iframe.src = 'about:blank';
+}
+document.addEventListener('keydown', e => {
+  const ov = document.getElementById('m08FpOverlay');
+  if (e.key === 'Escape' && ov && ov.style.display === 'flex') {
+    closeM08FpPuzzle();
+  }
+});
+</script>
 
 <!-- ══ REACTOR PUZZLE — GM Panel ══ -->
 <div id="reactorGMPanel">

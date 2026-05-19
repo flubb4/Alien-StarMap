@@ -14,14 +14,23 @@ let m08FpDismissed = false; // lokal weggeklickt → solange kein neuer Trigger 
 
 // ── GM: Modal für alle öffnen ──────────────────────────────────────────────────
 window.openM08FpPuzzle = function() {
+  console.log('[M08FP] openM08FpPuzzle() called. isGM=', window.isGM);
   if (!window.isGM) {
-    // Spieler kann nicht selbst öffnen — falls Funktion versehentlich gerufen wird
+    console.warn('[M08FP] not GM, aborting');
+    return;
+  }
+  if (!window.db) {
+    console.error('[M08FP] window.db missing!');
     return;
   }
   set(m08FpRef(), {
     active: true,
     ts: Date.now(),
     triggeredBy: window.myName || 'GM'
+  }).then(() => {
+    console.log('[M08FP] Firebase write succeeded.');
+  }).catch(err => {
+    console.error('[M08FP] Firebase write FAILED:', err);
   });
 };
 
@@ -56,8 +65,15 @@ function hideLocalModal() {
 
 // ── Watcher ───────────────────────────────────────────────────────────────────
 window.startM08FpWatcher = function() {
+  console.log('[M08FP] startM08FpWatcher() called. isGM=', window.isGM, 'myName=', window.myName);
+  if (!window.db) {
+    console.warn('[M08FP] window.db not ready yet — retrying in 500ms');
+    setTimeout(() => window.startM08FpWatcher(), 500);
+    return;
+  }
   onValue(m08FpRef(), snap => {
     const data = snap.val();
+    console.log('[M08FP] snapshot received:', data);
     if (!data || !data.active) {
       m08FpDismissed = false;
       m08FpLastTs = 0;
@@ -69,10 +85,17 @@ window.startM08FpWatcher = function() {
       m08FpLastTs = data.ts;
       m08FpDismissed = false;
     }
-    if (m08FpDismissed) return;
+    if (m08FpDismissed) {
+      console.log('[M08FP] dismissed locally, ignoring active state');
+      return;
+    }
+    console.log('[M08FP] opening local modal');
     showLocalModal();
   });
 };
+
+// Modul-Load-Diagnose
+console.log('[M08FP] sync module loaded. openM08FpPuzzle=', typeof window.openM08FpPuzzle);
 
 // ESC schließt Modal (nur outer-Fokus, iframe-Fokus wird vom Browser geschluckt)
 document.addEventListener('keydown', e => {

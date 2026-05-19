@@ -156,6 +156,7 @@ function _doLogin(nameUpper) {
       window.startXPChestWatcher?.();
       window.startAudioWatcher?.();
       window.startReactorWatcher?.();
+      window.startM08FpWatcher?.();
     }, 300);
   });
 }

@@ -6,23 +6,26 @@
 <title>RLS HERMES-7 — FRAGMENTED POWER NETWORK</title>
 <style>
 :root {
-  --bg: #050805;
-  --bg2: #0a100a;
-  --bg3: #101a10;
-  --bg4: #16221a;
-  --green: #4dff91;
-  --green-dim: #2a8a4d;
-  --green-dark: #1a4a2a;
-  --amber: #ffb830;
-  --amber-dim: #a07010;
+  /* MU/TH/UR Sodium-Amber — abgestimmt mit Provisions / Character Sheet */
+  --bg: #0a0e0a;
+  --bg2: #111411;
+  --bg3: #1a1d1a;
+  --bg4: #221f18;
+  --amber: #ffb000;
+  --amber-hi: #ffd06a;
+  --amber-dim: #8a6a2a;
+  --amber-dark: #5a4418;
+  --green: #7fb069;
+  --green-dim: #4a7040;
+  --green-dark: #2a4a2a;
   --red: #ff3a3a;
   --red-dim: #8a1a1a;
-  --text: #d8e8d8;
-  --text-dim: #6a886a;
-  --border: #1a3020;
-  --glow-green: 0 0 12px rgba(77,255,145,.35);
-  --glow-red: 0 0 14px rgba(255,58,58,.45);
-  --glow-amber: 0 0 10px rgba(255,184,48,.30);
+  --text: #e0b870;
+  --text-dim: #8a6a2a;
+  --border: #3a2a0a;
+  --glow-amber: 0 0 12px rgba(255,176,0,.35);
+  --glow-green: 0 0 12px rgba(127,176,105,.45);
+  --glow-red:   0 0 14px rgba(255,58,58,.45);
 }
 * { box-sizing: border-box; }
 html, body {
@@ -61,33 +64,33 @@ body::after {
   justify-content: center;
   font-size: 13px;
   line-height: 1.8;
-  color: var(--green);
+  color: var(--text);
 }
 #boot .boot-line { opacity: 0; }
 #boot .boot-line.show { opacity: 1; }
-#boot .boot-line.warn { color: var(--amber); }
+#boot .boot-line.warn { color: var(--amber); text-shadow: var(--glow-amber); }
 #boot .boot-line.err { color: var(--red); }
 #boot .blink::after {
   content: '_';
   animation: blink 1s infinite;
-  color: var(--green);
+  color: var(--amber);
 }
 @keyframes blink { 50% { opacity: 0; } }
 
 #main { display: none; }
 .term-head {
-  border: 1px solid var(--green-dim);
+  border: 1px solid var(--amber-dim);
   background: var(--bg2);
   padding: 14px 18px;
   margin-bottom: 18px;
   position: relative;
 }
 .term-head .ascii {
-  color: var(--green);
+  color: var(--amber);
   font-size: 11px;
   line-height: 1.4;
   white-space: pre;
-  text-shadow: var(--glow-green);
+  text-shadow: var(--glow-amber);
 }
 .term-head .meta {
   display: flex; gap: 16px; flex-wrap: wrap;
@@ -186,8 +189,8 @@ body::after {
   margin-top: 10px;
   padding: 8px 10px;
   background: var(--bg3);
-  border: 1px solid var(--green-dim);
-  color: var(--green);
+  border: 1px solid var(--amber-dim);
+  color: var(--amber);
   font-family: inherit;
   font-size: 10px;
   letter-spacing: 2px;
@@ -196,8 +199,9 @@ body::after {
   transition: all 0.15s ease;
 }
 .kern .btn:hover:not(:disabled) {
-  background: var(--green-dark);
-  box-shadow: var(--glow-green);
+  background: var(--amber-dark);
+  box-shadow: var(--glow-amber);
+  color: var(--amber-hi);
 }
 .kern .btn:disabled {
   opacity: 0.4;
@@ -207,7 +211,7 @@ body::after {
 }
 
 .console {
-  border: 1px solid var(--green-dim);
+  border: 1px solid var(--amber-dim);
   background: var(--bg2);
   padding: 14px 18px;
   min-height: 220px;
@@ -349,17 +353,10 @@ body.role-player .observer-badge { display: block; }
   outline: 1px dashed var(--amber-dim);
   outline-offset: -3px;
 }
-body.role-player .kern .btn {
-  border-color: var(--amber-dim);
-  color: var(--amber);
-}
-body.role-player .kern .btn:hover:not(:disabled) {
-  background: var(--bg4);
+.kern.my-pick .btn {
+  background: var(--amber-dark);
   box-shadow: var(--glow-amber);
-}
-body.role-player .kern.my-pick .btn {
-  background: var(--bg4);
-  box-shadow: var(--glow-amber);
+  color: var(--amber-hi);
 }
 
 .info-row {

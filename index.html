@@ -89,6 +89,7 @@
           <div class="gm-submenu-items">
             <button class="gm-dd-btn gm-dd-sub" onclick="openReactorGMPanel();closeGMTools()">Atlas Reaktor</button>
             <button class="gm-dd-btn gm-dd-sub" onclick="openM08FpPuzzle();closeGMTools()">Van Maanen — Fragmented Power</button>
+            <button class="gm-dd-btn gm-dd-sub" onclick="openM08MiPuzzle();closeGMTools()">Van Maanen — Memory Integration</button>
           </div>
         </div>
         <div class="gm-dropdown-divider"></div>
@@ -1488,16 +1489,28 @@ Recalculating."</div>
 </div>
 
 <!-- ══ M08 FRAGMENTED POWER — Embedded Puzzle Modal (Firebase-synced) ══ -->
-<div id="m08FpOverlay" style="position:fixed;inset:0;background:rgba(3,8,5,.94);z-index:5500;display:none;align-items:center;justify-content:center;padding:20px;">
-  <div style="display:flex;flex-direction:column;width:100%;max-width:1100px;height:92vh;background:#050805;border:1px solid #2a8a4d;border-top:2px solid #ffb830;box-shadow:0 0 60px rgba(77,255,145,.25), inset 0 0 50px rgba(0,0,0,.4);">
-    <div style="flex:0 0 auto;background:#0a100a;border-bottom:1px solid #1a3020;padding:6px 12px;display:flex;justify-content:space-between;align-items:center;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#6a886a;">
+<div id="m08FpOverlay" style="position:fixed;inset:0;background:rgba(10,14,10,.94);z-index:5500;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="display:flex;flex-direction:column;width:100%;max-width:1100px;height:92vh;background:#0a0e0a;border:1px solid #8a6a2a;border-top:2px solid #ffb000;box-shadow:0 0 60px rgba(255,176,0,.18), inset 0 0 50px rgba(0,0,0,.4);">
+    <div style="flex:0 0 auto;background:#111411;border-bottom:1px solid #3a2a0a;padding:6px 12px;display:flex;justify-content:space-between;align-items:center;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#8a6a2a;">
       <span>VAN MAANEN'S STAR · RLS HERMES-7 · FRAGMENTED POWER NETWORK</span>
       <button onclick="closeM08FpPuzzle()" style="background:transparent;border:1px solid #8a1a1a;color:#ff3a3a;font-family:inherit;font-size:10px;letter-spacing:2px;padding:3px 10px;cursor:pointer;">✕ CLOSE</button>
     </div>
-    <iframe id="m08FpFrame" src="about:blank" style="flex:1 1 auto;width:100%;border:0;background:#050805;"></iframe>
+    <iframe id="m08FpFrame" src="about:blank" style="flex:1 1 auto;width:100%;border:0;background:#0a0e0a;"></iframe>
   </div>
 </div>
 <script type="module" src="assets/js/m08-fp-sync.js"></script>
+
+<!-- ══ M08 MEMORY INTEGRATION — Embedded Puzzle Modal (Firebase-synced) ══ -->
+<div id="m08MiOverlay" style="position:fixed;inset:0;background:rgba(10,14,10,.94);z-index:5500;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="display:flex;flex-direction:column;width:100%;max-width:1100px;height:92vh;background:#0a0e0a;border:1px solid #8a6a2a;border-top:2px solid #ffb000;box-shadow:0 0 60px rgba(255,176,0,.18), inset 0 0 50px rgba(0,0,0,.4);">
+    <div style="flex:0 0 auto;background:#111411;border-bottom:1px solid #3a2a0a;padding:6px 12px;display:flex;justify-content:space-between;align-items:center;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#8a6a2a;">
+      <span>VAN MAANEN'S STAR · RLS HERMES-7 · MEMORY CORE INTEGRATION</span>
+      <button onclick="closeM08MiPuzzle()" style="background:transparent;border:1px solid #8a1a1a;color:#ff3a3a;font-family:inherit;font-size:10px;letter-spacing:2px;padding:3px 10px;cursor:pointer;">✕ CLOSE</button>
+    </div>
+    <iframe id="m08MiFrame" src="about:blank" style="flex:1 1 auto;width:100%;border:0;background:#0a0e0a;"></iframe>
+  </div>
+</div>
+<script type="module" src="assets/js/m08-mi-sync.js"></script>
 
 <!-- ══ REACTOR PUZZLE — GM Panel ══ -->
 <div id="reactorGMPanel">

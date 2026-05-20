@@ -157,6 +157,7 @@ function _doLogin(nameUpper) {
       window.startAudioWatcher?.();
       window.startReactorWatcher?.();
       window.startM08FpWatcher?.();
+      window.startM08MiWatcher?.();
     }, 300);
   });
 }

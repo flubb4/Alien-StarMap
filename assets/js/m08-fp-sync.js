@@ -12,11 +12,12 @@
 //  Firebase.state. Watcher empfängt Updates und schickt `m08fp-apply` an alle
 //  iframes (auch GM, was harmlos ist weil identisch).
 
-import { ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const M08FP_PATH = 'session/puzzle/m08-fp';
 const m08FpRef = () => ref(window.db, M08FP_PATH);
 const m08FpStateRef = () => ref(window.db, M08FP_PATH + '/state');
+const m08FpVotesRef = () => ref(window.db, M08FP_PATH + '/votes');
 
 let m08FpLastTs = 0;
 let m08FpDismissed = false;
@@ -26,12 +27,13 @@ let m08FpLastAppliedHash = '';
 window.openM08FpPuzzle = function() {
   if (!window.isGM) { console.warn('[M08FP] only GM can open'); return; }
   if (!window.db) { console.error('[M08FP] window.db missing'); return; }
-  // Wir resetten state beim Trigger — frische Session
+  // Wir resetten state + votes beim Trigger — frische Session
   set(m08FpRef(), {
     active: true,
     ts: Date.now(),
     triggeredBy: window.myName || 'GM',
-    state: null
+    state: null,
+    votes: null
   }).then(() => console.log('[M08FP] open trigger written'))
     .catch(err => console.error('[M08FP] open failed:', err));
 };
@@ -50,7 +52,8 @@ function showLocalModal() {
   const iframe = document.getElementById('m08FpFrame');
   if (!ov || !iframe) return;
   const role = window.isGM ? 'gm' : 'player';
-  iframe.src = 'puzzles/m08-fragmented-power.html?role=' + role + '&t=' + Date.now();
+  const nameParam = window.myName ? '&name=' + encodeURIComponent(window.myName) : '';
+  iframe.src = 'puzzles/m08-fragmented-power.html?role=' + role + nameParam + '&t=' + Date.now();
   ov.style.display = 'flex';
   setTimeout(() => { try { iframe.contentWindow.focus(); } catch (e) {} }, 200);
 }
@@ -76,13 +79,29 @@ window.addEventListener('message', e => {
   if (m.type === 'm08fp-state' && m.snap) {
     // nur der GM darf Updates senden — wir verifizieren über role
     if (m.role === 'gm' && window.isGM) {
-      // Hash vergleichen, vermeidet redundante Firebase-Writes
-      const h = quickHash(m.snap);
+      // Votes aus dem GM-Snap entfernen — die leben separat (top-level)
+      const snapForWrite = Object.assign({}, m.snap);
+      delete snapForWrite.votes;
+      const h = quickHash(snapForWrite);
       if (h === m08FpLastAppliedHash) return;
       m08FpLastAppliedHash = h;
-      update(m08FpRef(), { state: m.snap })
+      update(m08FpRef(), { state: snapForWrite })
         .catch(err => console.warn('[M08FP] state write failed:', err));
     }
+    return;
+  }
+  if (m.type === 'm08fp-vote' && m.name && m.node) {
+    // Jeder darf seine eigene Stimme schreiben
+    update(m08FpVotesRef(), { [m.name]: m.node })
+      .catch(err => console.warn('[M08FP] vote write failed:', err));
+    return;
+  }
+  if (m.type === 'm08fp-clear-votes') {
+    // Nur GM darf clear ausführen (sonst könnte ein Spieler die Tally wischen)
+    if (!window.isGM) return;
+    remove(m08FpVotesRef())
+      .catch(err => console.warn('[M08FP] votes clear failed:', err));
+    return;
   }
 });
 
@@ -90,15 +109,17 @@ function sendCurrentStateToIframe() {
   const iframe = document.getElementById('m08FpFrame');
   if (!iframe || !iframe.contentWindow) return;
   // Letzten bekannten state vom letzten Firebase-Snapshot ist in
-  // m08FpLastSnapState gespeichert — siehe Watcher.
+  // m08FpLastSnapState gespeichert — siehe Watcher. Votes werden gemergt.
   if (m08FpLastSnapState) {
+    const merged = Object.assign({}, m08FpLastSnapState, { votes: m08FpLastVotes || {} });
     try {
-      iframe.contentWindow.postMessage({type:'m08fp-apply', snap: m08FpLastSnapState}, '*');
+      iframe.contentWindow.postMessage({type:'m08fp-apply', snap: merged}, '*');
     } catch(e) {}
   }
 }
 
 let m08FpLastSnapState = null;
+let m08FpLastVotes = null;
 
 // ── Watcher ──────────────────────────────────────────────────────────────────
 window.startM08FpWatcher = function() {
@@ -113,6 +134,7 @@ window.startM08FpWatcher = function() {
       m08FpDismissed = false;
       m08FpLastTs = 0;
       m08FpLastSnapState = null;
+      m08FpLastVotes = null;
       m08FpLastAppliedHash = '';
       hideLocalModal();
       return;
@@ -128,17 +150,30 @@ window.startM08FpWatcher = function() {
     const ov = document.getElementById('m08FpOverlay');
     if (ov && ov.style.display !== 'flex') showLocalModal();
 
-    // State an iframe weitergeben
+    // Votes immer mitführen (auch wenn state unverändert ist — sonst sehen
+    // Spieler bei reinen Vote-Updates keine neuen Chips)
+    m08FpLastVotes = data.votes || {};
+
+    // Snap an iframe weitergeben — Echo-Schutz greift nur, wenn STATE & VOTES
+    // beide unverändert sind. Vote-only-Updates müssen durch.
     if (data.state) {
       m08FpLastSnapState = data.state;
-      const h = quickHash(data.state);
-      // Bei GM: nicht zurückschicken wenn's vom GM selbst kommt (Echo-Schutz)
+      const h = quickHash({ s: data.state, v: m08FpLastVotes });
       if (window.isGM && h === m08FpLastAppliedHash) return;
       m08FpLastAppliedHash = h;
+      const merged = Object.assign({}, data.state, { votes: m08FpLastVotes });
       const iframe = document.getElementById('m08FpFrame');
       if (iframe && iframe.contentWindow) {
         try {
-          iframe.contentWindow.postMessage({type:'m08fp-apply', snap: data.state}, '*');
+          iframe.contentWindow.postMessage({type:'m08fp-apply', snap: merged}, '*');
+        } catch(e) {}
+      }
+    } else {
+      // State noch nicht da (frischer Trigger), aber Votes können trotzdem rein
+      const iframe = document.getElementById('m08FpFrame');
+      if (iframe && iframe.contentWindow) {
+        try {
+          iframe.contentWindow.postMessage({type:'m08fp-apply', snap: { votes: m08FpLastVotes }}, '*');
         } catch(e) {}
       }
     }

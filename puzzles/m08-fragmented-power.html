@@ -307,8 +307,7 @@ body::after {
   line-height: 1.7;
 }
 
-/* Player-Mode: keine Buttons, kein GM-Panel, Observer-Badge */
-body.role-player .kern .btn { display: none; }
+/* Player-Mode: GM-Panel weg, Voter-Badge sichtbar — Buttons bleiben (Vote-Cast) */
 body.role-player #gm-panel { display: none !important; }
 .observer-badge {
   position: fixed; top: 10px; left: 10px;
@@ -322,6 +321,46 @@ body.role-player #gm-panel { display: none !important; }
   display: none;
 }
 body.role-player .observer-badge { display: block; }
+
+/* ── Vote-Chips unter jedem Knoten ───────────────────────────────────────── */
+.kern .votes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  justify-content: center;
+  margin-top: 8px;
+  min-height: 18px;
+}
+.kern .vote-chip {
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 2px 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.kern .vote-chip.mine {
+  border-color: var(--amber-dim);
+  color: var(--amber);
+  text-shadow: var(--glow-amber);
+}
+.kern.my-pick {
+  outline: 1px dashed var(--amber-dim);
+  outline-offset: -3px;
+}
+body.role-player .kern .btn {
+  border-color: var(--amber-dim);
+  color: var(--amber);
+}
+body.role-player .kern .btn:hover:not(:disabled) {
+  background: var(--bg4);
+  box-shadow: var(--glow-amber);
+}
+body.role-player .kern.my-pick .btn {
+  background: var(--bg4);
+  box-shadow: var(--glow-amber);
+}
 
 .info-row {
   font-size: 10px;
@@ -401,21 +440,24 @@ body.role-player .info-row { display: none; }
       <div class="id">E-KERN A</div>
       <div class="role">Stabilizer · Engine</div>
       <div class="state">DORMANT</div>
-      <button class="btn" onclick="activate('A')">▶ REKONSTRUIEREN</button>
+      <button class="btn" onclick="onNodeClick('A')">▶ REKONSTRUIEREN</button>
+      <div class="votes" id="votes-a"></div>
     </div>
     <div class="kern state-dormant" id="kern-b">
       <div class="sym">⚪</div>
       <div class="id">E-KERN B</div>
       <div class="role">Bio-Shield · Filter</div>
       <div class="state">DORMANT</div>
-      <button class="btn" onclick="activate('B')">▶ REKONSTRUIEREN</button>
+      <button class="btn" onclick="onNodeClick('B')">▶ REKONSTRUIEREN</button>
+      <div class="votes" id="votes-b"></div>
     </div>
     <div class="kern state-dormant" id="kern-c">
       <div class="sym">➖</div>
       <div class="id">E-KERN C</div>
       <div class="role">Routing · Habitation</div>
       <div class="state">DORMANT</div>
-      <button class="btn" onclick="activate('C')">▶ REKONSTRUIEREN</button>
+      <button class="btn" onclick="onNodeClick('C')">▶ REKONSTRUIEREN</button>
+      <div class="votes" id="votes-c"></div>
     </div>
   </div>
 
@@ -456,12 +498,14 @@ body.role-player .info-row { display: none; }
 // ─── ROLE (gm | player | standalone) ──────────────────────────────────────
 const params = new URLSearchParams(location.search);
 const ROLE = params.get('role') || 'standalone';
+const MY_NAME = params.get('name') || '';
 const IS_EMBEDDED = ROLE === 'gm' || ROLE === 'player';
 const CAN_EMIT = ROLE === 'gm' || ROLE === 'standalone';
 const CAN_ACT  = ROLE === 'gm' || ROLE === 'standalone';
+const CAN_VOTE = ROLE === 'player' && !!MY_NAME;
 document.body.classList.add('role-' + ROLE);
 document.getElementById('op-label').textContent =
-  ROLE === 'gm' ? 'GAME MASTER' : (ROLE === 'player' ? 'OBSERVER' : 'UNAUTHORIZED');
+  ROLE === 'gm' ? 'GAME MASTER' : (ROLE === 'player' ? (MY_NAME ? MY_NAME.toUpperCase() : 'OBSERVER') : 'UNAUTHORIZED');
 
 // ─── STATE (single source of truth) ───────────────────────────────────────
 const SEQUENCE = ['A', 'B', 'C'];
@@ -476,6 +520,7 @@ const state = {
   log: [],
   busy: false,
   collapsing: false,
+  votes: {}, // { playerName: 'A'|'B'|'C' } — injected by parent, NOT serialized by GM iframe
 };
 
 let applyingRemote = false;
@@ -546,16 +591,40 @@ function renderAll() {
     const stateEl = el.querySelector('.state');
     const stateText = {dormant:'DORMANT', activating:'ACTIVATING…', online:'ONLINE', locked:'LOCKED'}[state.kernStates[id]];
     if (stateEl) stateEl.textContent = stateText;
+
+    // Vote-Tally für diesen Knoten
+    const voters = Object.entries(state.votes || {})
+      .filter(([, v]) => v === id)
+      .map(([n]) => n);
+    const myVote = MY_NAME ? (state.votes && state.votes[MY_NAME]) : null;
+    if (myVote === id) el.classList.add('my-pick');
+
+    const votesEl = document.getElementById('votes-' + id.toLowerCase());
+    if (votesEl) {
+      votesEl.innerHTML = voters.map(n => {
+        const mine = (n === MY_NAME);
+        return '<span class="vote-chip' + (mine ? ' mine' : '') + '">' + escapeHtml(n.toUpperCase()) + '</span>';
+      }).join('');
+    }
+
     const btn = el.querySelector('.btn');
     if (btn) {
-      if (state.kernStates[id] === 'online') {
+      const isOnline = state.kernStates[id] === 'online';
+      const isLocked = state.kernStates[id] === 'locked';
+      if (isOnline) {
         btn.disabled = true; btn.textContent = '◆ ONLINE';
-      } else if (state.kernStates[id] === 'locked') {
+      } else if (isLocked) {
         btn.disabled = true; btn.textContent = '✕ LOCKED';
       } else if (state.busy) {
-        btn.disabled = true; btn.textContent = '▶ REKONSTRUIEREN';
+        btn.disabled = true;
+        btn.textContent = CAN_VOTE ? '▶ STIMME ABGEBEN' : '▶ REKONSTRUIEREN';
       } else {
-        btn.disabled = false; btn.textContent = '▶ REKONSTRUIEREN';
+        btn.disabled = false;
+        if (CAN_VOTE) {
+          btn.textContent = (myVote === id) ? '◉ DEINE STIMME' : '▶ STIMME ABGEBEN';
+        } else {
+          btn.textContent = '▶ REKONSTRUIEREN';
+        }
       }
     }
   });
@@ -588,19 +657,22 @@ function emitState() {
 }
 
 // ─── APPLY (incoming from parent) ───────────────────────────────────────
+// Patchy: nur Felder übernehmen, die im Snap vorkommen. So können reine
+// Vote-Updates (nur snap.votes) die Spiel-State nicht überschreiben.
 function applyState(snap) {
   applyingRemote = true;
   try {
-    state.view = snap.view || 'main';
-    state.kernStates = Object.assign({A:'dormant',B:'dormant',C:'dormant'}, snap.kernStates || {});
-    state.progress = Array.isArray(snap.progress) ? snap.progress.slice() : [];
-    state.stab = snap.stab|0;
-    state.errors = snap.errors|0;
-    state.atmos = snap.atmos || {text:'STABIL', cls:'warn'};
-    state.sec   = snap.sec   || {text:'GELB',   cls:''};
-    state.log = Array.isArray(snap.log) ? snap.log.slice(-80) : [];
-    state.busy = !!snap.busy;
-    state.collapsing = !!snap.collapsing;
+    if (snap.view !== undefined)        state.view = snap.view || 'main';
+    if (snap.kernStates !== undefined)  state.kernStates = Object.assign({A:'dormant',B:'dormant',C:'dormant'}, snap.kernStates || {});
+    if (snap.progress !== undefined)    state.progress = Array.isArray(snap.progress) ? snap.progress.slice() : [];
+    if (snap.stab !== undefined)        state.stab = snap.stab|0;
+    if (snap.errors !== undefined)      state.errors = snap.errors|0;
+    if (snap.atmos !== undefined)       state.atmos = snap.atmos || {text:'STABIL', cls:'warn'};
+    if (snap.sec !== undefined)         state.sec   = snap.sec   || {text:'GELB',   cls:''};
+    if (snap.log !== undefined)         state.log = Array.isArray(snap.log) ? snap.log.slice(-80) : [];
+    if (snap.busy !== undefined)        state.busy = !!snap.busy;
+    if (snap.collapsing !== undefined)  state.collapsing = !!snap.collapsing;
+    if (snap.votes !== undefined)       state.votes = (snap.votes && typeof snap.votes === 'object') ? snap.votes : {};
     renderAll();
   } finally {
     applyingRemote = false;
@@ -639,7 +711,33 @@ function startClock() {
 }
 startClock();
 
+// ─── CLICK DISPATCH ─────────────────────────────────────────────────────
+// GM / standalone → direkt aktivieren. Player → Stimme abgeben.
+function onNodeClick(node) {
+  if (CAN_VOTE) { castVote(node); return; }
+  activate(node);
+}
+
+// Spieler-Vote: postet ans Parent (m08-fp-sync.js schreibt nach Firebase)
+function castVote(node) {
+  if (!CAN_VOTE) return;
+  if (state.view !== 'main') return;
+  // Bereits aktivierte/gesperrte Knoten kann man nicht wählen
+  const ks = state.kernStates[node];
+  if (ks === 'online' || ks === 'locked') return;
+  try {
+    parent.postMessage({type:'m08fp-vote', name: MY_NAME, node}, '*');
+  } catch(e) {}
+  // Optimistic: lokal sofort spiegeln, Firebase-Echo überschreibt gleich wieder
+  state.votes = Object.assign({}, state.votes, { [MY_NAME]: node });
+  renderAll();
+}
+
 // ─── ACTIVATE NODE ─────────────────────────────────────────────────────
+function clearVotesUpstream() {
+  try { parent.postMessage({type:'m08fp-clear-votes'}, '*'); } catch(e) {}
+}
+
 function activate(node) {
   if (!CAN_ACT) return;
   if (state.view !== 'main') return;
@@ -670,6 +768,7 @@ function activate(node) {
         }, 1500);
       }
       emitState();
+      clearVotesUpstream();
     } else {
       state.errors++;
       state.kernStates[node] = 'locked';
@@ -677,6 +776,7 @@ function activate(node) {
       onSequenceError(node, expected);
       emitState();
       setTimeout(() => resetAfterError(), 2400);
+      clearVotesUpstream();
     }
   }, 1800);
 }
@@ -758,6 +858,7 @@ function gmReset() {
   renderAll();
   log('warn', 'GM', 'Full reset.');
   emitState();
+  clearVotesUpstream();
 }
 
 function gmForceSolve() {
@@ -768,6 +869,7 @@ function gmForceSolve() {
   state.busy = false;
   renderAll();
   emitState();
+  clearVotesUpstream();
   setTimeout(() => {
     state.view = 'success';
     renderAll();

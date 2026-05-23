@@ -896,24 +896,34 @@
   <div class="ib-header">
     <span class="ib-title">// Image Board</span>
     <div class="ib-tools">
-      <button class="ib-tool-btn ib-marker-btn-style" id="ibMarkerBtn" onclick="ibmkToggleMode()" title="Klick aufs Bild = setzt deinen Marker (Position)">📍 MARKER</button>
-      <button class="ib-tool-btn ib-gm-only ib-pin-btn-style" id="ibPinBtn" onclick="ibmkTogglePinMode()" title="GM: setzt einen beschrifteten Pin (NPC / Threat)">+ PIN</button>
-      <span class="ib-tool-sep"></span>
-      <input type="color" id="ibColorPicker" value="#ff4444" title="Pen color">
-      <input type="range" id="ibSizeSlider" min="2" max="20" value="4" title="Pen size">
-      <button class="ib-tool-btn" id="ibEraserBtn" onclick="ibToggleEraser()">⬜ Eraser</button>
-      <button class="ib-tool-btn ib-gm-only" onclick="document.getElementById('imageBoardFileInput').click()">📁 Load Image</button>
-      <button class="ib-tool-btn ib-gm-only" onclick="document.getElementById('coverImageFileInput').click()">🗺 Load Cover</button>
-      <button class="ib-tool-btn ib-gm-only" id="ibFogMenuBtn" onclick="ibToggleFogPanel()">🌫 Fog ▾</button>
-      <button class="ib-tool-btn ib-gm-only ib-release-btn" id="ibReleaseBtn" onclick="ibRelease()" style="display:none">✅ FREIGEBEN</button>
-      <button class="ib-tool-btn" id="mtTrackerBtn" onclick="mtToggleTrackerPlacement()">📡 Motion Tracker</button>
-      <button class="ib-tool-btn ib-gm-only" id="mtBlipBtn" onclick="mtToggleBlipMode()">🎯 Blip setzen</button>
-      <button class="ib-tool-btn ib-gm-only" id="mtClearBtn" onclick="mtClearTrackers()" title="Rechtsklick auf einen Tracker löscht ihn einzeln">🗑 Tracker leeren</button>
-      <button class="ib-tool-btn ib-gm-only" onclick="clearImageBoard()">🗑 Clear</button>
+      <div class="ib-tool-group" data-group-label="PLAYER">
+        <button class="ib-tool-btn ib-marker-btn-style" id="ibMarkerBtn" onclick="ibmkToggleMode()" title="Klick aufs Bild = setzt deinen Marker (Position)">📍 MARKER</button>
+        <input type="color" id="ibColorPicker" value="#ff4444" title="Pen color">
+        <input type="range" id="ibSizeSlider" min="2" max="20" value="4" title="Pen size">
+        <button class="ib-tool-btn" id="ibEraserBtn" onclick="ibToggleEraser()">⬜ Eraser</button>
+        <button class="ib-tool-btn" id="mtTrackerBtn" onclick="mtToggleTrackerPlacement()">📡 Motion Tracker</button>
+        <button class="ib-tool-btn" onclick="openCharSheet()">📋 Character</button>
+        <button class="ib-tool-btn" onclick="openSupplyPanel()">📦 Supply</button>
+      </div>
 
-      <button class="ib-tool-btn ib-gm-only" onclick="openInitiative()">⚡ Initiative</button>
-      <button class="ib-tool-btn" onclick="openCharSheet()">📋 Character</button>
-      <button class="ib-tool-btn" onclick="openSupplyPanel()">📦 Supply</button>
+      <div class="ib-tool-group ib-gm-group ib-gm-only" data-group-label="GM · SETUP">
+        <button class="ib-tool-btn" onclick="document.getElementById('imageBoardFileInput').click()">📁 Load Image</button>
+        <button class="ib-tool-btn" onclick="document.getElementById('coverImageFileInput').click()">🗺 Load Cover</button>
+        <button class="ib-tool-btn" id="ibFogMenuBtn" onclick="ibToggleFogPanel()">🌫 Fog ▾</button>
+        <button class="ib-tool-btn ib-release-btn" id="ibReleaseBtn" onclick="ibRelease()" style="display:none">✅ FREIGEBEN</button>
+      </div>
+
+      <div class="ib-tool-group ib-gm-group ib-gm-only" data-group-label="GM · MARKER">
+        <button class="ib-tool-btn ib-pin-btn-style" id="ibPinBtn" onclick="ibmkTogglePinMode()" title="GM: setzt einen beschrifteten Pin (NPC / Threat)">+ PIN</button>
+        <button class="ib-tool-btn" id="mtBlipBtn" onclick="mtToggleBlipMode()">🎯 Blip</button>
+        <button class="ib-tool-btn" id="mtClearBtn" onclick="mtClearTrackers()" title="Rechtsklick auf einen Tracker löscht ihn einzeln">🗑 Tracker leeren</button>
+      </div>
+
+      <div class="ib-tool-group ib-gm-group ib-gm-only" data-group-label="GM · SESSION">
+        <button class="ib-tool-btn" onclick="openInitiative()">⚡ Initiative</button>
+        <button class="ib-tool-btn" onclick="clearImageBoard()">🗑 Clear</button>
+      </div>
+
       <button class="ib-close-btn" onclick="closeImageBoard()">✕ Close</button>
     </div>
   </div>

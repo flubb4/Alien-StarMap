@@ -316,6 +316,96 @@ const BVT_SYSTEMS = [
   { id:'leper_col',    name:'LEPER COLONY',               sector:'TRAILWARD',
     a:['SCORCHED','NONE','TOXIC_CO2','NONE','FACULTATIVE','LOW_FREQ','LOW','M_RED','NONE','ACTIVE'],
     x: 1620, y: 1880 },
+  { id:'tracinium',    name:'TRACINIUM',                  sector:'FRONTIER',
+    a:['EXTREME_DIURNAL','NONE','BREATHABLE','NONE','STRICT_ATMO','SILENT','NEAR_EARTH','F_YEL_WHT','SURFACE_RIVER','LOW'],
+    x: 2360, y: 240 },
+  { id:'sphere_mag',   name:'SPHERE — MAGELLAN',          sector:'OUTER RIM',
+    a:['STABLE','NONE','BREATHABLE','GEOTHERMAL_OPT','STRICT_ATMO','NOISE','HIGH_EARTH','G_YELLOW','MIXED','LOW'],
+    x: 380, y: 460 },
+  { id:'hodgson9',     name:'HODGSON THETA-9',            sector:'TARTARUS SECTOR',
+    a:['STABLE','UNSTABLE_BIO','BREATHABLE','NONE','FACULTATIVE','TECH_HZ','HIGH_EARTH','F_YEL_WHT','MIXED','MODERATE'],
+    x: 1180, y: 1960 },
+  { id:'pylos_prime',  name:'PYLOS PRIME',                sector:'INDEPENDENT CORE',
+    a:['STABLE','WEAK','BREATHABLE','SOLAR','STRICT_ATMO','TECH_HZ','EARTH_OPTIMAL','G_YELLOW','MIXED','LOW'],
+    x: 1020, y: 1620 },
+  { id:'weyland_isles',name:'WEYLAND-ISLES OUTPOST',      sector:'OUTER RIM',
+    a:['STABLE','UNSTABLE_BIO','BREATHABLE','NONE','STRICT_ATMO','NOISE','HIGH_EARTH','M_RED','SUBSURFACE','MODERATE'],
+    x: 660, y: 280 },
+  { id:'kronos_prime', name:'KRONOS PRIME',               sector:'CORE SYSTEMS',
+    a:['EXTREME_DIURNAL','NONE','BREATHABLE','GEOTHERMAL_OPT','STRICT_ATMO','LOW_FREQ','EARTH_OPTIMAL','K_ORANGE','MIXED','LOW'],
+    x: 1500, y: 1080 },
+  { id:'sheherazade',  name:'SHEHERAZADE',                sector:'AMERICAN ARM',
+    a:['STABLE','NONE','TOXIC_CO2','SOLAR','STRICT_ATMO','TECH_HZ','NEAR_EARTH','K_ORANGE','MIXED','LOW'],
+    x: 1660, y: 1220 },
+  { id:'parnassus',    name:'PARNASSUS',                  sector:'CORE SYSTEMS',
+    a:['STABLE','NONE','BREATHABLE','SOLAR','STRICT_ATMO','TECH_HZ','EARTH_OPTIMAL','K_ORANGE','SURFACE_OCEAN','LOW'],
+    x: 1380, y: 1020 },
+  { id:'sirius_c',     name:'SIRIUS C',                   sector:'CORE SYSTEMS',
+    a:['STABLE','WEAK','BREATHABLE','GEOTHERMAL_OPT','STRICT_ATMO','TECH_HZ','HIGH_EARTH','A_WHITE','SURFACE_RIVER','LOW'],
+    x: 1280, y: 1140 },
+  { id:'barnards',     name:'BARNARD\'S STAR',            sector:'FRONTIER',
+    a:['STABLE','WEAK','BREATHABLE','NONE','FACULTATIVE','SILENT','NEAR_EARTH','M_RED','FROZEN','DORMANT'],
+    x: 320, y: 1140 },
+  { id:'groombridge',  name:'GROOMBRIDGE 34',             sector:'OUTER VEIL',
+    a:['SCORCHED','UNSTABLE_BIO','METHANE','VOLCANIC_HOT','STRICT_ATMO','LOW_FREQ','HIGH_EARTH','M_RED','NONE','ACTIVE'],
+    x: 880, y: 580 },
+  { id:'kapteyn',      name:'KAPTEYN',                    sector:'INDEPENDENT CORE',
+    a:['EXTREME_DIURNAL','NONE','TOXIC_CO2','NONE','STRICT_ATMO','NOISE','HIGH_EARTH','M_RED','NONE','LOW'],
+    x: 920, y: 1700 },
+  { id:'aldebaran',    name:'ALDEBARAN OUTPOST',          sector:'OUTER RIM',
+    a:['STABLE','NONE','BREATHABLE','VOLCANIC_HOT','STRICT_ATMO','NOISE','HIGH_EARTH','K_ORANGE','SUBSURFACE','ACTIVE'],
+    x: 2880, y: 460 },
+  { id:'rigel_harbour',name:'RIGEL HARBOUR',              sector:'AMERICAN ARM',
+    a:['STABLE','NONE','BREATHABLE','GEOTHERMAL_OPT','STRICT_ATMO','TECH_HZ','EARTH_OPTIMAL','A_WHITE','MIXED','MODERATE'],
+    x: 1480, y: 1440 },
+  { id:'omega_st',     name:'OMEGA STATION',              sector:'CRESTUS CLUSTER',
+    a:['EXTREME_DIURNAL','NONE','BREATHABLE','NONE','STRICT_ATMO','NOISE','HIGH_EARTH','G_YELLOW','MIXED','DORMANT'],
+    x: 2180, y: 620 },
+  { id:'vespucci',     name:'VESPUCCI',                   sector:'CORE SYSTEMS',
+    a:['STABLE','NONE','BREATHABLE','SOLAR','FACULTATIVE','TECH_HZ','NEAR_EARTH','G_YELLOW','MIXED','LOW'],
+    x: 1240, y: 1080 },
+  { id:'cavendish',    name:'CAVENDISH',                  sector:'FRONTIER',
+    a:['STABLE','UNSTABLE_BIO','BREATHABLE','GEOTHERMAL_OPT','STRICT_ATMO','NOISE','HIGH_EARTH','F_YEL_WHT','MIXED','MODERATE'],
+    x: 2960, y: 1480 },
+  { id:'mena3',        name:'MENA III',                   sector:'OUTER VEIL',
+    a:['STABLE','NONE','TOXIC_CO2','NONE','STRICT_ATMO','LOW_FREQ','HIGH_EARTH','G_YELLOW','MIXED','LOW'],
+    x: 740, y: 740 },
+  { id:'shajn',        name:'SHAJN',                      sector:'TARTARUS SECTOR',
+    a:['EXTREME_DIURNAL','NONE','BREATHABLE','NONE','STRICT_ATMO','NOISE','HIGH_EARTH','M_RED','SUBSURFACE','ACTIVE'],
+    x: 1340, y: 2000 },
+  { id:'nickerson',    name:'NICKERSON',                  sector:'AMERICAN ARM',
+    a:['STABLE','NONE','BREATHABLE','SOLAR','STRICT_ATMO','TECH_HZ','HIGH_EARTH','K_ORANGE','SURFACE_OCEAN','LOW'],
+    x: 1580, y: 1280 },
+  { id:'eos_sunrise',  name:'EOS — SUNRISE STATION',      sector:'OUTER VEIL',
+    a:['STABLE','UNSTABLE_BIO','BREATHABLE','SOLAR','STRICT_ATMO','TECH_HZ','HIGH_EARTH','G_YELLOW','SURFACE_OCEAN','LOW'],
+    x: 2020, y: 720 },
+  { id:'astraea2',     name:'ASTRAEA-2',                  sector:'OUTER VEIL',
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','BREATHABLE','GEOTHERMAL_OPT','STRICT_ATMO','NOISE','NEAR_EARTH','M_RED','FROZEN','MODERATE'],
+    x: 1880, y: 580 },
+  { id:'castlemount',  name:'CASTLEMOUNT',                sector:'FRONTIER',
+    a:['SCORCHED','NONE','BREATHABLE','NONE','STRICT_ATMO','SILENT','HIGH_EARTH','M_RED','FROZEN','DORMANT'],
+    x: 440, y: 1660 },
+  { id:'erebus',       name:'EREBUS',                     sector:'OUTER RIM',
+    a:['STABLE','UNSTABLE_BIO','TOXIC_CO2','SOLAR','STRICT_ATMO','LOW_FREQ','NEAR_EARTH','K_ORANGE','SUBSURFACE','ACTIVE'],
+    x: 2540, y: 280 },
+  { id:'thanatos5',    name:'THANATOS V',                 sector:'OUTER RIM',
+    a:['EXTREME_DIURNAL','WEAK','TOXIC_CO2','NONE','FACULTATIVE','NOISE','NEAR_EARTH','M_RED','SUBSURFACE','DORMANT'],
+    x: 2920, y: 320 },
+  { id:'helios_prime', name:'HELIOS PRIME',               sector:'CORE SYSTEMS',
+    a:['SCORCHED','NONE','BREATHABLE','GEOTHERMAL_OPT','STRICT_ATMO','TECH_HZ','EARTH_OPTIMAL','F_YEL_WHT','SURFACE_RIVER','LOW'],
+    x: 1320, y: 1000 },
+  { id:'calanth',      name:'CALANTH',                    sector:'OUTER VEIL',
+    a:['STABLE','NONE','TOXIC_CO2','NONE','STRICT_ATMO','LOW_FREQ','HIGH_EARTH','K_ORANGE','MIXED','MODERATE'],
+    x: 1960, y: 460 },
+  { id:'marrow',       name:'MARROW',                     sector:'TRAILWARD',
+    a:['SCORCHED','NONE','BREATHABLE','NONE','FACULTATIVE','SILENT','LOW','M_RED','SUBSURFACE','DORMANT'],
+    x: 1480, y: 1980 },
+  { id:'aethra',       name:'AETHRA',                     sector:'CORE SYSTEMS',
+    a:['STABLE','NONE','BREATHABLE','SOLAR','STRICT_ATMO','TECH_HZ','HIGH_EARTH','K_ORANGE','SURFACE_OCEAN','LOW'],
+    x: 1400, y: 1240 },
+  { id:'niveris',      name:'NIVERIS',                    sector:'OUTER RIM',
+    a:['EXTREME_DIURNAL','NONE','BREATHABLE','NONE','STRICT_ATMO','LOW_FREQ','HIGH_EARTH','M_RED','FROZEN','ACTIVE'],
+    x: 2780, y: 540 },
 
   // ── Decoy worlds (near-target false positives) ──
   // Each matches 8–9 of 10 filters → stays in the candidate list until late.
@@ -444,12 +534,60 @@ window.bvtToggleView = function() {
 const BVT_MAP_W = 3200, BVT_MAP_H = 2067;
 let bvtMapImg = null;
 let bvtAnimReq = null;
+let bvtZoom = 1, bvtPanX = 0, bvtPanY = 0;
+let bvtDrag = null;
 
 function bvtLoadMapImg() {
   if (bvtMapImg) return;
   bvtMapImg = new Image();
   bvtMapImg.src = 'assets/images/starmap.jpg';
   bvtMapImg.onload = () => { if (bvtView === 'targeting') bvtDrawMiniMap(); };
+}
+
+window.bvtResetMapView = function() {
+  bvtZoom = 1; bvtPanX = 0; bvtPanY = 0;
+  bvtDrawMiniMap();
+};
+
+// Global window handlers (attached once, target current canvas)
+window.addEventListener('mousemove', e => {
+  if (!bvtDrag) return;
+  const dx = e.clientX - bvtDrag.sx, dy = e.clientY - bvtDrag.sy;
+  bvtPanX = bvtDrag.px + dx;
+  bvtPanY = bvtDrag.py + dy;
+  bvtDrawMiniMap();
+});
+window.addEventListener('mouseup', () => {
+  if (!bvtDrag) return;
+  const c = document.getElementById('bvtMiniMap');
+  if (c) c.style.cursor = 'grab';
+  bvtDrag = null;
+});
+
+function bvtAttachMapEvents() {
+  const canvas = document.getElementById('bvtMiniMap');
+  if (!canvas || canvas._bvtAttached) return;
+  canvas._bvtAttached = true;
+
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const factor = e.deltaY < 0 ? 1.18 : 1/1.18;
+    const newZoom = Math.max(1, Math.min(10, bvtZoom * factor));
+    const k = newZoom / bvtZoom;
+    bvtPanX = mx - (mx - bvtPanX) * k;
+    bvtPanY = my - (my - bvtPanY) * k;
+    bvtZoom = newZoom;
+    bvtDrawMiniMap();
+  }, { passive: false });
+
+  canvas.addEventListener('mousedown', e => {
+    bvtDrag = { sx: e.clientX, sy: e.clientY, px: bvtPanX, py: bvtPanY };
+    canvas.style.cursor = 'grabbing';
+  });
+  canvas.style.cursor = 'grab';
 }
 
 function bvtDrawPin(ctx, x, y, isQueen, t) {
@@ -501,10 +639,12 @@ function bvtDrawMiniMap() {
   ctx.fillStyle = '#000a10';
   ctx.fillRect(0, 0, cw, ch);
 
-  // Fit map preserving aspect ratio
-  const scale = Math.min(cw / BVT_MAP_W, ch / BVT_MAP_H);
+  // Fit map preserving aspect ratio + zoom/pan
+  const baseScale = Math.min(cw / BVT_MAP_W, ch / BVT_MAP_H);
+  const scale = baseScale * bvtZoom;
   const dw = BVT_MAP_W * scale, dh = BVT_MAP_H * scale;
-  const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
+  const dx = (cw - dw) / 2 + bvtPanX;
+  const dy = (ch - dh) / 2 + bvtPanY;
   if (bvtMapImg && bvtMapImg.complete) {
     ctx.globalAlpha = 0.55;
     ctx.drawImage(bvtMapImg, dx, dy, dw, dh);
@@ -642,6 +782,10 @@ function bvtRender() {
       </div>
       <div class="bvt-map-wrap">
         <canvas id="bvtMiniMap"></canvas>
+        <div class="bvt-map-controls">
+          <button class="bvt-map-ctrl" onclick="bvtResetMapView()" title="Reset view">⟲ FIT</button>
+          <div class="bvt-map-hint">⊙ WHEEL: ZOOM · DRAG: PAN</div>
+        </div>
       </div>
       ${noMatchHtml}
       ${showList ? `<div class="bvt-sys-list">${listHtml}</div>` : ''}
@@ -650,8 +794,8 @@ function bvtRender() {
 
   // Make sure image is loading and start animation
   bvtLoadMapImg();
-  // Render map after layout settles
-  requestAnimationFrame(bvtDrawMiniMap);
+  // Render map after layout settles, attach zoom/pan handlers
+  requestAnimationFrame(() => { bvtAttachMapEvents(); bvtDrawMiniMap(); });
   // Start pulse loop only if Queen is locked
   if (isSolved && !bvtAnimReq) bvtAnimReq = requestAnimationFrame(bvtAnimLoop);
 }

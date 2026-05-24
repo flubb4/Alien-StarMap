@@ -37,7 +37,15 @@
     --glow:    var(--amber-soft);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--bg); color:var(--text); font-family:"Share Tech Mono",monospace; height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+  body {
+    background:var(--bg); color:var(--text);
+    font-family:"Share Tech Mono",monospace;
+    height:100vh; overflow:hidden;
+    display:flex; flex-direction:column;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
 
   header {
     background:var(--panel);
@@ -97,7 +105,12 @@
   /* Cap markers list height so other sections stay reachable */
   .markers-list { max-height:180px; }
   .sidebar-section { padding:10px; border-bottom:1px solid var(--border); }
-  .sidebar-title { font-size:11px; letter-spacing:1.8px; color:var(--amber-hi); text-transform:uppercase; margin-bottom:9px; font-weight:700; }
+  .sidebar-title {
+    font-family:"Share Tech Mono",monospace;
+    font-size:12px; letter-spacing:1.5px;
+    color:var(--amber-hi); text-transform:uppercase;
+    margin-bottom:9px;
+  }
 
   .marker-types { display:flex; flex-direction:column; gap:4px; }
   .marker-btn {
@@ -186,7 +199,7 @@
     width:100%; background:transparent; border:1px solid var(--accent);
     color:var(--accent); font-family:"Share Tech Mono",monospace; font-size:12px;
     padding:9px; cursor:pointer; letter-spacing:1.8px; text-transform:uppercase;
-    transition:all 0.15s; font-weight:700;
+    transition:all 0.15s;
   }
   .dist-btn:hover { background:var(--amber-soft); box-shadow:0 0 10px var(--amber-glow); }
   .dist-result {

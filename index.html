@@ -669,7 +669,7 @@
         <div class="intercept-coords" id="interceptCoords">INTERCEPT COORDS: —</div>
         <button class="intercept-close" onclick="closeInterceptAlert()">Acknowledge // Dismiss</button>
         <div id="interceptShopBtn" style="display:none;margin-top:12px;text-align:center;">
-          <button onclick="shopGMOpen()" style="background:#0a1a05;border:2px solid #88cc44;color:#88cc44;font-family:'Courier New',monospace;font-size:13px;letter-spacing:3px;padding:12px 24px;cursor:pointer;width:100%;text-shadow:0 0 8px #88cc44;">🛒 OPEN TRADE TERMINAL</button>
+          <button onclick="shopGMOpen()" style="background:#11140f;border:2px solid #d8b26b;color:#ffcf7a;font-family:'Courier New',monospace;font-size:13px;letter-spacing:3px;padding:12px 24px;cursor:pointer;width:100%;text-shadow:0 0 8px rgba(216,178,107,0.6);">🛒 OPEN TRADE TERMINAL</button>
         </div>
       </div>
     </div>
@@ -781,7 +781,7 @@
           <button class="shop-nav-btn" onclick="shopSetCategory('weapons', this)">⚔  WEAPONS</button>
           <button class="shop-nav-btn" onclick="shopSetCategory('tech', this)">📡  TECH</button>
           <button class="shop-nav-btn" onclick="shopSetCategory('contraband', this)">☣  CONTRABAND</button>
-          <button class="shop-nav-btn" onclick="shopSetCategory('sell', this)">💰  SELL INTEL <span id="shopSellBadge" style="display:none;background:#cc4444;color:#fff;border-radius:8px;padding:0 5px;font-size:8px;margin-left:4px">0</span></button>
+          <button class="shop-nav-btn" onclick="shopSetCategory('sell', this)">💰  SELL INTEL <span id="shopSellBadge" style="display:none;background:#d66a5a;color:#0a0c0a;border-radius:8px;padding:0 5px;font-size:8px;margin-left:4px;font-weight:bold">0</span></button>
           <button class="shop-nav-btn" onclick="shopSetCategory('cart', this)" id="shopCartNavBtn">🛒  CART<span class="shop-nav-badge" id="shopCartBadge" style="display:none">0</span></button>
           <button class="shop-nav-btn" onclick="shopSetCategory('inventory', this)">🎒  INVENTORY</button>
         </nav>
@@ -801,8 +801,8 @@
         </div>
 
         <!-- GM: pending sell approvals -->
-        <div class="shop-gm-balances" id="shopGmSellPanel" style="display:none;border-color:#cc4444;margin-top:10px">
-          <div class="shop-gm-balances-title" style="color:#cc4444">⚠ SELL REQUESTS</div>
+        <div class="shop-gm-balances" id="shopGmSellPanel" style="display:none;border-color:#d66a5a;margin-top:10px">
+          <div class="shop-gm-balances-title" style="color:#d66a5a">⚠ SELL REQUESTS</div>
           <div id="shopGmSellList"></div>
         </div>
       </div>
@@ -815,8 +815,8 @@
     </div>
 
     <!-- Balance Editor (inline, toggled by GM above GM bar) -->
-    <div id="shopBalanceEditor" style="display:none;background:#060400;border-top:2px solid #2a5020;padding:18px 24px;flex-shrink:0;">
-      <div style="font-size:13px;letter-spacing:3px;color:#88cc44;margin-bottom:16px;">⚙ SET PLAYER BALANCES ($)</div>
+    <div id="shopBalanceEditor" style="display:none;background:#11140f;border-top:2px solid #4a3a20;padding:18px 24px;flex-shrink:0;">
+      <div style="font-size:13px;letter-spacing:3px;color:#ffcf7a;margin-bottom:16px;">⚙ SET PLAYER BALANCES ($)</div>
       <div class="shop-bal-grid" id="shopBalInputs"></div>
       <div style="display:flex;gap:12px;margin-top:4px;">
         <button onclick="shopGMApplyBalances()" class="shop-gm-btn">✓ APPLY</button>

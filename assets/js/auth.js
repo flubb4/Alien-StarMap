@@ -148,6 +148,7 @@ function _doLogin(nameUpper) {
       window.applySessionGateAfterLogin?.();
       window.updateSessionBtn?.();
       window.bvInit?.();
+      window.bvtInit?.();
       window.startGlobalIbWatcher?.();
       window.startHandoutWatcher?.();
       window.startPrputEvolveWatcher?.();

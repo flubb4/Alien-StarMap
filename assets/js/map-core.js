@@ -126,6 +126,7 @@ function draw() {
   if (window.drawDistanceLine) window.drawDistanceLine();
   if (window.drawShipPosition) window.drawShipPosition();
   if (window.drawTravelingShip) window.drawTravelingShip();
+  if (window.bvQueenLoc)        drawQueenPin(window.bvQueenLoc);
   ctx.restore();
 }
 window.draw = draw;
@@ -193,6 +194,73 @@ function drawMarker(m) {
   ctx.fillText(labelText, x, labelY);
   ctx.textBaseline = 'alphabetic';
 }
+
+// ---- Black Veil Queen Pin (set by black-veil-targeting.js via Firebase) ----
+window.bvQueenLoc = null;
+
+function drawQueenPin(loc) {
+  const x = loc.x, y = loc.y;
+  const t = (Date.now() % 1600) / 1600;
+  const pulseR = 28 + Math.sin(t * Math.PI * 2) * 10;
+
+  // Outer pulsing ring
+  ctx.strokeStyle = '#ff3a3a';
+  ctx.globalAlpha = 0.35 + 0.35 * Math.sin(t * Math.PI * 2);
+  ctx.lineWidth = 2 / viewScale;
+  ctx.beginPath(); ctx.arc(x, y, pulseR/viewScale, 0, Math.PI*2); ctx.stroke();
+  ctx.globalAlpha = 0.15;
+  ctx.beginPath(); ctx.arc(x, y, (pulseR+12)/viewScale, 0, Math.PI*2); ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Inner core
+  const coreR = 9/viewScale;
+  const glow = ctx.createRadialGradient(x, y, 0, x, y, coreR*3);
+  glow.addColorStop(0, 'rgba(255,58,58,0.85)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.arc(x, y, coreR*3, 0, Math.PI*2); ctx.fill();
+
+  ctx.fillStyle = '#ff3a3a';
+  ctx.beginPath(); ctx.arc(x, y, coreR, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(x, y, coreR*0.4, 0, Math.PI*2); ctx.fill();
+
+  // Label
+  ctx.font = 'bold ' + (14/viewScale) + 'px "Share Tech Mono",monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const labelY = y + (pulseR + 6)/viewScale;
+  const labelText = '⚠ ' + (loc.system || 'TARGET') + ' ⚠';
+  const lw = ctx.measureText(labelText).width + 16/viewScale;
+  const lh = 22/viewScale;
+  ctx.fillStyle = 'rgba(20,0,0,0.92)';
+  ctx.fillRect(x - lw/2, labelY, lw, lh);
+  ctx.strokeStyle = '#ff3a3a';
+  ctx.lineWidth = 1/viewScale;
+  ctx.strokeRect(x - lw/2, labelY, lw, lh);
+  ctx.lineWidth = 3/viewScale;
+  ctx.strokeStyle = '#000';
+  ctx.strokeText(labelText, x, labelY + 4/viewScale);
+  ctx.fillStyle = '#ff8888';
+  ctx.fillText(labelText, x, labelY + 4/viewScale);
+  ctx.textBaseline = 'alphabetic';
+}
+
+// Pulse animation loop (only while queen is set)
+let bvQueenAnimReq = null;
+function bvQueenAnimLoop() {
+  if (window.bvQueenLoc) {
+    draw();
+    bvQueenAnimReq = requestAnimationFrame(bvQueenAnimLoop);
+  } else {
+    bvQueenAnimReq = null;
+  }
+}
+onValue(ref(db, 'session/blackveil/queenLocation'), snap => {
+  window.bvQueenLoc = snap.val() || null;
+  if (window.bvQueenLoc && !bvQueenAnimReq) bvQueenAnimLoop();
+  draw();
+});
 
 // ---- Pan / Zoom ----
 function screenToMap(sx, sy) { return { x:(sx-viewX)/viewScale, y:(sy-viewY)/viewScale }; }

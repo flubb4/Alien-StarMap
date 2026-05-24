@@ -408,19 +408,33 @@ const BVT_SYSTEMS = [
     x: 2780, y: 540 },
 
   // ── Decoy worlds (near-target false positives) ──
-  // Each matches 8–9 of 10 filters → stays in the candidate list until late.
+  // Each matches 9 of 10 filters → stays in the candidate list until LATE.
+  // Schwachstellen sind über die Filter F5–F9 verteilt, damit jeder Filter
+  // mindestens einen Decoy eliminiert (= keine "leeren" Filter mehr).
   { id:'blacksite_gamma', name:'BLACKSITE GAMMA',         sector:'OUTER RIM',
-    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','K_ORANGE','MIXED','LOW'],
+    // fails F5 (STRICT_ATMO statt FACULTATIVE)
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','STRICT_ATMO','LOW_FREQ','EARTH_OPTIMAL','K_ORANGE','SUBSURFACE','DORMANT'],
     x: 2720, y: 360 },
+  { id:'kamino7',        name:'KAMINO-7',                 sector:'OUTER RIM',
+    // fails F6 (NOISE statt LOW_FREQ)
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','NOISE','EARTH_OPTIMAL','K_ORANGE','SUBSURFACE','DORMANT'],
+    x: 2600, y: 200 },
   { id:'tartarus12',     name:'TARTARUS XII',             sector:'TARTARUS SECTOR',
-    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','G_YELLOW','SUBSURFACE','DORMANT'],
+    // fails F7 (NEAR_EARTH statt EARTH_OPTIMAL)
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','NEAR_EARTH','K_ORANGE','SUBSURFACE','DORMANT'],
     x: 1440, y: 1860 },
-  { id:'nehrunmar3',     name:'NEHRUNMAR III',            sector:'OUTER VEIL',
-    a:['STABLE','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','K_ORANGE','SUBSURFACE','DORMANT'],
-    x: 1980, y: 600 },
   { id:'phlegethon4',    name:'PHLEGETHON IV',            sector:'TRAILWARD',
-    a:['EXTREME_DIURNAL','WEAK','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','K_ORANGE','SUBSURFACE','DORMANT'],
+    // fails F8 (G_YELLOW statt K_ORANGE)
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','G_YELLOW','SUBSURFACE','DORMANT'],
     x: 1020, y: 1760 },
+  { id:'revenant',       name:'REVENANT',                 sector:'TRAILWARD',
+    // fails F9 (MIXED statt SUBSURFACE)
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','K_ORANGE','MIXED','DORMANT'],
+    x: 760, y: 1620 },
+  { id:'nehrunmar3',     name:'NEHRUNMAR III',            sector:'OUTER VEIL',
+    // fails F10 (LOW statt DORMANT)
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','K_ORANGE','SUBSURFACE','LOW'],
+    x: 1980, y: 600 },
 
   // ── THE TARGET ──
   { id:'blacksite_theta', name:'BLACKSITE THETA', sector:'[REDACTED]',
@@ -534,7 +548,10 @@ window.bvtToggleView = function() {
 const BVT_MAP_W = 3200, BVT_MAP_H = 2067;
 let bvtMapImg = null;
 let bvtAnimReq = null;
-let bvtZoom = 1, bvtPanX = 0, bvtPanY = 0;
+// Absolute map origin (top-left of the drawn image) within canvas pixels.
+// null = "fit & centered" (computed on first draw).
+let bvtZoom = 1;
+let bvtMapX = null, bvtMapY = null;
 let bvtDrag = null;
 
 function bvtLoadMapImg() {
@@ -544,17 +561,21 @@ function bvtLoadMapImg() {
   bvtMapImg.onload = () => { if (bvtView === 'targeting') bvtDrawMiniMap(); };
 }
 
+function bvtBaseScale(canvas) {
+  return Math.min(canvas.width / BVT_MAP_W, canvas.height / BVT_MAP_H);
+}
+
 window.bvtResetMapView = function() {
-  bvtZoom = 1; bvtPanX = 0; bvtPanY = 0;
+  bvtZoom = 1;
+  bvtMapX = null; bvtMapY = null;  // will re-center on next draw
   bvtDrawMiniMap();
 };
 
-// Global window handlers (attached once, target current canvas)
+// Global window handlers (attached once)
 window.addEventListener('mousemove', e => {
   if (!bvtDrag) return;
-  const dx = e.clientX - bvtDrag.sx, dy = e.clientY - bvtDrag.sy;
-  bvtPanX = bvtDrag.px + dx;
-  bvtPanY = bvtDrag.py + dy;
+  bvtMapX = bvtDrag.mx + (e.clientX - bvtDrag.sx);
+  bvtMapY = bvtDrag.my + (e.clientY - bvtDrag.sy);
   bvtDrawMiniMap();
 });
 window.addEventListener('mouseup', () => {
@@ -576,15 +597,22 @@ function bvtAttachMapEvents() {
     const my = e.clientY - rect.top;
     const factor = e.deltaY < 0 ? 1.18 : 1/1.18;
     const newZoom = Math.max(1, Math.min(10, bvtZoom * factor));
-    const k = newZoom / bvtZoom;
-    bvtPanX = mx - (mx - bvtPanX) * k;
-    bvtPanY = my - (my - bvtPanY) * k;
+    if (newZoom === bvtZoom) return;
+    const base = bvtBaseScale(canvas);
+    const oldScale = base * bvtZoom;
+    const newScale = base * newZoom;
+    // Mouse position in map-space (3200x2067) BEFORE the zoom
+    const mapPtX = (mx - bvtMapX) / oldScale;
+    const mapPtY = (my - bvtMapY) / oldScale;
+    // Solve for new bvtMapX/Y so the same map point lands under the mouse
+    bvtMapX = mx - mapPtX * newScale;
+    bvtMapY = my - mapPtY * newScale;
     bvtZoom = newZoom;
     bvtDrawMiniMap();
   }, { passive: false });
 
   canvas.addEventListener('mousedown', e => {
-    bvtDrag = { sx: e.clientX, sy: e.clientY, px: bvtPanX, py: bvtPanY };
+    bvtDrag = { sx: e.clientX, sy: e.clientY, mx: bvtMapX, my: bvtMapY };
     canvas.style.cursor = 'grabbing';
   });
   canvas.style.cursor = 'grab';
@@ -611,16 +639,18 @@ function bvtDrawPin(ctx, x, y, isQueen, t) {
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI*2); ctx.fill();
   } else {
-    const glow = ctx.createRadialGradient(x, y, 0, x, y, 11);
-    glow.addColorStop(0, 'rgba(77,255,145,0.55)');
+    // Compact ring marker — leaves the actual star visible underneath
+    const glow = ctx.createRadialGradient(x, y, 0, x, y, 8);
+    glow.addColorStop(0, 'rgba(77,255,145,0.22)');
     glow.addColorStop(1, 'transparent');
     ctx.fillStyle = glow;
-    ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#4dff91';
-    ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#4dff91';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI*2); ctx.stroke();
+    ctx.lineWidth = 0.6;
+    ctx.strokeStyle = 'rgba(77,255,145,0.45)';
+    ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI*2); ctx.stroke();
   }
 }
 
@@ -640,13 +670,17 @@ function bvtDrawMiniMap() {
   ctx.fillRect(0, 0, cw, ch);
 
   // Fit map preserving aspect ratio + zoom/pan
-  const baseScale = Math.min(cw / BVT_MAP_W, ch / BVT_MAP_H);
+  const baseScale = bvtBaseScale(canvas);
   const scale = baseScale * bvtZoom;
   const dw = BVT_MAP_W * scale, dh = BVT_MAP_H * scale;
-  const dx = (cw - dw) / 2 + bvtPanX;
-  const dy = (ch - dh) / 2 + bvtPanY;
+  // First-draw or post-reset: center the map
+  if (bvtMapX === null || bvtMapY === null) {
+    bvtMapX = (cw - dw) / 2;
+    bvtMapY = (ch - dh) / 2;
+  }
+  const dx = bvtMapX, dy = bvtMapY;
   if (bvtMapImg && bvtMapImg.complete) {
-    ctx.globalAlpha = 0.55;
+    ctx.globalAlpha = 0.78;
     ctx.drawImage(bvtMapImg, dx, dy, dw, dh);
     ctx.globalAlpha = 1;
   }

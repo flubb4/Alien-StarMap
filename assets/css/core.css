@@ -46,13 +46,13 @@
     display:flex; align-items:center; justify-content:space-between;
     z-index:100; flex-shrink:0;
   }
-  header h1 { font-family:"Orbitron",sans-serif; font-size:13px; font-weight:900; letter-spacing:4px; color:var(--accent); text-shadow:0 0 16px var(--amber-glow); text-transform:uppercase; }
-  header .sub { font-size:9px; color:var(--dim); letter-spacing:2px; margin-top:2px; }
+  header h1 { font-family:"Orbitron",sans-serif; font-size:14px; font-weight:900; letter-spacing:3.5px; color:var(--accent); text-shadow:0 0 16px var(--amber-glow); text-transform:uppercase; }
+  header .sub { font-size:11px; color:var(--bone-2); letter-spacing:1.5px; margin-top:2px; }
   .header-right { display:flex; align-items:center; gap:14px; }
-  .user-badge { display:flex; align-items:center; gap:8px; background:var(--amber-soft); border:1px solid var(--border); padding:5px 11px; font-size:11px; }
+  .user-badge { display:flex; align-items:center; gap:8px; background:var(--amber-soft); border:1px solid var(--border); padding:5px 11px; font-size:12px; }
   .user-dot { width:8px; height:8px; border-radius:50%; animation:pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.25} }
-  .online-count { font-size:9px; color:var(--dim); letter-spacing:1px; }
+  .online-count { font-size:11px; color:var(--bone-2); letter-spacing:1px; }
 
   /* HEADER ACTION BUTTONS */
   .header-btn {
@@ -60,8 +60,8 @@
     border: 1px solid var(--hair);
     color: var(--bone-2);
     font-family: "Share Tech Mono", monospace;
-    font-size: 11px;
-    padding: 6px 14px;
+    font-size: 12px;
+    padding: 7px 14px;
     cursor: pointer;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -97,14 +97,14 @@
   /* Cap markers list height so other sections stay reachable */
   .markers-list { max-height:180px; }
   .sidebar-section { padding:10px; border-bottom:1px solid var(--border); }
-  .sidebar-title { font-size:8px; letter-spacing:3px; color:var(--dim); text-transform:uppercase; margin-bottom:8px; }
+  .sidebar-title { font-size:10px; letter-spacing:2px; color:var(--bone-2); text-transform:uppercase; margin-bottom:8px; }
 
   .marker-types { display:flex; flex-direction:column; gap:4px; }
   .marker-btn {
-    display:flex; align-items:center; gap:9px; padding:7px 9px;
+    display:flex; align-items:center; gap:9px; padding:8px 10px;
     background:transparent; border:1px solid var(--border); color:var(--text);
-    font-family:"Share Tech Mono",monospace; font-size:10px; cursor:pointer;
-    transition:all 0.15s; text-align:left; letter-spacing:1px;
+    font-family:"Share Tech Mono",monospace; font-size:12px; cursor:pointer;
+    transition:all 0.15s; text-align:left; letter-spacing:0.8px;
   }
   .marker-btn:hover,.marker-btn.active { border-color:var(--accent); background:var(--amber-soft); color:var(--accent); }
   .marker-btn.active { box-shadow:0 0 8px var(--amber-glow); }
@@ -118,14 +118,14 @@
   .markers-list { flex:1; overflow-y:auto; padding:6px; }
   .markers-list::-webkit-scrollbar{width:3px}
   .markers-list::-webkit-scrollbar-thumb{background:var(--border)}
-  .marker-item { display:flex; align-items:center; gap:7px; padding:6px 7px; border:1px solid transparent; margin-bottom:3px; font-size:10px; cursor:pointer; transition:all 0.12s; }
+  .marker-item { display:flex; align-items:center; gap:7px; padding:7px 8px; border:1px solid transparent; margin-bottom:3px; font-size:12px; cursor:pointer; transition:all 0.12s; }
   .marker-item:hover { border-color:var(--border); background:var(--panel-3); }
   .marker-item-info { flex:1; min-width:0; }
-  .marker-item-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:1px; }
-  .marker-item-meta { color:var(--dim); font-size:8px; margin-top:1px; }
-  .marker-item-del { background:none; border:none; color:var(--dim); cursor:pointer; font-size:11px; padding:1px 3px; transition:color 0.15s; }
+  .marker-item-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:0.8px; }
+  .marker-item-meta { color:var(--bone-2); font-size:10px; margin-top:2px; letter-spacing:0.5px; }
+  .marker-item-del { background:none; border:none; color:var(--dim); cursor:pointer; font-size:13px; padding:2px 4px; transition:color 0.15s; }
   .marker-item-del:hover { color:var(--accent2); }
-  .no-markers { text-align:center; color:var(--dim); font-size:10px; padding:18px; letter-spacing:1px; line-height:2; }
+  .no-markers { text-align:center; color:var(--bone-2); font-size:11px; padding:18px; letter-spacing:1px; line-height:1.9; }
 
   .map-wrap { flex:1; position:relative; overflow:hidden; cursor:crosshair; background:var(--ink); }
   #mapCanvas { position:absolute; top:0; left:0; width:100%; height:100%; }
@@ -139,27 +139,27 @@
 
   .tooltip {
     position:absolute; background:var(--panel); border:1px solid var(--accent);
-    padding:8px 12px; font-size:10px; pointer-events:none; z-index:200; display:none;
-    max-width:200px; box-shadow:0 0 18px var(--amber-glow);
+    padding:9px 13px; font-size:12px; pointer-events:none; z-index:200; display:none;
+    max-width:220px; box-shadow:0 0 18px var(--amber-glow);
   }
   .tooltip.visible{display:block}
-  .tooltip-name{color:var(--accent);letter-spacing:1px;font-weight:bold;margin-bottom:3px}
-  .tooltip-meta{color:var(--dim);font-size:9px;letter-spacing:0.5px}
-  .tooltip-note{color:var(--bone-2);font-size:9px;margin-top:3px}
+  .tooltip-name{color:var(--accent);letter-spacing:1px;font-weight:bold;margin-bottom:4px;font-size:13px}
+  .tooltip-meta{color:var(--bone-2);font-size:11px;letter-spacing:0.5px}
+  .tooltip-note{color:var(--bone-2);font-size:11px;margin-top:4px;line-height:1.5}
 
   .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.80); z-index:500; display:none; align-items:center; justify-content:center; }
   .modal-overlay.open{display:flex}
-  .modal { background:var(--panel); border:1px solid var(--accent); padding:22px; width:310px; box-shadow:0 0 36px var(--amber-glow); }
-  .modal h3 { font-family:"Orbitron",sans-serif; font-size:11px; letter-spacing:3px; color:var(--accent); margin-bottom:14px; text-transform:uppercase; }
-  .modal input,.modal textarea { width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text); font-family:"Share Tech Mono",monospace; font-size:11px; padding:7px 9px; margin-bottom:10px; outline:none; letter-spacing:1px; resize:none; }
+  .modal { background:var(--panel); border:1px solid var(--accent); padding:22px; width:330px; box-shadow:0 0 36px var(--amber-glow); }
+  .modal h3 { font-family:"Orbitron",sans-serif; font-size:13px; letter-spacing:2.5px; color:var(--accent); margin-bottom:14px; text-transform:uppercase; }
+  .modal input,.modal textarea { width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text); font-family:"Share Tech Mono",monospace; font-size:13px; padding:8px 10px; margin-bottom:10px; outline:none; letter-spacing:0.8px; resize:none; }
   .modal input:focus,.modal textarea:focus{border-color:var(--accent)}
   .modal-btns{display:flex;gap:7px;justify-content:flex-end}
-  .btn{background:transparent;border:1px solid var(--border);color:var(--text);font-family:"Share Tech Mono",monospace;font-size:10px;padding:7px 14px;cursor:pointer;letter-spacing:2px;transition:all 0.15s;text-transform:uppercase}
+  .btn{background:transparent;border:1px solid var(--border);color:var(--text);font-family:"Share Tech Mono",monospace;font-size:11px;padding:8px 16px;cursor:pointer;letter-spacing:1.5px;transition:all 0.15s;text-transform:uppercase}
   .btn:hover{border-color:var(--dim)}
   .btn.primary{border-color:var(--accent);color:var(--accent)}
   .btn.primary:hover{background:var(--amber-soft);box-shadow:0 0 8px var(--amber-glow)}
 
-  .statusbar { background:var(--panel); border-top:1px solid var(--border); padding:4px 14px; display:flex; align-items:center; justify-content:space-between; font-size:8px; color:var(--dim); letter-spacing:1.5px; flex-shrink:0; }
+  .statusbar { background:var(--panel); border-top:1px solid var(--border); padding:5px 14px; display:flex; align-items:center; justify-content:space-between; font-size:10px; color:var(--bone-2); letter-spacing:1.2px; flex-shrink:0; }
   .status-left{display:flex;gap:18px;align-items:center}
   .status-live{color:var(--green);display:flex;align-items:center;gap:4px}
   .status-live::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
@@ -174,8 +174,8 @@
   .dist-selects { display:flex; flex-direction:column; gap:5px; margin-bottom:8px; }
   .dist-select {
     width:100%; background:var(--panel-2); border:1px solid var(--border);
-    color:var(--bone-2); font-family:"Share Tech Mono",monospace; font-size:10px;
-    padding:6px 8px; outline:none; cursor:pointer; letter-spacing:1px;
+    color:var(--bone); font-family:"Share Tech Mono",monospace; font-size:12px;
+    padding:7px 9px; outline:none; cursor:pointer; letter-spacing:0.8px;
     -webkit-appearance: none; appearance: none;
   }
   .dist-select option {
@@ -184,8 +184,8 @@
   .dist-select:focus { border-color:var(--accent); }
   .dist-btn {
     width:100%; background:transparent; border:1px solid var(--accent);
-    color:var(--accent); font-family:"Share Tech Mono",monospace; font-size:9px;
-    padding:7px; cursor:pointer; letter-spacing:3px; text-transform:uppercase;
+    color:var(--accent); font-family:"Share Tech Mono",monospace; font-size:11px;
+    padding:8px; cursor:pointer; letter-spacing:2px; text-transform:uppercase;
     transition:all 0.15s;
   }
   .dist-btn:hover { background:var(--amber-soft); }
@@ -195,14 +195,14 @@
   }
   .dist-result.visible { display:block; }
   .dist-result-val {
-    font-family:"Orbitron",sans-serif; font-size:14px; color:var(--accent);
-    text-shadow:0 0 12px var(--amber-glow); letter-spacing:2px; text-align:center;
+    font-family:"Orbitron",sans-serif; font-size:16px; color:var(--accent);
+    text-shadow:0 0 12px var(--amber-glow); letter-spacing:1.5px; text-align:center;
   }
-  .dist-result-sub { font-size:10px; color:var(--bone-2); letter-spacing:1px; text-align:center; margin-top:5px; }
+  .dist-result-sub { font-size:11px; color:var(--bone-2); letter-spacing:0.8px; text-align:center; margin-top:5px; }
   .dist-line-toggle {
     width:100%; background:transparent; border:1px solid var(--border);
-    color:var(--dim); font-family:"Share Tech Mono",monospace; font-size:9px;
-    padding:5px; cursor:pointer; letter-spacing:2px; margin-top:5px;
+    color:var(--bone-2); font-family:"Share Tech Mono",monospace; font-size:11px;
+    padding:6px; cursor:pointer; letter-spacing:1.5px; margin-top:5px;
     transition:all 0.15s; text-transform:uppercase;
   }
   .dist-line-toggle:hover { border-color:var(--dim); color:var(--text); }
@@ -220,8 +220,8 @@
   .travel-section { padding:10px; border-bottom:1px solid var(--border); }
   .travel-btn {
     width:100%; background:transparent; border:1px solid var(--dim-2);
-    color:var(--dim); font-family:"Share Tech Mono",monospace; font-size:9px;
-    padding:7px; cursor:not-allowed; letter-spacing:2px; text-transform:uppercase;
+    color:var(--bone-2); font-family:"Share Tech Mono",monospace; font-size:11px;
+    padding:8px; cursor:not-allowed; letter-spacing:1.5px; text-transform:uppercase;
     transition:all 0.2s; margin-top:5px;
   }
   .travel-btn.enabled {
@@ -235,8 +235,8 @@
   @keyframes travelPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
   .travel-status {
-    font-size:9px; color:var(--dim); letter-spacing:1px; text-align:center;
-    margin-top:6px; min-height:12px; line-height:1.6;
+    font-size:11px; color:var(--bone-2); letter-spacing:0.8px; text-align:center;
+    margin-top:6px; min-height:14px; line-height:1.6;
   }
   .travel-status.active { color:var(--chart); }
 
@@ -244,8 +244,8 @@
   /* POSITION MARKER button */
   .pos-btn {
     width:100%; background:transparent; border:1px solid var(--border);
-    color:var(--dim); font-family:"Share Tech Mono",monospace; font-size:9px;
-    padding:6px; cursor:pointer; letter-spacing:2px; text-transform:uppercase;
+    color:var(--bone-2); font-family:"Share Tech Mono",monospace; font-size:11px;
+    padding:7px; cursor:pointer; letter-spacing:1.5px; text-transform:uppercase;
     transition:all 0.15s; margin-bottom:4px;
   }
   .pos-btn:hover { border-color:var(--accent); color:var(--accent); }
@@ -260,16 +260,16 @@
     padding:5px 12px; border:1px solid var(--border);
     background:var(--amber-soft);
   }
-  .date-label { font-size:8px; color:var(--dim); letter-spacing:2px; }
+  .date-label { font-size:10px; color:var(--bone-2); letter-spacing:1.5px; }
   .date-value {
-    font-family:"Orbitron",sans-serif; font-size:12px;
-    color:var(--chart); letter-spacing:2px;
+    font-family:"Orbitron",sans-serif; font-size:13px;
+    color:var(--chart); letter-spacing:1.5px;
     text-shadow:0 0 10px rgba(212,209,104,0.4);
   }
   .date-edit-btn {
     background:none; border:1px solid var(--chart); color:var(--chart);
-    font-family:"Share Tech Mono",monospace; font-size:9px;
-    padding:2px 8px; cursor:pointer; letter-spacing:1px;
+    font-family:"Share Tech Mono",monospace; font-size:10px;
+    padding:3px 9px; cursor:pointer; letter-spacing:1px;
     transition:all 0.15s; display:none;
   }
   .date-edit-btn:hover { background:rgba(212,209,104,0.1); }
@@ -289,7 +289,7 @@
   .date-adj-btn {
     flex:1; background:transparent; border:1px solid var(--border);
     color:var(--text); font-family:"Share Tech Mono",monospace;
-    font-size:9px; padding:6px 4px; cursor:pointer; letter-spacing:1px;
+    font-size:11px; padding:7px 5px; cursor:pointer; letter-spacing:0.8px;
     transition:all 0.15s; text-align:center;
   }
   .date-adj-btn:hover { border-color:var(--chart); color:var(--chart); }
@@ -365,20 +365,20 @@
   /* GM INTERCEPT CONTROLS */
   .gm-section { padding:10px; border-bottom:1px solid var(--border); display:none; }
   .gm-section.visible { display:block; }
-  .gm-title { font-size:8px; letter-spacing:3px; color:var(--rust); text-transform:uppercase; margin-bottom:8px; }
+  .gm-title { font-size:10px; letter-spacing:2px; color:var(--rust); text-transform:uppercase; margin-bottom:8px; }
   /* colour-only — layout comes from .gm-dd-btn */
   .gm-intercept-btn { border-color:var(--rust); color:var(--rust); background:rgba(198,66,37,0.07); }
   .gm-intercept-btn:hover { background:rgba(198,66,37,0.18); box-shadow:0 0 12px var(--rust-glow); }
   .gm-intercept-btn:disabled { opacity:0.35; cursor:not-allowed; border-color:var(--dim-2); color:var(--dim-2); }
   .chance-bar-wrap { margin-top:4px; }
-  .chance-bar-label { display:flex; justify-content:space-between; font-size:9px; color:var(--dim); letter-spacing:1px; margin-bottom:4px; }
+  .chance-bar-label { display:flex; justify-content:space-between; font-size:11px; color:var(--bone-2); letter-spacing:0.8px; margin-bottom:4px; }
   .chance-bar-label span { color:var(--chart); }
   .chance-bar-track { height:6px; background:var(--panel-2); border:1px solid var(--border); position:relative; }
   .chance-bar-fill { height:100%; background:linear-gradient(to right, var(--amber), var(--rust)); transition:width 0.5s ease; }
   .chance-reset-btn {
     width:100%; background:transparent; border:1px solid var(--border);
-    color:var(--dim); font-family:"Share Tech Mono",monospace; font-size:8px;
-    padding:4px; cursor:pointer; letter-spacing:2px; margin-top:5px;
+    color:var(--bone-2); font-family:"Share Tech Mono",monospace; font-size:10px;
+    padding:5px; cursor:pointer; letter-spacing:1.5px; margin-top:5px;
     transition:all 0.15s; text-transform:uppercase;
   }
   .chance-reset-btn:hover { border-color:var(--chart); color:var(--chart); }
@@ -422,15 +422,15 @@
 
   /* USERNAME INPUT on login */
   .pw-input-wrap { width:100%; display:flex; flex-direction:column; gap:8px; }
-  .pw-label { font-size:8px; color:var(--dim); letter-spacing:3px; text-transform:uppercase; }
+  .pw-label { font-size:10px; color:var(--bone-2); letter-spacing:2.5px; text-transform:uppercase; }
 
   /* ONLINE PLAYERS PANEL */
   .players-section { padding:10px; border-bottom:1px solid var(--border); }
 
-  .player-entry { display:flex; align-items:center; gap:8px; padding:4px 0; font-size:10px; letter-spacing:1px; }
+  .player-entry { display:flex; align-items:center; gap:8px; padding:5px 0; font-size:12px; letter-spacing:0.8px; }
   .player-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
   .player-name { flex:1; }
-  .player-you { font-size:8px; color:var(--dim); }
+  .player-you { font-size:10px; color:var(--bone-2); letter-spacing:0.5px; }
 
   /* PING animation */
   @keyframes pingRing {
@@ -547,7 +547,7 @@
   }
   #gm-broadcast-panel.open { display: flex; }
   .gm-bc-title {
-    color: var(--accent); font-size: 10px; letter-spacing: 5px;
+    color: var(--accent); font-size: 12px; letter-spacing: 3.5px;
     margin-bottom: 14px; padding-bottom: 10px;
     border-bottom: 1px solid var(--hair); flex-shrink: 0;
   }
@@ -567,7 +567,7 @@
     padding: 7px 0; border-bottom: 1px solid var(--hair-soft);
   }
   .gm-bc-row-text {
-    flex: 1; font-size: 11px; color: var(--bone-2); letter-spacing: 1px;
+    flex: 1; font-size: 12px; color: var(--bone); letter-spacing: 0.8px;
   }
   .gm-bc-del {
     background: none; border: none; color: var(--dim-2);
@@ -576,8 +576,8 @@
   }
   .gm-bc-del:hover { color: var(--rust); }
   .gm-bc-empty {
-    display: block; font-size: 10px; color: var(--dim-2);
-    letter-spacing: 2px; padding: 12px 0;
+    display: block; font-size: 11px; color: var(--bone-2);
+    letter-spacing: 1.5px; padding: 12px 0;
   }
   .gm-bc-add-row {
     display: flex; gap: 8px; flex-shrink: 0;
@@ -585,15 +585,15 @@
   }
   #gm-bc-new {
     flex: 1; background: var(--ink); border: 1px solid var(--hair);
-    color: var(--bone-2); font-family: 'Share Tech Mono', monospace;
-    font-size: 11px; letter-spacing: 1px; padding: 8px 10px; outline: none;
+    color: var(--bone); font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; letter-spacing: 0.8px; padding: 9px 11px; outline: none;
   }
   #gm-bc-new:focus { border-color: var(--accent); }
-  #gm-bc-new::placeholder { color: var(--dim-2); }
+  #gm-bc-new::placeholder { color: var(--dim); }
   #gm-bc-add-btn {
     background: transparent; border: 1px solid var(--accent);
     color: var(--accent); font-family: 'Share Tech Mono', monospace;
-    font-size: 9px; letter-spacing: 3px; padding: 8px 16px;
+    font-size: 11px; letter-spacing: 2px; padding: 9px 18px;
     cursor: pointer; text-transform: uppercase; flex-shrink: 0;
   }
   #gm-bc-add-btn:hover { background: var(--amber-soft); }
@@ -608,8 +608,8 @@
     border: 1px solid var(--rust);
     color: var(--rust);
     font-family: "Share Tech Mono", monospace;
-    font-size: 12px; padding: 7px 16px;
-    cursor: pointer; letter-spacing: 2px;
+    font-size: 13px; padding: 8px 18px;
+    cursor: pointer; letter-spacing: 1.8px;
     transition: all 0.2s; text-transform: uppercase;
     white-space: nowrap;
   }
@@ -634,7 +634,7 @@
   .gm-dropdown.open { display: block; }
 
   .gm-dropdown-title {
-    font-size: 10px; letter-spacing: 3px;
+    font-size: 11px; letter-spacing: 2.5px;
     color: var(--rust); text-transform: uppercase;
     margin-bottom: 8px; margin-top: 2px;
   }
@@ -661,7 +661,7 @@
   .gm-submenu.open .gm-submenu-arrow { transform: rotate(90deg); }
   .gm-submenu-items  { display: none; padding-left: 10px; }
   .gm-submenu.open .gm-submenu-items { display: block; }
-  .gm-dropdown .gm-dd-sub { font-size: 11px !important; color: #5a7a6a !important; border-color: #1a2e22 !important; }
+  .gm-dropdown .gm-dd-sub { font-size: 12px !important; color: #8aa898 !important; border-color: #2a4030 !important; }
   .gm-dropdown .gm-dd-sub:hover { color: var(--amber) !important; border-color: var(--amber) !important; }
 
   /* Colour overrides — two classes = specificity 0,2,0, beats .gm-dropdown button */

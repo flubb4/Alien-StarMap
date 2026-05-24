@@ -168,14 +168,29 @@ function drawMarker(m) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(icon, x, cy2);
 
-  ctx.font = 'bold ' + (11/viewScale) + 'px "Share Tech Mono",monospace';
+  ctx.font = 'bold ' + (13/viewScale) + 'px "Share Tech Mono",monospace';
   ctx.textBaseline = 'top'; ctx.textAlign = 'center';
-  const labelY = y - stemH + 5/viewScale;
-  const lw = ctx.measureText(m.name.toUpperCase()).width + 12/viewScale;
-  ctx.fillStyle = 'rgba(4,17,26,0.88)';
-  ctx.fillRect(x - lw/2, labelY - 2/viewScale, lw, 16/viewScale);
+  const labelText = m.name.toUpperCase();
+  const labelY = y - stemH + 6/viewScale;
+  const lw = ctx.measureText(labelText).width + 16/viewScale;
+  const lh = 20/viewScale;
+  const lx = x - lw/2, ly = labelY - 3/viewScale;
+  // Pillbox background
+  ctx.fillStyle = 'rgba(4,17,26,0.96)';
+  ctx.fillRect(lx, ly, lw, lh);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1/viewScale;
+  ctx.globalAlpha = 0.55;
+  ctx.strokeRect(lx, ly, lw, lh);
+  ctx.globalAlpha = 1;
+  // Text with black outline for contrast on any marker color
+  ctx.lineJoin = 'round';
+  ctx.miterLimit = 2;
+  ctx.lineWidth = 3/viewScale;
+  ctx.strokeStyle = '#000';
+  ctx.strokeText(labelText, x, labelY);
   ctx.fillStyle = color;
-  ctx.fillText(m.name.toUpperCase(), x, labelY);
+  ctx.fillText(labelText, x, labelY);
   ctx.textBaseline = 'alphabetic';
 }
 

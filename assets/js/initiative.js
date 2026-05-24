@@ -1513,14 +1513,21 @@ function drawShipPosition() {
   ctx.fillText('🚀', x, y);
 
   // Label
-  ctx.font = 'bold ' + (11/viewScale) + 'px "Share Tech Mono",monospace';
+  ctx.font = 'bold ' + (13/viewScale) + 'px "Share Tech Mono",monospace';
   ctx.textBaseline = 'top'; ctx.textAlign = 'center';
   const label = 'CM-90S CORVUS';
-  const lw = ctx.measureText(label).width + 12/viewScale;
-  ctx.fillStyle = 'rgba(4,17,26,0.88)';
-  ctx.fillRect(x-lw/2, y+r+2/viewScale, lw, 16/viewScale);
+  const lw = ctx.measureText(label).width + 16/viewScale;
+  const ly = y+r+2/viewScale;
+  ctx.fillStyle = 'rgba(4,17,26,0.96)';
+  ctx.fillRect(x-lw/2, ly, lw, 20/viewScale);
+  ctx.strokeStyle = '#44ff88'; ctx.lineWidth = 1/viewScale; ctx.globalAlpha = 0.55;
+  ctx.strokeRect(x-lw/2, ly, lw, 20/viewScale);
+  ctx.globalAlpha = 1;
+  ctx.lineJoin = 'round'; ctx.miterLimit = 2;
+  ctx.lineWidth = 3/viewScale; ctx.strokeStyle = '#000';
+  ctx.strokeText(label, x, y+r+5/viewScale);
   ctx.fillStyle = '#44ff88';
-  ctx.fillText(label, x, y+r+4/viewScale);
+  ctx.fillText(label, x, y+r+5/viewScale);
   ctx.textBaseline = 'alphabetic';
 }
 
@@ -1555,14 +1562,23 @@ function drawRouteLine() {
   const mx = (a.x+b.x)/2, my = (a.y+b.y)/2;
   const dist = Math.sqrt((b.x-a.x)**2+(b.y-a.y)**2);
   const pc   = (dist/PX_PER_PARSEC).toFixed(2);
-  ctx.font = 'bold '+(12/viewScale)+'px "Share Tech Mono",monospace';
+  ctx.font = 'bold '+(13/viewScale)+'px "Share Tech Mono",monospace';
   ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-  const lw = ctx.measureText(pc+' pc').width+12/viewScale;
-  ctx.globalAlpha = 0.92;
-  ctx.fillStyle = 'rgba(4,17,26,0.9)';
-  ctx.fillRect(mx-lw/2, my-17/viewScale, lw, 16/viewScale);
-  ctx.fillStyle = '#ffcc00'; ctx.shadowBlur=0;
-  ctx.fillText(pc+' pc', mx, my-3/viewScale);
+  const label = pc+' pc';
+  const lw = ctx.measureText(label).width+16/viewScale;
+  const lh = 20/viewScale;
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = 'rgba(4,17,26,0.96)';
+  ctx.fillRect(mx-lw/2, my-lh-3/viewScale, lw, lh);
+  ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 1/viewScale; ctx.globalAlpha = 0.55;
+  ctx.strokeRect(mx-lw/2, my-lh-3/viewScale, lw, lh);
+  ctx.globalAlpha = 1;
+  ctx.lineJoin = 'round'; ctx.miterLimit = 2;
+  ctx.lineWidth = 3/viewScale; ctx.strokeStyle = '#000';
+  ctx.shadowBlur = 0;
+  ctx.strokeText(label, mx, my-5/viewScale);
+  ctx.fillStyle = '#ffcc00';
+  ctx.fillText(label, mx, my-5/viewScale);
   ctx.restore();
 }
 
@@ -1653,13 +1669,20 @@ function drawTravelingShip() {
     const remaining = Math.max(0, travelState.durationMs - (Date.now()-travelState.startTs));
     const secs = Math.ceil(remaining/1000);
     const label = 'IN TRANSIT — '+secs+'s';
-    ctx.font='bold '+(11/viewScale)+'px "Share Tech Mono",monospace';
+    ctx.font='bold '+(13/viewScale)+'px "Share Tech Mono",monospace';
     ctx.textBaseline='top'; ctx.textAlign='center';
-    const lw=ctx.measureText(label).width+12/viewScale;
-    ctx.fillStyle='rgba(4,17,26,0.88)';
-    ctx.fillRect(x-lw/2,y+r+2/viewScale,lw,16/viewScale);
+    const lw=ctx.measureText(label).width+16/viewScale;
+    const ly = y+r+2/viewScale;
+    ctx.fillStyle='rgba(4,17,26,0.96)';
+    ctx.fillRect(x-lw/2,ly,lw,20/viewScale);
+    ctx.strokeStyle='#ffcc00'; ctx.lineWidth=1/viewScale; ctx.globalAlpha=0.55;
+    ctx.strokeRect(x-lw/2,ly,lw,20/viewScale);
+    ctx.globalAlpha=1;
+    ctx.lineJoin='round'; ctx.miterLimit=2;
+    ctx.lineWidth=3/viewScale; ctx.strokeStyle='#000';
+    ctx.strokeText(label,x,y+r+5/viewScale);
     ctx.fillStyle='#ffcc00';
-    ctx.fillText(label,x,y+r+4/viewScale);
+    ctx.fillText(label,x,y+r+5/viewScale);
     ctx.textBaseline='alphabetic';
   }
 }
@@ -1871,17 +1894,24 @@ function drawDistanceLine() {
   const dist = Math.sqrt(dx*dx+dy*dy);
   const parsecs = (dist / PX_PER_PARSEC).toFixed(2);
 
-  ctx.font = 'bold ' + (12/viewScale) + 'px "Share Tech Mono",monospace';
+  ctx.font = 'bold ' + (13/viewScale) + 'px "Share Tech Mono",monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   const label = parsecs + ' pc';
-  const lw = ctx.measureText(label).width + 12/viewScale;
-  ctx.globalAlpha = 0.92;
-  ctx.fillStyle = 'rgba(4,17,26,0.9)';
-  ctx.fillRect(mx - lw/2, my - 17/viewScale, lw, 16/viewScale);
-  ctx.fillStyle = '#ffcc00';
+  const lw = ctx.measureText(label).width + 16/viewScale;
+  const lh = 20/viewScale;
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = 'rgba(4,17,26,0.96)';
+  ctx.fillRect(mx - lw/2, my - lh - 3/viewScale, lw, lh);
+  ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 1/viewScale; ctx.globalAlpha = 0.55;
+  ctx.strokeRect(mx - lw/2, my - lh - 3/viewScale, lw, lh);
+  ctx.globalAlpha = 1;
+  ctx.lineJoin = 'round'; ctx.miterLimit = 2;
+  ctx.lineWidth = 3/viewScale; ctx.strokeStyle = '#000';
   ctx.shadowBlur = 0;
-  ctx.fillText(label, mx, my - 3/viewScale);
+  ctx.strokeText(label, mx, my - 5/viewScale);
+  ctx.fillStyle = '#ffcc00';
+  ctx.fillText(label, mx, my - 5/viewScale);
   ctx.restore();
 }
 

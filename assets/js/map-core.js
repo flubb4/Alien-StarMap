@@ -164,16 +164,16 @@ function drawMarker(m) {
   ctx.lineWidth = 1.5/viewScale;
   ctx.beginPath(); ctx.arc(x, cy2, r, 0, Math.PI*2); ctx.stroke();
 
-  ctx.font = (13/viewScale) + 'px serif';
+  ctx.font = (15/viewScale) + 'px serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(icon, x, cy2);
 
-  ctx.font = 'bold ' + (9/viewScale) + 'px "Share Tech Mono",monospace';
+  ctx.font = 'bold ' + (11/viewScale) + 'px "Share Tech Mono",monospace';
   ctx.textBaseline = 'top'; ctx.textAlign = 'center';
-  const labelY = y - stemH + 4/viewScale;
-  const lw = ctx.measureText(m.name.toUpperCase()).width + 10/viewScale;
-  ctx.fillStyle = 'rgba(4,17,26,0.82)';
-  ctx.fillRect(x - lw/2, labelY - 1/viewScale, lw, 13/viewScale);
+  const labelY = y - stemH + 5/viewScale;
+  const lw = ctx.measureText(m.name.toUpperCase()).width + 12/viewScale;
+  ctx.fillStyle = 'rgba(4,17,26,0.88)';
+  ctx.fillRect(x - lw/2, labelY - 2/viewScale, lw, 16/viewScale);
   ctx.fillStyle = color;
   ctx.fillText(m.name.toUpperCase(), x, labelY);
   ctx.textBaseline = 'alphabetic';

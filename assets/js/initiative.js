@@ -1508,19 +1508,19 @@ function drawShipPosition() {
   ctx.shadowBlur  = 0;
 
   // Ship icon
-  ctx.font = (13/viewScale) + 'px serif';
+  ctx.font = (15/viewScale) + 'px serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('🚀', x, y);
 
   // Label
-  ctx.font = 'bold ' + (9/viewScale) + 'px "Share Tech Mono",monospace';
+  ctx.font = 'bold ' + (11/viewScale) + 'px "Share Tech Mono",monospace';
   ctx.textBaseline = 'top'; ctx.textAlign = 'center';
   const label = 'CM-90S CORVUS';
-  const lw = ctx.measureText(label).width + 10/viewScale;
-  ctx.fillStyle = 'rgba(4,17,26,0.85)';
-  ctx.fillRect(x-lw/2, y+r+2/viewScale, lw, 13/viewScale);
+  const lw = ctx.measureText(label).width + 12/viewScale;
+  ctx.fillStyle = 'rgba(4,17,26,0.88)';
+  ctx.fillRect(x-lw/2, y+r+2/viewScale, lw, 16/viewScale);
   ctx.fillStyle = '#44ff88';
-  ctx.fillText(label, x, y+r+3/viewScale);
+  ctx.fillText(label, x, y+r+4/viewScale);
   ctx.textBaseline = 'alphabetic';
 }
 
@@ -1555,14 +1555,14 @@ function drawRouteLine() {
   const mx = (a.x+b.x)/2, my = (a.y+b.y)/2;
   const dist = Math.sqrt((b.x-a.x)**2+(b.y-a.y)**2);
   const pc   = (dist/PX_PER_PARSEC).toFixed(2);
-  ctx.font = 'bold '+(10/viewScale)+'px "Share Tech Mono",monospace';
+  ctx.font = 'bold '+(12/viewScale)+'px "Share Tech Mono",monospace';
   ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-  const lw = ctx.measureText(pc+' pc').width+10/viewScale;
-  ctx.globalAlpha = 0.88;
-  ctx.fillStyle = 'rgba(4,17,26,0.85)';
-  ctx.fillRect(mx-lw/2, my-14/viewScale, lw, 13/viewScale);
+  const lw = ctx.measureText(pc+' pc').width+12/viewScale;
+  ctx.globalAlpha = 0.92;
+  ctx.fillStyle = 'rgba(4,17,26,0.9)';
+  ctx.fillRect(mx-lw/2, my-17/viewScale, lw, 16/viewScale);
   ctx.fillStyle = '#ffcc00'; ctx.shadowBlur=0;
-  ctx.fillText(pc+' pc', mx, my-2/viewScale);
+  ctx.fillText(pc+' pc', mx, my-3/viewScale);
   ctx.restore();
 }
 
@@ -1644,7 +1644,7 @@ function drawTravelingShip() {
   ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.stroke();
   ctx.shadowBlur=0;
 
-  ctx.font=(13/viewScale)+'px serif';
+  ctx.font=(15/viewScale)+'px serif';
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText('🚀',x,y);
 
@@ -1653,13 +1653,13 @@ function drawTravelingShip() {
     const remaining = Math.max(0, travelState.durationMs - (Date.now()-travelState.startTs));
     const secs = Math.ceil(remaining/1000);
     const label = 'IN TRANSIT — '+secs+'s';
-    ctx.font='bold '+(9/viewScale)+'px "Share Tech Mono",monospace';
+    ctx.font='bold '+(11/viewScale)+'px "Share Tech Mono",monospace';
     ctx.textBaseline='top'; ctx.textAlign='center';
-    const lw=ctx.measureText(label).width+10/viewScale;
-    ctx.fillStyle='rgba(4,17,26,0.85)';
-    ctx.fillRect(x-lw/2,y+r+2/viewScale,lw,13/viewScale);
+    const lw=ctx.measureText(label).width+12/viewScale;
+    ctx.fillStyle='rgba(4,17,26,0.88)';
+    ctx.fillRect(x-lw/2,y+r+2/viewScale,lw,16/viewScale);
     ctx.fillStyle='#ffcc00';
-    ctx.fillText(label,x,y+r+3/viewScale);
+    ctx.fillText(label,x,y+r+4/viewScale);
     ctx.textBaseline='alphabetic';
   }
 }
@@ -1871,17 +1871,17 @@ function drawDistanceLine() {
   const dist = Math.sqrt(dx*dx+dy*dy);
   const parsecs = (dist / PX_PER_PARSEC).toFixed(2);
 
-  ctx.font = 'bold ' + (10/viewScale) + 'px "Share Tech Mono",monospace';
+  ctx.font = 'bold ' + (12/viewScale) + 'px "Share Tech Mono",monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   const label = parsecs + ' pc';
-  const lw = ctx.measureText(label).width + 10/viewScale;
-  ctx.globalAlpha = 0.88;
-  ctx.fillStyle = 'rgba(4,17,26,0.85)';
-  ctx.fillRect(mx - lw/2, my - 14/viewScale, lw, 13/viewScale);
+  const lw = ctx.measureText(label).width + 12/viewScale;
+  ctx.globalAlpha = 0.92;
+  ctx.fillStyle = 'rgba(4,17,26,0.9)';
+  ctx.fillRect(mx - lw/2, my - 17/viewScale, lw, 16/viewScale);
   ctx.fillStyle = '#ffcc00';
   ctx.shadowBlur = 0;
-  ctx.fillText(label, mx, my - 2/viewScale);
+  ctx.fillText(label, mx, my - 3/viewScale);
   ctx.restore();
 }
 

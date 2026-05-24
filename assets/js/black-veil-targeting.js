@@ -225,6 +225,113 @@ const BVT_SYSTEMS = [
     a:['EXTREME_DIURNAL','MODERATE','METHANE','GEOTHERMAL_OPT','PRESSURE_DEP','LOW_FREQ','NEAR_EARTH','M_RED','FROZEN','ACTIVE'],
     x: 2540, y: 380 },
 
+  // ── Additional candidate worlds ──
+  { id:'tantalus',     name:'TANTALUS',                   sector:'TARTARUS SECTOR',
+    a:['EXTREME_DIURNAL','NONE','METHANE','GEOTHERMAL_OPT','STRICT_ATMO','NOISE','EARTH_OPTIMAL','G_YELLOW','MIXED','MODERATE'],
+    x: 1320, y: 1880 },
+  { id:'tracon',       name:'TRACON',                     sector:'INDEPENDENT CORE',
+    a:['STABLE','NONE','BREATHABLE','GEOTHERMAL_OPT','STRICT_ATMO','TECH_HZ','HIGH_EARTH','K_ORANGE','MIXED','LOW'],
+    x: 1080, y: 1540 },
+  { id:'bellerophon',  name:'BELLEROPHON',                sector:'CORE SYSTEMS',
+    a:['STABLE','WEAK','TOXIC_CO2','SOLAR','STRICT_ATMO','LOW_FREQ','NEAR_EARTH','G_YELLOW','MIXED','LOW'],
+    x: 1240, y: 1140 },
+  { id:'eta_cas',      name:'ETA CASSIOPEIAE',            sector:'FRONTIER',
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','VOLCANIC_HOT','STRICT_ATMO','SILENT','HIGH_EARTH','A_WHITE','SUBSURFACE','ACTIVE'],
+    x: 580, y: 320 },
+  { id:'ophiuchi70',   name:'70 OPHIUCHI — V\'KAR',       sector:'OUTER VEIL',
+    a:['STABLE','MODERATE','BREATHABLE','SOLAR','PRESSURE_DEP','LOW_FREQ','HIGH_EARTH','K_ORANGE','SUBSURFACE','MODERATE'],
+    x: 820, y: 680 },
+  { id:'hyades',       name:'HYADES — KORN STATION',      sector:'OUTER RIM',
+    a:['EXTREME_DIURNAL','NONE','BREATHABLE','NONE','STRICT_ATMO','NOISE','NEAR_EARTH','K_ORANGE','MIXED','DORMANT'],
+    x: 2620, y: 460 },
+  { id:'delphi',       name:'DELPHI',                     sector:'CORE SYSTEMS',
+    a:['STABLE','NONE','BREATHABLE','SOLAR','STRICT_ATMO','TECH_HZ','EARTH_OPTIMAL','K_ORANGE','SURFACE_OCEAN','LOW'],
+    x: 1380, y: 1180 },
+  { id:'avraham',      name:'AVRAHAM — TRADE HUB',        sector:'INDEPENDENT CORE',
+    a:['STABLE','NONE','BREATHABLE','SOLAR','STRICT_ATMO','LOW_FREQ','NEAR_EARTH','G_YELLOW','MIXED','DORMANT'],
+    x: 1140, y: 1380 },
+  { id:'wormtown',     name:'WORMTOWN — FAR REACH',       sector:'FRONTIER',
+    a:['SCORCHED','NONE','VACUUM','NONE','FACULTATIVE','SILENT','HIGH_EARTH','M_RED','SUBSURFACE','DORMANT'],
+    x: 480, y: 1880 },
+  { id:'galsworthy',   name:'GALSWORTHY',                 sector:'FRONTIER',
+    a:['STABLE','UNSTABLE_BIO','BREATHABLE','SOLAR','STRICT_ATMO','NOISE','NEAR_EARTH','F_YEL_WHT','SUBSURFACE','DORMANT'],
+    x: 2940, y: 1180 },
+  { id:'mururoa2',     name:'MURUROA II',                 sector:'CRESTUS CLUSTER',
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','NONE','STRICT_ATMO','NOISE','HIGH_EARTH','M_RED','NONE','ACTIVE'],
+    x: 2080, y: 480 },
+  { id:'hephaistos',   name:'HEPHAISTOS',                 sector:'TARTARUS SECTOR',
+    a:['VOLCANIC_HOT','WEAK','METHANE','GEOTHERMAL_OPT','STRICT_ATMO','SILENT','EARTH_OPTIMAL','F_YEL_WHT','FROZEN','VOLCANIC'],
+    x: 1460, y: 1940 },
+  { id:'roanoke',      name:'ROANOKE',                    sector:'OUTER VEIL',
+    a:['EXTREME_DIURNAL','NONE','BREATHABLE','SOLAR','FACULTATIVE','TECH_HZ','NEAR_EARTH','G_YELLOW','MIXED','LOW'],
+    x: 760, y: 540 },
+  { id:'bara_cath',    name:'BARA CATHEDRALE',            sector:'TARTARUS SECTOR',
+    a:['STABLE','NONE','METHANE','NONE','FACULTATIVE','SILENT','HIGH_EARTH','K_ORANGE','FROZEN','DORMANT'],
+    x: 1280, y: 2000 },
+  { id:'glaxus',       name:'GLAXUS — MINING MOON',       sector:'TRAILWARD',
+    a:['SCORCHED','NONE','VACUUM','GEOTHERMAL_OPT','STRICT_ATMO','TECH_HZ','LOW','M_RED','SUBSURFACE','LOW'],
+    x: 1180, y: 1820 },
+  { id:'frost',        name:'FROST',                      sector:'OUTER RIM',
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','BREATHABLE','NONE','STRICT_ATMO','NOISE','HIGH_EARTH','M_RED','SUBSURFACE','MODERATE'],
+    x: 2780, y: 280 },
+  { id:'lapchet',      name:'LAPCHET',                    sector:'CORE SYSTEMS',
+    a:['STABLE','UNSTABLE_BIO','BREATHABLE','GEOTHERMAL_OPT','STRICT_ATMO','NOISE','EARTH_OPTIMAL','G_YELLOW','MIXED','DORMANT'],
+    x: 1480, y: 1240 },
+  { id:'damascus',     name:'DAMASCUS',                   sector:'CORE SYSTEMS',
+    a:['STABLE','UNSTABLE_BIO','BREATHABLE','SOLAR','FACULTATIVE','TECH_HZ','EARTH_OPTIMAL','K_ORANGE','MIXED','DORMANT'],
+    x: 1240, y: 1240 },
+  { id:'kaaba',        name:'KAABA',                      sector:'CORE SYSTEMS',
+    a:['STABLE','NONE','BREATHABLE','SOLAR','STRICT_ATMO','TECH_HZ','EARTH_OPTIMAL','G_YELLOW','SURFACE_OCEAN','DORMANT'],
+    x: 1420, y: 1320 },
+  { id:'steeple',      name:'STEEPLE-MASON',              sector:'FRONTIER',
+    a:['SCORCHED','NONE','TOXIC_CO2','VOLCANIC_HOT','STRICT_ATMO','SILENT','HIGH_EARTH','F_YEL_WHT','FROZEN','ACTIVE'],
+    x: 320, y: 940 },
+  { id:'caldwell',     name:'CALDWELL',                   sector:'AMERICAN ARM',
+    a:['STABLE','NONE','BREATHABLE','SOLAR','STRICT_ATMO','TECH_HZ','EARTH_OPTIMAL','G_YELLOW','SURFACE_OCEAN','LOW'],
+    x: 1540, y: 1320 },
+  { id:'glamour',      name:'GLAMOUR',                    sector:'INDEPENDENT CORE',
+    a:['STABLE','WEAK','BREATHABLE','SOLAR','STRICT_ATMO','TECH_HZ','NEAR_EARTH','K_ORANGE','SURFACE_RIVER','LOW'],
+    x: 980, y: 1480 },
+  { id:'thurnish',     name:'THURNISH',                   sector:'CRESTUS CLUSTER',
+    a:['EXTREME_DIURNAL','NONE','BREATHABLE','NONE','STRICT_ATMO','LOW_FREQ','HIGH_EARTH','G_YELLOW','MIXED','ACTIVE'],
+    x: 2240, y: 380 },
+  { id:'carthage',     name:'CARTHAGE',                   sector:'CORE SYSTEMS',
+    a:['STABLE','WEAK','BREATHABLE','GEOTHERMAL_OPT','STRICT_ATMO','TECH_HZ','EARTH_OPTIMAL','G_YELLOW','MIXED','LOW'],
+    x: 1300, y: 980 },
+  { id:'brakari',      name:'BRAKARI',                    sector:'FRONTIER',
+    a:['FROZEN','NONE','TOXIC_CO2','NONE','STRICT_ATMO','SILENT','HIGH_EARTH','M_RED','SUBSURFACE','ACTIVE'],
+    x: 2980, y: 720 },
+  { id:'nuovo_dur',    name:'NUOVO DURANGO',              sector:'AMERICAN ARM',
+    a:['EXTREME_DIURNAL','NONE','BREATHABLE','NONE','FACULTATIVE','NOISE','NEAR_EARTH','G_YELLOW','MIXED','LOW'],
+    x: 1620, y: 1380 },
+  { id:'europa_x',     name:'EUROPA-X',                   sector:'CORE SYSTEMS',
+    a:['FROZEN','UNSTABLE_BIO','BREATHABLE','NONE','PRESSURE_DEP','LOW_FREQ','HIGH_EARTH','A_WHITE','FROZEN','LOW'],
+    x: 1160, y: 920 },
+  { id:'procyon_b',    name:'PROCYON B',                  sector:'CORE SYSTEMS',
+    a:['STABLE','NONE','BREATHABLE','GEOTHERMAL_OPT','FACULTATIVE','TECH_HZ','HIGH_EARTH','F_YEL_WHT','MIXED','LOW'],
+    x: 1180, y: 1020 },
+  { id:'ascalon',      name:'ASCALON',                    sector:'TARTARUS SECTOR',
+    a:['EXTREME_DIURNAL','WEAK','BREATHABLE','GEOTHERMAL_OPT','STRICT_ATMO','SILENT','NEAR_EARTH','M_RED','MIXED','MODERATE'],
+    x: 1380, y: 1780 },
+  { id:'leper_col',    name:'LEPER COLONY',               sector:'TRAILWARD',
+    a:['SCORCHED','NONE','TOXIC_CO2','NONE','FACULTATIVE','LOW_FREQ','LOW','M_RED','NONE','ACTIVE'],
+    x: 1620, y: 1880 },
+
+  // ── Decoy worlds (near-target false positives) ──
+  // Each matches 8–9 of 10 filters → stays in the candidate list until late.
+  { id:'blacksite_gamma', name:'BLACKSITE GAMMA',         sector:'OUTER RIM',
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','K_ORANGE','MIXED','LOW'],
+    x: 2720, y: 360 },
+  { id:'tartarus12',     name:'TARTARUS XII',             sector:'TARTARUS SECTOR',
+    a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','G_YELLOW','SUBSURFACE','DORMANT'],
+    x: 1440, y: 1860 },
+  { id:'nehrunmar3',     name:'NEHRUNMAR III',            sector:'OUTER VEIL',
+    a:['STABLE','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','K_ORANGE','SUBSURFACE','DORMANT'],
+    x: 1980, y: 600 },
+  { id:'phlegethon4',    name:'PHLEGETHON IV',            sector:'TRAILWARD',
+    a:['EXTREME_DIURNAL','WEAK','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','K_ORANGE','SUBSURFACE','DORMANT'],
+    x: 1020, y: 1760 },
+
   // ── THE TARGET ──
   { id:'blacksite_theta', name:'BLACKSITE THETA', sector:'[REDACTED]',
     a:['EXTREME_DIURNAL','UNSTABLE_BIO','TOXIC_CO2','GEOTHERMAL_OPT','FACULTATIVE','LOW_FREQ','EARTH_OPTIMAL','K_ORANGE','SUBSURFACE','DORMANT'],
@@ -333,6 +440,126 @@ window.bvtToggleView = function() {
   if (bvtView === 'targeting') bvtRender();
 };
 
+// ── Mini-Map Rendering ──
+const BVT_MAP_W = 3200, BVT_MAP_H = 2067;
+let bvtMapImg = null;
+let bvtAnimReq = null;
+
+function bvtLoadMapImg() {
+  if (bvtMapImg) return;
+  bvtMapImg = new Image();
+  bvtMapImg.src = 'assets/images/starmap.jpg';
+  bvtMapImg.onload = () => { if (bvtView === 'targeting') bvtDrawMiniMap(); };
+}
+
+function bvtDrawPin(ctx, x, y, isQueen, t) {
+  if (isQueen) {
+    const phase = (t % 1400) / 1400;
+    const r = 14 + Math.sin(phase * Math.PI * 2) * 5;
+    ctx.strokeStyle = '#ff3a3a';
+    ctx.globalAlpha = 0.4 + 0.5 * Math.sin(phase * Math.PI * 2);
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = 0.18;
+    ctx.beginPath(); ctx.arc(x, y, r + 8, 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = 1;
+    const glow = ctx.createRadialGradient(x, y, 0, x, y, 14);
+    glow.addColorStop(0, 'rgba(255,58,58,0.85)');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ff3a3a';
+    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI*2); ctx.fill();
+  } else {
+    const glow = ctx.createRadialGradient(x, y, 0, x, y, 11);
+    glow.addColorStop(0, 'rgba(77,255,145,0.55)');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#4dff91';
+    ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI*2); ctx.stroke();
+  }
+}
+
+function bvtDrawMiniMap() {
+  const canvas = document.getElementById('bvtMiniMap');
+  if (!canvas) return;
+  const wrap = canvas.parentElement;
+  if (!wrap) return;
+  const cw = wrap.clientWidth;
+  const ch = wrap.clientHeight;
+  if (cw < 10 || ch < 10) return;
+  if (canvas.width !== cw || canvas.height !== ch) {
+    canvas.width = cw; canvas.height = ch;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000a10';
+  ctx.fillRect(0, 0, cw, ch);
+
+  // Fit map preserving aspect ratio
+  const scale = Math.min(cw / BVT_MAP_W, ch / BVT_MAP_H);
+  const dw = BVT_MAP_W * scale, dh = BVT_MAP_H * scale;
+  const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
+  if (bvtMapImg && bvtMapImg.complete) {
+    ctx.globalAlpha = 0.55;
+    ctx.drawImage(bvtMapImg, dx, dy, dw, dh);
+    ctx.globalAlpha = 1;
+  }
+  // Border
+  ctx.strokeStyle = '#1a3320';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(dx + 0.5, dy + 0.5, dw - 1, dh - 1);
+
+  const matches = bvtMatchingSystems();
+  const isSolved = matches.length === 1 && bvtActiveFilters().length === 10;
+  const t = Date.now();
+
+  matches.forEach(sys => {
+    const px = dx + sys.x * scale;
+    const py = dy + sys.y * scale;
+    const isQueen = isSolved && sys.id === 'blacksite_theta';
+    bvtDrawPin(ctx, px, py, isQueen, t);
+  });
+
+  // Queen label
+  if (isSolved) {
+    const q = matches[0];
+    const px = dx + q.x * scale;
+    const py = dy + q.y * scale;
+    ctx.font = 'bold 12px "Share Tech Mono",monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const label = '⚠ ' + q.name + ' ⚠';
+    const w = ctx.measureText(label).width + 14;
+    const ly = py + 22;
+    ctx.fillStyle = 'rgba(20,0,0,0.9)';
+    ctx.fillRect(px - w/2, ly, w, 18);
+    ctx.strokeStyle = '#ff3a3a';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px - w/2, ly, w, 18);
+    ctx.fillStyle = '#ff8888';
+    ctx.fillText(label, px, ly + 3);
+    ctx.textBaseline = 'alphabetic';
+  }
+}
+window.bvtDrawMiniMap = bvtDrawMiniMap;
+
+function bvtAnimLoop() {
+  if (bvtView !== 'targeting') { bvtAnimReq = null; return; }
+  const matches = bvtMatchingSystems();
+  const isSolved = matches.length === 1 && bvtActiveFilters().length === 10;
+  if (!isSolved) { bvtAnimReq = null; return; }
+  bvtDrawMiniMap();
+  bvtAnimReq = requestAnimationFrame(bvtAnimLoop);
+}
+
+window.addEventListener('resize', () => { if (bvtView === 'targeting') bvtDrawMiniMap(); });
+
 // ── Render ──
 function bvtRender() {
   const panel = document.getElementById('bvtPanel');
@@ -379,18 +606,22 @@ function bvtRender() {
     </div>`;
   }).join('');
 
-  // ── RIGHT: System list ──
+  // ── RIGHT: Mini-Map + compact list ──
   const counterCls = isSolved ? 'bvt-counter solved'
                    : (matches.length <= 3 ? 'bvt-counter close' : 'bvt-counter');
 
-  const systemsHtml = matches.map(s => {
+  const showList = matches.length > 0 && matches.length <= 12;
+  const listHtml = !showList ? '' : matches.map(s => {
     const isQueen = isSolved && s.id === 'blacksite_theta';
-    return `<div class="bvt-sys${isQueen?' queen':''}">
-      <div class="bvt-sys-name">${s.name}</div>
-      <div class="bvt-sys-sector">${s.sector}</div>
-      ${isQueen ? '<div class="bvt-sys-tag">⚠ TARGET CONFIRMED — XENOMORPH QUEEN</div>' : ''}
+    return `<div class="bvt-sys-row${isQueen?' queen':''}">
+      <span class="bvt-sys-dot"></span>
+      <span class="bvt-sys-name">${s.name}</span>
+      <span class="bvt-sys-sector">${s.sector}</span>
     </div>`;
-  }).join('') || '<div class="bvt-empty-sys">NO MATCHING SYSTEMS — ONE OR MORE INPUTS INCONSISTENT</div>';
+  }).join('');
+
+  const noMatchHtml = matches.length === 0
+    ? '<div class="bvt-empty-sys">NO MATCHING SYSTEMS — INPUT INCONSISTENT</div>' : '';
 
   panel.innerHTML = `
     <div class="bvt-col bvt-col-filters">
@@ -402,15 +633,26 @@ function bvtRender() {
     </div>
     <div class="bvt-col bvt-col-results">
       <div class="bvt-col-hd">
-        <span class="bvt-col-title">// CANDIDATE SYSTEMS</span>
+        <span class="bvt-col-title">// CANDIDATE STAR MAP</span>
         <span class="${counterCls}">${matches.length} / ${BVT_SYSTEMS.length}</span>
       </div>
       <div class="bvt-active-summary">
         <span>${active.length} / 10 FILTERS ACTIVE</span>
-        ${isSolved ? '<span class="bvt-locked-tag">◆ TARGET ACQUIRED — PIN ON STARMAP</span>' : ''}
+        ${isSolved ? '<span class="bvt-locked-tag">◆ TARGET ACQUIRED</span>' : ''}
       </div>
-      <div class="bvt-systems">${systemsHtml}</div>
+      <div class="bvt-map-wrap">
+        <canvas id="bvtMiniMap"></canvas>
+      </div>
+      ${noMatchHtml}
+      ${showList ? `<div class="bvt-sys-list">${listHtml}</div>` : ''}
     </div>
   `;
+
+  // Make sure image is loading and start animation
+  bvtLoadMapImg();
+  // Render map after layout settles
+  requestAnimationFrame(bvtDrawMiniMap);
+  // Start pulse loop only if Queen is locked
+  if (isSolved && !bvtAnimReq) bvtAnimReq = requestAnimationFrame(bvtAnimLoop);
 }
 window.bvtRender = bvtRender;

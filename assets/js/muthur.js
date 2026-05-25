@@ -438,7 +438,7 @@ function handleStatusChange(status) {
   const gmVerdict = $('mtGmVerdictPanel');
 
   if (status === 'pending_review') {
-    if (waiting)  waiting.style.display  = 'flex';
+    if (waiting)  waiting.style.display  = window.isGM ? 'none' : 'flex';
     if (verdict)  verdict.style.display  = 'none';
     if (gmVerdict) gmVerdict.style.display = window.isGM ? 'flex' : 'none';
     if (window.isGM && _bayId) {

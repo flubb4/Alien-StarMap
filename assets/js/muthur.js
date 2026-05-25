@@ -161,6 +161,7 @@ function subscribeSession(bayId) {
 
   _unsubTyping = onValue(ref(window.db, `muthur/sessions/${bayId}/typing`), snap => {
     _currentTyping = snap.val() || null;
+    console.log('[MU/TH/UR typing] received:', _currentTyping, 'myName=', window.myName, 'iAmTyping=', _iAmTyping);
     renderTyping(_currentTyping);
   });
 
@@ -351,8 +352,9 @@ function renderTyping(t) {
   const log = $('mtLog');
   if (!log) return;
   const existing = log.querySelector('.mt-typing-line');
-  // Hide if empty OR if it's me (I have the input field)
-  if (!t || !t.text || (t.who && t.who === window.myName)) {
+  // Hide if empty OR I'm currently the typer (local flag is the source of truth —
+  // name comparison is unreliable when myName is missing or shared as fallback)
+  if (!t || !t.text || _iAmTyping) {
     existing?.remove();
     return;
   }
@@ -735,14 +737,16 @@ function flushTyping() {
   if (text.length === 0) {
     if (_iAmTyping) {
       _iAmTyping = false;
-      set(ref(window.db, `muthur/sessions/${_bayId}/typing`), null).catch(() => {});
+      set(ref(window.db, `muthur/sessions/${_bayId}/typing`), null)
+        .catch(err => console.warn('[MU/TH/UR typing] clear failed:', err?.code, err?.message));
     }
     return;
   }
   _iAmTyping = true;
+  console.log('[MU/TH/UR typing] write:', text);
   set(ref(window.db, `muthur/sessions/${_bayId}/typing`), {
     text, who: window.myName || 'OPERATOR',
-  }).catch(() => {});
+  }).catch(err => console.warn('[MU/TH/UR typing] write failed:', err?.code, err?.message));
 }
 
 function scheduleTypingWrite() {

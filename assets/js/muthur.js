@@ -30,6 +30,7 @@ let _unsubGm       = null;
 let _unsubCaptain  = null;
 let _unsubProtocol = null;
 let _unsubStatus   = null;
+let _unsubTyping   = null;
 let _busy          = false;
 let _directive     = '';
 let _captainName   = '';
@@ -37,6 +38,10 @@ let _protocolStep  = 0;
 let _protocolItems = {};
 let _stepFollowupCount = 0;   // wie viele Folgefragen wurden im aktuellen Schritt schon gestellt (max 2)
 let _currentStatus  = 'active';
+let _currentTyping  = null;   // {text, who} — wer gerade tippt (für alle sichtbar)
+let _typingTimer    = null;   // throttle handle for outgoing writes
+let _typingPending  = false;  // trailing-edge flag
+let _iAmTyping      = false;  // bin ich selbst gerade der broadcaster?
 let _selectedRating = 0;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -79,11 +84,19 @@ function _localCloseMuthur() {
     overlay.style.display = 'none';
     overlay.classList.remove('mt-is-spectator');
   }
+  if (_bayId && _iAmTyping) {
+    set(ref(window.db, `muthur/sessions/${_bayId}/typing`), null).catch(() => {});
+  }
   if (_unsubMsgs)     { _unsubMsgs();     _unsubMsgs     = null; }
   if (_unsubGm)       { _unsubGm();       _unsubGm       = null; }
   if (_unsubCaptain)  { _unsubCaptain();  _unsubCaptain  = null; }
   if (_unsubProtocol) { _unsubProtocol(); _unsubProtocol = null; }
   if (_unsubStatus)   { _unsubStatus();   _unsubStatus   = null; }
+  if (_unsubTyping)   { _unsubTyping();   _unsubTyping   = null; }
+  if (_typingTimer)   { clearTimeout(_typingTimer); _typingTimer = null; }
+  _typingPending  = false;
+  _iAmTyping      = false;
+  _currentTyping  = null;
   _bayId          = null;
   _ctx            = null;
   _messages       = [];
@@ -144,6 +157,12 @@ function subscribeSession(bayId) {
   if (_unsubCaptain)  { _unsubCaptain();  _unsubCaptain  = null; }
   if (_unsubProtocol) { _unsubProtocol(); _unsubProtocol = null; }
   if (_unsubStatus)   { _unsubStatus();   _unsubStatus   = null; }
+  if (_unsubTyping)   { _unsubTyping();   _unsubTyping   = null; }
+
+  _unsubTyping = onValue(ref(window.db, `muthur/sessions/${bayId}/typing`), snap => {
+    _currentTyping = snap.val() || null;
+    renderTyping(_currentTyping);
+  });
 
   _unsubMsgs = onValue(ref(window.db, `muthur/sessions/${bayId}/messages`), snap => {
     const raw = snap.val() || {};
@@ -324,7 +343,37 @@ function renderLog(msgs) {
   });
 
   if (loadingLine) log.appendChild(loadingLine);
+  renderTyping(_currentTyping);
   log.scrollTop = log.scrollHeight;
+}
+
+function renderTyping(t) {
+  const log = $('mtLog');
+  if (!log) return;
+  const existing = log.querySelector('.mt-typing-line');
+  // Hide if empty OR if it's me (I have the input field)
+  if (!t || !t.text || (t.who && t.who === window.myName)) {
+    existing?.remove();
+    return;
+  }
+  if (existing) {
+    const textEl = existing.querySelector('.mt-typing-text');
+    if (textEl) textEl.textContent = t.text;
+    return;
+  }
+  const wasAtBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
+  const div = document.createElement('div');
+  div.className = 'mt-line mt-op mt-typing-line';
+  div.innerHTML =
+    `<span class="mt-who">${esc(t.who || 'OPERATOR')}</span>` +
+    `<span class="mt-sep">›</span>` +
+    `<span class="mt-text"><span class="mt-typing-text"></span><span class="mt-cursor">_</span></span>`;
+  div.querySelector('.mt-typing-text').textContent = t.text;
+  // Insert before loading line if present, so loading stays at very bottom
+  const loadingLine = log.querySelector('.mt-loading-line');
+  if (loadingLine) log.insertBefore(div, loadingLine);
+  else log.appendChild(div);
+  if (wasAtBottom) log.scrollTop = log.scrollHeight;
 }
 
 function appendLine(container, cls, who, text) {
@@ -570,6 +619,7 @@ async function sendQuery() {
   _busy = true;
   const btn = $('mtSendBtn');
   input.value = '';
+  clearMyTyping();
   if (btn) btn.disabled = true;
 
   const apiMessages = [
@@ -678,10 +728,45 @@ async function sendQuery() {
 
 // ── Event wiring ──────────────────────────────────────────────────────────────
 
+function flushTyping() {
+  if (!_bayId) return;
+  const input = $('mtInput');
+  const text = input?.value || '';
+  if (text.length === 0) {
+    if (_iAmTyping) {
+      _iAmTyping = false;
+      set(ref(window.db, `muthur/sessions/${_bayId}/typing`), null).catch(() => {});
+    }
+    return;
+  }
+  _iAmTyping = true;
+  set(ref(window.db, `muthur/sessions/${_bayId}/typing`), {
+    text, who: window.myName || 'OPERATOR',
+  }).catch(() => {});
+}
+
+function scheduleTypingWrite() {
+  if (_typingTimer) { _typingPending = true; return; }
+  flushTyping();
+  _typingTimer = setTimeout(() => {
+    _typingTimer = null;
+    if (_typingPending) { _typingPending = false; scheduleTypingWrite(); }
+  }, 200);
+}
+
+function clearMyTyping() {
+  if (!_bayId || !_iAmTyping) return;
+  _iAmTyping = false;
+  if (_typingTimer) { clearTimeout(_typingTimer); _typingTimer = null; }
+  _typingPending = false;
+  set(ref(window.db, `muthur/sessions/${_bayId}/typing`), null).catch(() => {});
+}
+
 $('mtSendBtn')?.addEventListener('click', sendQuery);
 $('mtInput')?.addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); sendQuery(); }
 });
+$('mtInput')?.addEventListener('input', scheduleTypingWrite);
 $('mtCloseBtn')?.addEventListener('click', window.closeMutherTerminal);
 $('mtDirectiveBtn')?.addEventListener('click', saveDirective);
 $('mtGmAskBtn')?.addEventListener('click', sendGmQuestion);

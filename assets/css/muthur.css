@@ -84,6 +84,11 @@
 .mt-cursor { animation: mt-blink .8s step-end infinite; }
 @keyframes mt-blink { 50% { opacity: 0; } }
 
+/* Live typing ghost line — visible while operator is typing, not yet sent */
+.mt-typing-line .mt-who  { color: rgba(245,166,35,.55); }
+.mt-typing-line .mt-text { color: rgba(245,166,35,.55); font-style: italic; }
+.mt-typing-line .mt-cursor { color: rgba(245,166,35,.7); font-style: normal; }
+
 /* System messages (session start etc.) */
 .mt-system .mt-who  { color: rgba(57,255,20,.3); }
 .mt-system .mt-text { color: rgba(57,255,20,.35); font-size: 9px; letter-spacing: .28em; }

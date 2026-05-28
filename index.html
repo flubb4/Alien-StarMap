@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="assets/css/youtube-player.css">
 <link rel="stylesheet" href="assets/css/android-bay.css">
 <link rel="stylesheet" href="assets/css/muthur.css">
+<link rel="stylesheet" href="assets/css/reliability.css">
 <link rel="stylesheet" href="assets/css/reactor-puzzle.css">
 <link rel="stylesheet" href="assets/css/corvus-decks.css">
 <link rel="stylesheet" href="assets/css/prput-evolve.css">
@@ -125,6 +126,18 @@
       <button class="date-edit-btn" id="dateEditBtn" onclick="openDateModal()">EDIT</button>
     </div>
     <div class="online-count" id="onlineCount">● 1 OPERATIVE ONLINE</div>
+    <div class="reliability-hud" id="reliabilityHud" title="Crew Reliability — accumulates verdicts from Android Bay assessments">
+      <div class="rel-label">// RELIABILITY</div>
+      <div class="rel-bar-frame">
+        <div class="rel-bar-track"><div class="rel-bar-fill" id="relBarFill"></div></div>
+        <div class="rel-value" id="relValue">0</div>
+        <div class="rel-delta" id="relDelta"></div>
+      </div>
+      <div class="rel-gm-controls">
+        <button class="rel-gm-btn rel-minus" id="relMinusBtn" title="Reliability −1">−1</button>
+        <button class="rel-gm-btn rel-plus"  id="relPlusBtn"  title="Reliability +1">+1</button>
+      </div>
+    </div>
     <button id="initViewBtn" class="header-btn header-btn--plum" onclick="openInitiative()" style="display:none;">⚡ INITIATIVE</button>
     <button id="bvBtn" class="header-btn" onclick="openBVPanel()">🧬 BLACK VEIL</button>
     <button id="charSheetBtn" class="header-btn header-btn--bone" onclick="openCharSheet()">📋 CHARACTER</button>
@@ -1369,6 +1382,7 @@
 <script type="module" src="assets/js/gm-broadcast.js"></script>
 <script type="module" src="assets/js/android-bay.js"></script>
 <script type="module" src="assets/js/muthur.js"></script>
+<script type="module" src="assets/js/reliability.js"></script>
 <script type="module" src="assets/js/reactor-puzzle.js"></script>
 <script type="module" src="assets/js/corvus-decks.js"></script>
 <script type="module" src="assets/js/prput-evolve.js"></script>

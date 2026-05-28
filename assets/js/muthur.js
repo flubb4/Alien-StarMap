@@ -604,11 +604,28 @@ function prefillVerdictSuggestion(rating, summary) {
 
 async function approveVerdict() {
   if (!_bayId) return;
+  const bayId  = _bayId;
+  const rating = _selectedRating;
   const summary = $('mtVerdictSummaryInput')?.value.trim() || '';
-  await set(ref(window.db, `muthur/sessions/${_bayId}/verdict`), {
-    rating: _selectedRating, summary,
+  await set(ref(window.db, `muthur/sessions/${bayId}/verdict`), {
+    rating, summary,
   });
-  await set(ref(window.db, `muthur/sessions/${_bayId}/status`), 'verdict_ready');
+  await set(ref(window.db, `muthur/sessions/${bayId}/status`), 'verdict_ready');
+
+  // Auto-apply verdict rating (−3..+3) as delta to crew reliability bar,
+  // but only once per bay session — re-approvals must not stack.
+  if (typeof rating === 'number' && rating !== 0 && typeof window.adjustReliability === 'function') {
+    try {
+      const flagRef = ref(window.db, `muthur/sessions/${bayId}/verdictAppliedToReliability`);
+      const snap = await get(flagRef);
+      if (!snap.exists() || snap.val() !== true) {
+        await window.adjustReliability(rating, `Bay verdict ${bayId}`);
+        await set(flagRef, true);
+      }
+    } catch (err) {
+      console.error('[Muthur] reliability auto-apply failed:', err);
+    }
+  }
 }
 
 // ── Send ──────────────────────────────────────────────────────────────────────

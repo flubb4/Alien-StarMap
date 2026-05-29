@@ -3,8 +3,8 @@
 .reliability-hud {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 14px 6px 16px;
+  gap: 10px;
+  padding: 5px 12px 5px 13px;
   border: 1px solid var(--amber);
   background:
     linear-gradient(180deg, rgba(255,154,60,0.10) 0%, rgba(0,0,0,0.55) 100%),
@@ -38,9 +38,9 @@
 
 .rel-label {
   font-family: "Orbitron", "Share Tech Mono", monospace;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 2.5px;
+  letter-spacing: 2px;
   color: var(--amber);
   text-transform: uppercase;
   text-shadow: 0 0 6px var(--amber-glow);
@@ -61,8 +61,8 @@
 
 .rel-bar-track {
   position: relative;
-  width: 220px;
-  height: 16px;
+  width: 150px;
+  height: 14px;
   background:
     linear-gradient(180deg, #060c0a 0%, #0c1612 100%);
   border: 1px solid var(--hair);
@@ -143,7 +143,7 @@
 .rel-scale {
   display: flex;
   justify-content: space-between;
-  width: 220px;
+  width: 150px;
   font-size: 8px;
   letter-spacing: 1px;
   color: var(--dim);
@@ -153,10 +153,10 @@
 .rel-scale span:nth-child(2) { color: var(--bone-2); }
 
 .rel-value {
-  min-width: 42px;
+  min-width: 32px;
   text-align: right;
   font-family: "Orbitron", "Share Tech Mono", monospace;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 900;
   letter-spacing: 1px;
   color: var(--bone);

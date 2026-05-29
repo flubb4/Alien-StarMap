@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stars of the Middle Heavens — Alien RPG</title>
-<link rel="stylesheet" href="assets/css/core.css">
+<link rel="stylesheet" href="assets/css/core.css?v=6">
 <link rel="stylesheet" href="assets/css/initiative.css">
 <link rel="stylesheet" href="assets/css/character-sheet.css">
 <link rel="stylesheet" href="assets/css/provisions.css">
@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/css/youtube-player.css">
 <link rel="stylesheet" href="assets/css/android-bay.css">
 <link rel="stylesheet" href="assets/css/muthur.css">
-<link rel="stylesheet" href="assets/css/reliability.css">
+<link rel="stylesheet" href="assets/css/reliability.css?v=2">
 <link rel="stylesheet" href="assets/css/reactor-puzzle.css">
 <link rel="stylesheet" href="assets/css/corvus-decks.css">
 <link rel="stylesheet" href="assets/css/prput-evolve.css">
@@ -67,11 +67,17 @@
 </div>
 
 <header>
-  <div>
-    <h1>Stars of the Middle Heavens</h1>
-    <div class="sub">ALIEN RPG // 2183 // WEYLAND-YUTANI STARSHIP TRAFFIC CONTROL</div>
+  <!-- ZONE 1 · IDENTITY -->
+  <div class="hdr-id">
+    <div class="hdr-id-node" aria-hidden="true">◇</div>
+    <div class="hdr-id-text">
+      <h1>Stars of the Middle Heavens</h1>
+      <div class="sub">ALIEN RPG // 2183 // W-Y TRAFFIC CONTROL</div>
+    </div>
   </div>
-  <div class="header-right">
+
+  <!-- ZONE 2 · ACTION DECK -->
+  <nav class="hdr-deck">
     <!-- GM TOOLS DROPDOWN — shown only to GM via .visible (toggled by initiative.js) -->
     <div id="gmSection" style="position:relative;">
       <button id="gmToolsToggle" class="gm-tools-btn" onclick="toggleGMTools(event)">⚙ GM TOOLS ▾</button>
@@ -118,14 +124,29 @@
         </div>
       </div>
     </div>
-    <div class="date-display">
-      <div>
-        <div class="date-label">// STARDATE</div>
-        <div class="date-value" id="dateDisplay">05 MAR 2183</div>
-      </div>
-      <button class="date-edit-btn" id="dateEditBtn" onclick="openDateModal()">EDIT</button>
+    <div class="hdr-tgrp" data-group="crew">
+      <button id="charSheetBtn" class="header-btn header-btn--bone" onclick="openCharSheet()">📋 CHARACTER</button>
+      <button id="rationsBtn" class="header-btn header-btn--chart" onclick="openRationsPanel()">🍫 PROVISIONS</button>
+      <button id="supplyBtn" class="header-btn header-btn--teal" onclick="openSupplyPanel()">📦 SUPPLY</button>
     </div>
-    <div class="online-count" id="onlineCount">● 1 OPERATIVE ONLINE</div>
+    <div class="hdr-tgrp" data-group="ship">
+      <button id="corvusBtn" class="header-btn" onclick="openCorvusDecks()">🚢 CORVUS</button>
+      <button id="androidBayBtn" class="header-btn header-btn--android" onclick="openAndroidBay()">🤖 ANDROID BAY</button>
+    </div>
+    <div class="hdr-tgrp" data-group="ops">
+      <button id="bvBtn" class="header-btn" onclick="openBVPanel()">🧬 BLACK VEIL</button>
+      <button id="initViewBtn" class="header-btn header-btn--plum" onclick="openInitiative()" style="display:none;">⚡ INITIATIVE</button>
+      <button id="imageBoardBtn" class="header-btn" onclick="reopenImageBoard()" style="display:none">🖼 IMAGE BOARD</button>
+    </div>
+  </nav><!-- /hdr-deck -->
+
+  <!-- ZONE 3 · INSTRUMENT CONSOLE -->
+  <div class="hdr-console">
+    <div class="instr instr-date">
+      <div class="instr-k">// Stardate</div>
+      <div class="instr-v"><span id="dateDisplay">05 MAR 2183</span><button class="date-edit-btn" id="dateEditBtn" onclick="openDateModal()">EDIT</button></div>
+    </div>
+    <div class="instr-sep"></div>
     <div class="reliability-hud" id="reliabilityHud" title="Crew Reliability — accumulates verdicts from Android Bay assessments">
       <div class="rel-label">CREW<br>RELIABILITY</div>
       <div class="rel-bar-frame">
@@ -141,18 +162,12 @@
         <button class="rel-gm-btn rel-plus"  id="relPlusBtn"  title="Reliability +1">+1</button>
       </div>
     </div>
-    <button id="initViewBtn" class="header-btn header-btn--plum" onclick="openInitiative()" style="display:none;">⚡ INITIATIVE</button>
-    <button id="bvBtn" class="header-btn" onclick="openBVPanel()">🧬 BLACK VEIL</button>
-    <button id="charSheetBtn" class="header-btn header-btn--bone" onclick="openCharSheet()">📋 CHARACTER</button>
-    <button id="rationsBtn" class="header-btn header-btn--chart" onclick="openRationsPanel()">🍫 PROVISIONS</button>
-    <button id="supplyBtn" class="header-btn header-btn--teal" onclick="openSupplyPanel()">📦 SUPPLY</button>
-    <button id="androidBayBtn" class="header-btn header-btn--android" onclick="openAndroidBay()">🤖 ANDROID BAY</button>
-    <button id="corvusBtn" class="header-btn" onclick="openCorvusDecks()">🚢 CORVUS</button>
-    <button id="imageBoardBtn" onclick="reopenImageBoard()" style="display:none">🖼 IMAGE BOARD</button>
-    <div class="user-badge">
-      <div class="user-dot" id="myDot" style="background:#00e5ff"></div>
-      <span id="myName">CONNECTING...</span>
-    </div>
+  </div>
+  <!-- Kept in DOM (JS writes to these) but not shown in the bar -->
+  <div class="hdr-hidden" hidden>
+    <span id="onlineCount"></span>
+    <span class="user-dot" id="myDot" style="background:#00e5ff"></span>
+    <span id="myName"></span>
   </div>
 </header>
 

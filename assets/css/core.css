@@ -47,49 +47,101 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* ═══════════════════════════════════════════════════════════════
+     HEADER — W-Y TRAFFIC CONTROL CONSOLE DECK
+     Three zones:  identity │ action deck │ instrument console
+     ═══════════════════════════════════════════════════════════════ */
   header {
-    background:var(--panel);
-    border-bottom:1px solid var(--border);
-    padding:8px 18px;
-    display:flex; align-items:center; justify-content:space-between;
-    z-index:100; flex-shrink:0;
+    position: relative;
+    background: linear-gradient(180deg, #101b16 0%, var(--panel) 100%);
+    border-bottom: 1px solid var(--hair);
+    box-shadow: 0 2px 14px rgba(0,0,0,0.45);
+    padding: 6px 16px;
+    min-height: 62px;
+    display: flex; align-items: stretch; gap: 16px;
+    z-index: 100; flex-shrink: 0;
   }
-  header h1 { font-family:"Orbitron",sans-serif; font-size:14px; font-weight:900; letter-spacing:3.5px; color:var(--accent); text-shadow:0 0 16px var(--amber-glow); text-transform:uppercase; }
-  header .sub { font-size:11px; color:var(--bone-2); letter-spacing:1.5px; margin-top:2px; }
-  .header-right { display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; column-gap:14px; row-gap:6px; }
-  .user-badge { display:flex; align-items:center; gap:8px; background:var(--amber-soft); border:1px solid var(--border); padding:5px 11px; font-size:12px; }
-  .user-dot { width:8px; height:8px; border-radius:50%; animation:pulse 2s infinite; }
+  /* amber instrument scan-line along the bottom seam */
+  header::after {
+    content:""; position:absolute; left:0; right:0; bottom:0; height:1px;
+    background: linear-gradient(90deg, transparent, rgba(255,154,60,0.45) 16%, rgba(255,154,60,0.45) 84%, transparent);
+    pointer-events:none;
+  }
+
+  /* ── ZONE 1 · IDENTITY ─────────────────────────────────────────── */
+  .hdr-id { display:flex; align-items:center; gap:12px; padding-right:16px; border-right:1px solid var(--hair); }
+  .hdr-id-node {
+    width:32px; height:32px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--amber); color:var(--amber); font-size:16px; line-height:1;
+    background:var(--amber-soft);
+    box-shadow: inset 0 0 10px rgba(255,154,60,0.20), 0 0 10px rgba(255,154,60,0.18);
+  }
+  .hdr-id-text { display:flex; flex-direction:column; justify-content:center; }
+  header h1 { font-family:"Orbitron",sans-serif; font-size:13px; font-weight:900; letter-spacing:3px; color:var(--amber); text-shadow:0 0 14px var(--amber-glow); text-transform:uppercase; line-height:1.15; }
+  header .sub { font-size:9px; color:var(--dim); letter-spacing:1.5px; margin-top:3px; text-transform:uppercase; }
+
+  /* ── ZONE 2 · ACTION DECK ──────────────────────────────────────── */
+  .hdr-deck { flex:1; min-width:0; display:flex; align-items:center; flex-wrap:wrap; justify-content:center; gap:6px; }
+  .hdr-tgrp { display:flex; align-items:center; gap:6px; }
+  .hdr-tgrp + .hdr-tgrp { margin-left:6px; padding-left:12px; border-left:1px solid var(--hair-soft); }
+  #gmSection.visible { margin-right:4px; padding-right:12px; border-right:1px solid var(--hair-soft); }
+
+  /* ── ZONE 3 · INSTRUMENT CONSOLE ───────────────────────────────── */
+  .hdr-console {
+    position:relative; display:flex; align-items:center; gap:13px;
+    padding:0 15px; margin:9px 0;
+    border:1px solid var(--hair);
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(0,0,0,0.38));
+    box-shadow: inset 0 0 16px rgba(0,0,0,0.55);
+  }
+  .hdr-console::before, .hdr-console::after { content:""; position:absolute; width:6px; height:6px; border:1px solid var(--bone-2); opacity:.45; pointer-events:none; }
+  .hdr-console::before { top:-1px; left:-1px;  border-right:none; border-bottom:none; }
+  .hdr-console::after  { bottom:-1px; right:-1px; border-left:none;  border-top:none; }
+
+  .instr   { display:flex; flex-direction:column; gap:3px; justify-content:center; }
+  .instr-k { font-size:8px; letter-spacing:2px; color:var(--dim); text-transform:uppercase; line-height:1; white-space:nowrap; }
+  .instr-v { font-family:"Orbitron",sans-serif; font-size:12px; letter-spacing:1px; color:var(--bone); line-height:1.1; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  .instr-date .instr-v { color:var(--chart); text-shadow:0 0 8px rgba(212,209,104,0.35); }
+  .instr-sep { width:1px; align-self:stretch; margin:9px 0; background:var(--hair); }
+
+  .date-edit-btn { background:none; border:1px solid var(--chart); color:var(--chart); font-family:"Share Tech Mono",monospace; font-size:9px; padding:2px 7px; cursor:pointer; letter-spacing:1px; transition:all .15s; display:none; margin-left:2px; }
+  .date-edit-btn:hover { background:rgba(212,209,104,0.1); }
+  .date-edit-btn.visible { display:inline-block; }
+
+  .online-count { font-size:11px; color:var(--bone-2); letter-spacing:.5px; white-space:nowrap; }
+  .user-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; animation:pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.25} }
-  .online-count { font-size:11px; color:var(--bone-2); letter-spacing:1px; }
 
-  /* HEADER ACTION BUTTONS */
+  /* ── TOOLBAR BUTTONS — uniform console keys, accent lights up on hover ─
+     Feature CSS styles each button via #id (min-width:150px + bright
+     colour); we re-style at #id specificity so the deck stays uniform. */
   .header-btn {
-    background: transparent;
-    border: 1px solid var(--hair);
-    color: var(--bone-2);
-    font-family: "Share Tech Mono", monospace;
-    font-size: 12px;
-    padding: 7px 14px;
-    cursor: pointer;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    transition: all 0.2s;
-    white-space: nowrap;
-    min-width: 150px;
-    text-align: center;
+    background:transparent; border:1px solid var(--hair); color:var(--bone-2);
+    font-family:"Share Tech Mono",monospace; font-size:12px; padding:7px 14px;
+    cursor:pointer; letter-spacing:1.5px; text-transform:uppercase; transition:all .2s;
+    white-space:nowrap; min-width:150px; text-align:center;
   }
-  /* Resting state — tinted border + text, subtle background */
-  .header-btn--plum  { border-color: var(--plum);  color: var(--plum);  background: rgba(163,125,187,0.07); }
-  .header-btn--bone  { border-color: var(--bone-2); color: var(--bone-2); }
-  .header-btn--chart { border-color: var(--chart);  color: var(--chart); background: rgba(212,209,104,0.07); }
-  .header-btn--teal  { border-color: var(--teal);   color: var(--teal);  background: rgba(110,192,196,0.07); }
+  .header-btn--plum  { border-color:var(--plum);  color:var(--plum); }
+  .header-btn--bone  { border-color:var(--bone-2); color:var(--bone-2); }
+  .header-btn--chart { border-color:var(--chart);  color:var(--chart); }
+  .header-btn--teal  { border-color:var(--teal);   color:var(--teal); }
 
-  /* Hover state — brighter + glow */
-  .header-btn:hover               { border-color: var(--bone-2); color: var(--bone);  background: var(--panel-3); }
-  .header-btn--plum:hover         { border-color: var(--plum);   color: var(--bone);  background: rgba(163,125,187,0.18); box-shadow: 0 0 12px rgba(163,125,187,0.40); }
-  .header-btn--bone:hover         { border-color: var(--bone);   color: var(--bone);  background: rgba(240,230,210,0.10); }
-  .header-btn--chart:hover        { border-color: var(--chart);  color: var(--bone);  background: rgba(212,209,104,0.18); box-shadow: 0 0 12px rgba(212,209,104,0.35); }
-  .header-btn--teal:hover         { border-color: var(--teal);   color: var(--bone);  background: rgba(110,192,196,0.18); box-shadow: 0 0 12px rgba(110,192,196,0.35); }
+  .hdr-deck .header-btn,
+  .hdr-deck #charSheetBtn, .hdr-deck #rationsBtn, .hdr-deck #supplyBtn,
+  .hdr-deck #corvusBtn, .hdr-deck #bvBtn, .hdr-deck #initViewBtn, .hdr-deck #imageBoardBtn {
+    min-width:0; padding:8px 15px; font-size:12px; letter-spacing:1.6px;
+    border:1px solid var(--hair); color:var(--bone-2);
+    background:rgba(0,0,0,0.28); text-transform:uppercase;
+  }
+  .hdr-deck .header-btn:hover, .hdr-deck #imageBoardBtn:hover { border-color:var(--bone-2); color:var(--bone); background:var(--panel-3); }
+  .hdr-deck #charSheetBtn:hover, .hdr-deck #supplyBtn:hover   { border-color:#88cc44;      color:#bbee66;        box-shadow:0 0 9px rgba(136,204,68,0.30); }
+  .hdr-deck #rationsBtn:hover  { border-color:var(--chart);  color:#ffcf7a;          box-shadow:0 0 9px rgba(216,178,107,0.30); }
+  .hdr-deck #corvusBtn:hover   { border-color:var(--amber);  color:var(--amber-hi);  box-shadow:0 0 9px var(--amber-glow); }
+  .hdr-deck #bvBtn:hover       { border-color:var(--green);  color:#88ffbb;          box-shadow:0 0 9px var(--green-glow); }
+  .hdr-deck #initViewBtn:hover { border-color:var(--plum);   color:var(--plum);      box-shadow:0 0 9px rgba(163,125,187,0.35); }
+  .hdr-deck .header-btn--android:hover { border-color:#a8d4e8; color:var(--bone);    box-shadow:0 0 9px rgba(122,184,212,0.30); }
+  .hdr-deck .gm-tools-btn { font-size:12px; padding:8px 15px; letter-spacing:1.6px; }
 
   .main { display:flex; flex:1; overflow:hidden; }
 

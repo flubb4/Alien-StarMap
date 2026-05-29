@@ -663,6 +663,8 @@
   margin-left: 8px;
 }
 #rationsPanel .sm-close:hover { border-color: var(--sm-red); color: var(--sm-red); }
+#rationsPanel .sm-pest-btn { color: var(--sm-ink-dim); }
+#rationsPanel .sm-pest-btn:hover { border-color: var(--sm-warn); color: var(--sm-warn); }
 
 /* Warning stripe */
 #rationsPanel .sm-warning-stripe {
@@ -856,6 +858,30 @@
   0%   { opacity: 1; filter: brightness(1); }
   50%  { opacity: 1; filter: brightness(2.5) saturate(0.5); }
   100% { opacity: 0; transform: translate(var(--ex), calc(var(--ey) - 20px)) rotate(var(--rf)) scale(0.6); }
+}
+
+/* ---------- Vermin (the gag) ---------- */
+#rationsPanel .sm-mice-layer {
+  position: absolute; left: 0; right: 0; bottom: 36px; top: 0;
+  pointer-events: none; z-index: 6;
+}
+#rationsPanel .sm-mouse {
+  position: absolute; left: 0; top: 0; width: 26px; height: 13px;
+  pointer-events: auto; cursor: pointer;
+}
+#rationsPanel .sm-mouse-body {
+  display: block; transform-origin: bottom center;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.6));
+  transition: filter 0.1s;
+}
+#rationsPanel .sm-mouse:hover .sm-mouse-body {
+  filter: drop-shadow(0 0 4px rgba(255,207,122,0.85)) brightness(1.35);
+}
+#rationsPanel .sm-mouse-body.squished { animation: smSquish 0.36s ease-out forwards; }
+@keyframes smSquish {
+  0%   { transform: scaleY(1)    scaleX(1);   opacity: 1; }
+  40%  { transform: scaleY(0.25) scaleX(1.4); opacity: 1; }
+  100% { transform: scaleY(0.12) scaleX(1.55); opacity: 0; }
 }
 
 /* Quote strip (kept from previous) */

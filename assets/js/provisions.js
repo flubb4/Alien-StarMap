@@ -322,6 +322,13 @@ window.startSupplyPanel = function() {};
   let _panelOpen = false;
   let _initialized = false; // first Firebase callback seeds silently
 
+  // ─── Vermin (the gag): a mouse may scurry among the supplies ──
+  const PESTS_PATH = 'session/pests';
+  const MAX_MICE = 5;
+  let _mice = 0;            // shared population (Firebase-synced)
+  let _miceEls = [];        // {el, body, w, h, x, baseY, vx, dir, t, nextTurn, phase, paused, dying}
+  let _miceRAF = null;
+
   // ─── Sprite SVG (1:1 ported from design sprites.jsx, flat-color to avoid id collisions) ──
   function spriteSVG(type) {
     if (type === 'standard' || type === 'premium') {
@@ -630,28 +637,161 @@ window.startSupplyPanel = function() {};
     })();
   }
 
+  // ─── Vermin: sprite + movement ──
+  function mouseSVG() {
+    return `<svg width="26" height="13" viewBox="0 0 26 13" style="display:block;overflow:visible">
+      <path d="M3 9 Q1 9 1 6 Q1 4 3 5" fill="none" stroke="#6b5328" stroke-width="1.2" stroke-linecap="round"/>
+      <ellipse cx="11" cy="8.5" rx="8" ry="4" fill="#7a5f30" stroke="#3a2c14" stroke-width="0.8"/>
+      <circle cx="19.5" cy="7" r="3.4" fill="#8a6d3b" stroke="#3a2c14" stroke-width="0.8"/>
+      <ellipse cx="18.5" cy="3.6" rx="1.8" ry="1.9" fill="#7a5f30" stroke="#3a2c14" stroke-width="0.6"/>
+      <circle cx="21.4" cy="6.4" r="0.8" fill="#d66a5a"/>
+      <circle cx="22.8" cy="7.6" r="0.6" fill="#3a2c14"/>
+      <line x1="22.8" y1="7.5" x2="25.6" y2="6.4" stroke="#6b5328" stroke-width="0.4"/>
+      <line x1="22.8" y1="7.9" x2="25.6" y2="8.6" stroke="#6b5328" stroke-width="0.4"/>
+      <line x1="8" y1="12" x2="7" y2="13.6" stroke="#3a2c14" stroke-width="0.8"/>
+      <line x1="13" y1="12" x2="14" y2="13.6" stroke="#3a2c14" stroke-width="0.8"/>
+    </svg>`;
+  }
+
+  function _spawnMouse() {
+    const layer = document.getElementById('smMiceLayer');
+    if (!layer) return;
+    const W = layer.clientWidth || 600;
+    const H = layer.clientHeight || 240;
+    const w = 26, h = 13;
+    const el = document.createElement('div');
+    el.className = 'sm-mouse';
+    const body = document.createElement('span');
+    body.className = 'sm-mouse-body';
+    body.innerHTML = mouseSVG();
+    el.appendChild(body);
+    const vx = (Math.random() < 0.5 ? -1 : 1) * (0.8 + Math.random() * 1.3);
+    const m = {
+      el, body, w, h,
+      x: Math.random() * (W - w),
+      baseY: H - h - 1,
+      vx, dir: vx < 0 ? -1 : 1,
+      t: 0, nextTurn: 40 + Math.random() * 120,
+      phase: Math.random() * 6.28, paused: false, dying: false,
+    };
+    body.style.transform = 'scaleX(' + m.dir + ')';
+    el.style.transform = 'translate(' + m.x + 'px,' + m.baseY + 'px)';
+    el.addEventListener('click', function() { _squish(m, true); });
+    layer.appendChild(el);
+    _miceEls.push(m);
+    _ensureMiceLoop();
+  }
+
+  function _squish(m, fromClick) {
+    if (m.dying) return;
+    m.dying = true;
+    m.body.classList.add('squished');
+    if (fromClick) { spBeep(1500, 50, 0.05); spBeep(950, 45, 0.04); }
+    const el = m.el;
+    setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 360);
+    _miceEls = _miceEls.filter(x => x !== m);
+    if (fromClick) {
+      const next = Math.max(0, _mice - 1);
+      window._authReadyPromise.then(() => set(ref(window.db, PESTS_PATH), next));
+    }
+  }
+
+  function _miceTick(ts) {
+    _miceRAF = null;
+    if (!_panelOpen) return;
+    const layer = document.getElementById('smMiceLayer');
+    if (!layer) return;
+    const W = layer.clientWidth, H = layer.clientHeight;
+    const now = ts || performance.now();
+    for (const m of _miceEls) {
+      if (m.dying) continue;
+      m.baseY = H - m.h - 1;
+      if (++m.t > m.nextTurn) {
+        m.t = 0; m.nextTurn = 40 + Math.random() * 140;
+        if (m.paused) { m.paused = false; m.vx = (Math.random() < 0.5 ? -1 : 1) * (0.8 + Math.random() * 1.3); }
+        else if (Math.random() < 0.35) { m.paused = true; m.vx = 0; }
+        else { m.vx = (Math.random() < 0.5 ? -1 : 1) * (0.8 + Math.random() * 1.3); }
+      }
+      m.x += m.vx;
+      if (m.x < 2) { m.x = 2; m.vx = Math.abs(m.vx) || 1; }
+      if (m.x > W - m.w - 2) { m.x = W - m.w - 2; m.vx = -(Math.abs(m.vx) || 1); }
+      const ndir = m.vx < 0 ? -1 : (m.vx > 0 ? 1 : m.dir);
+      if (ndir !== m.dir) { m.dir = ndir; m.body.style.transform = 'scaleX(' + m.dir + ')'; }
+      const bob = m.vx === 0 ? 0 : Math.sin(now / 80 + m.phase) * 1.6;
+      m.el.style.transform = 'translate(' + m.x + 'px,' + (m.baseY + bob) + 'px)';
+    }
+    if (_miceEls.some(m => !m.dying)) _miceRAF = requestAnimationFrame(_miceTick);
+  }
+
+  function _ensureMiceLoop() {
+    if (_miceRAF == null && _panelOpen) _miceRAF = requestAnimationFrame(_miceTick);
+  }
+
+  function _renderMice() {
+    if (!_panelOpen) return;
+    const layer = document.getElementById('smMiceLayer');
+    if (!layer) return;
+    const alive = _miceEls.filter(m => !m.dying);
+    let diff = _mice - alive.length;
+    if (diff > 0) { for (let i = 0; i < diff; i++) _spawnMouse(); }
+    else if (diff < 0) { for (let i = 0; i < alive.length && i < -diff; i++) _squish(alive[i], false); }
+  }
+
+  function _clearMice() {
+    if (_miceRAF != null) { cancelAnimationFrame(_miceRAF); _miceRAF = null; }
+    const layer = document.getElementById('smMiceLayer');
+    if (layer) layer.innerHTML = '';
+    _miceEls = [];
+  }
+
+  function _pestRoll() {
+    let next = _mice;
+    if (_mice === 0) { if (Math.random() < 0.4) next = 1; }
+    else if (_mice < MAX_MICE) { if (Math.random() < 0.5) next = _mice + 1; }
+    if (next !== _mice) window._authReadyPromise.then(() => set(ref(window.db, PESTS_PATH), next));
+  }
+
+  // GM: force-release one more pest (ignores the breeding cap, hard-capped at 20)
+  window.gmTriggerMouse = function() {
+    const next = Math.min(20, _mice + 1);
+    window._authReadyPromise.then(() => set(ref(window.db, PESTS_PATH), next));
+    spBeep(1500, 50, 0.05); spBeep(950, 45, 0.04);
+  };
+
   // ─── Public API ──
   window.startRationsPanel = function() {
     // Everyone sees the button — no more Scott-only gating
     const btn = document.getElementById('rationsBtn');
     if (btn) btn.style.display = 'inline-block';
 
+    // GM-only pest trigger (for testing / dramatic effect)
+    const pestBtn = document.getElementById('smPestBtn');
+    if (pestBtn && window.isGM) pestBtn.style.display = 'inline-block';
+
     _bindInputs();
     _startClock();
 
     window._authReadyPromise.then(() => {
       onValue(ref(window.db, RATIONS_PATH), _onFirebase);
+      onValue(ref(window.db, PESTS_PATH), (snap) => {
+        _mice = Math.max(0, Math.min(MAX_MICE, parseInt(snap.val(), 10) || 0));
+        _renderMice();
+      });
     });
   };
 
   window.openRationsPanel = function() {
     document.getElementById('rationsPanel').classList.add('open');
     _panelOpen = true;
+    const pestBtn = document.getElementById('smPestBtn');
+    if (pestBtn) pestBtn.style.display = window.isGM ? 'inline-block' : 'none';
     // Wait for layout so stockpile has real dimensions, then seed
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         _reseed();
         _initialized = true;
+        _renderMice();
+        _pestRoll();
       });
     });
   };
@@ -660,6 +800,7 @@ window.startSupplyPanel = function() {};
     _panelOpen = false;
     _initialized = false;
     _clearScene();
+    _clearMice();
     document.getElementById('rationsPanel').classList.remove('open');
   };
 

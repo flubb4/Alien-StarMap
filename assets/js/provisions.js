@@ -639,7 +639,7 @@ window.startSupplyPanel = function() {};
 
   // ─── Vermin: sprite + movement ──
   function mouseSVG() {
-    return `<svg width="26" height="13" viewBox="0 0 26 13" style="display:block;overflow:visible">
+    return `<svg width="52" height="26" viewBox="0 0 26 13" style="display:block;overflow:visible">
       <path d="M3 9 Q1 9 1 6 Q1 4 3 5" fill="none" stroke="#6b5328" stroke-width="1.2" stroke-linecap="round"/>
       <ellipse cx="11" cy="8.5" rx="8" ry="4" fill="#7a5f30" stroke="#3a2c14" stroke-width="0.8"/>
       <circle cx="19.5" cy="7" r="3.4" fill="#8a6d3b" stroke="#3a2c14" stroke-width="0.8"/>
@@ -658,7 +658,7 @@ window.startSupplyPanel = function() {};
     if (!layer) return;
     const W = layer.clientWidth || 600;
     const H = layer.clientHeight || 240;
-    const w = 26, h = 13;
+    const w = 52, h = 26;
     const el = document.createElement('div');
     el.className = 'sm-mouse';
     const body = document.createElement('span');

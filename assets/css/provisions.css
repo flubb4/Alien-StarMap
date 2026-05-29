@@ -866,7 +866,7 @@
   pointer-events: none; z-index: 6;
 }
 #rationsPanel .sm-mouse {
-  position: absolute; left: 0; top: 0; width: 26px; height: 13px;
+  position: absolute; left: 0; top: 0; width: 52px; height: 26px;
   pointer-events: auto; cursor: pointer;
 }
 #rationsPanel .sm-mouse-body {

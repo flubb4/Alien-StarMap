@@ -22,60 +22,86 @@
   }
   #imageBoardOverlay.open { display:flex; }
   .ib-header {
-    width:100%; background:var(--panel);
-    border-bottom:1px solid var(--border);
-    padding:20px 18px 10px;
+    width:100%; position:relative;
+    background:linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%);
+    border-bottom:1px solid var(--hair);
+    box-shadow:0 2px 16px rgba(0,0,0,0.55);
+    padding:18px 18px 13px;
     display:flex; align-items:flex-end; justify-content:space-between;
-    flex-shrink:0; gap:12px;
+    flex-shrink:0; gap:18px;
   }
+  /* animated amber instrument seam along the bottom edge */
+  .ib-header::after {
+    content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+    background:linear-gradient(90deg, transparent, var(--amber), transparent);
+    opacity:0.45; animation:ibHeaderSeam 3.6s ease-in-out infinite;
+  }
+  @keyframes ibHeaderSeam { 0%,100%{opacity:0.2} 50%{opacity:0.6} }
+
   .ib-title {
-    font-family:"Orbitron",sans-serif; font-size:13px; font-weight:900;
-    letter-spacing:4px; color:var(--accent);
-    text-shadow:0 0 16px var(--accent);
+    font-family:"Orbitron",sans-serif; font-size:15px; font-weight:900;
+    letter-spacing:4px; color:var(--amber);
+    text-shadow:0 0 14px var(--amber-glow);
     text-transform:uppercase; white-space:nowrap;
-    padding-bottom:4px;
+    padding-bottom:5px; display:flex; align-items:center; gap:9px;
   }
+  .ib-title::before {
+    content:''; width:8px; height:8px; border-radius:50%;
+    background:var(--amber); box-shadow:0 0 9px var(--amber);
+    animation:ibTitlePulse 2.4s ease-in-out infinite;
+  }
+  @keyframes ibTitlePulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
   .ib-tools {
-    display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap;
+    display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap;
   }
   .ib-tool-group {
-    display:flex; align-items:center; gap:6px;
+    display:flex; align-items:center; gap:7px;
     position:relative;
-    padding:0 10px;
-    border-left:1px solid var(--border);
+    padding:0 15px;
+    border-left:1px solid var(--hair);
   }
   .ib-tool-group:first-child { padding-left:0; border-left:none; }
   .ib-tool-group::before {
     content: attr(data-group-label);
     position:absolute;
-    top:-14px; left:10px;
+    top:-15px; left:15px;
     font-family:"Share Tech Mono",monospace;
-    font-size:8px; letter-spacing:2px;
+    font-size:9px; letter-spacing:2px; font-weight:bold;
     color:var(--dim);
     text-transform:uppercase;
     white-space:nowrap;
     pointer-events:none;
   }
   .ib-tool-group:first-child::before { left:0; }
-  .ib-gm-group::before { color:var(--accent); opacity:0.55; }
+  .ib-gm-group::before { color:var(--amber); opacity:0.8; }
   .ib-tool-btn {
-    background:transparent; border:1px solid var(--dim); color:var(--text);
-    font-family:"Share Tech Mono",monospace; font-size:10px;
-    padding:5px 10px; cursor:pointer; letter-spacing:1px; transition:all 0.2s;
+    background:var(--panel-3); border:1px solid var(--hair); color:var(--bone);
+    font-family:"Share Tech Mono",monospace; font-size:11.5px; line-height:1;
+    padding:7px 13px; cursor:pointer; letter-spacing:0.5px; white-space:nowrap;
+    border-radius:2px; transition:all 0.15s;
   }
-  .ib-tool-btn:hover { border-color:var(--accent); color:var(--accent); }
-  .ib-tool-btn.active { border-color:var(--accent2); color:var(--accent2); background:rgba(255,68,0,0.08); }
+  .ib-tool-btn:hover {
+    border-color:var(--amber); color:var(--amber-hi);
+    background:rgba(255,154,60,0.1); box-shadow:0 0 12px var(--amber-glow);
+  }
+  .ib-tool-btn.active {
+    border-color:var(--amber); color:#1a0f00; background:var(--amber);
+    box-shadow:0 0 14px var(--amber-glow); font-weight:bold;
+  }
   .ib-close-btn {
-    background:transparent; border:1px solid #553388; color:#553388;
-    font-family:"Share Tech Mono",monospace; font-size:9px;
-    padding:6px 14px; cursor:pointer; letter-spacing:2px; transition:all 0.2s;
+    background:var(--panel-3); border:1px solid var(--rust); color:var(--rust);
+    font-family:"Share Tech Mono",monospace; font-size:11px;
+    padding:7px 15px; cursor:pointer; letter-spacing:2px; transition:all 0.15s;
+    border-radius:2px; white-space:nowrap;
   }
-  .ib-close-btn:hover { border-color:#cc88ff; color:#cc88ff; background:rgba(204,136,255,0.08); }
+  .ib-close-btn:hover { color:#e8755c; background:rgba(198,66,37,0.14); box-shadow:0 0 12px var(--rust-glow); }
   #ibColorPicker {
-    width:32px; height:28px; border:1px solid var(--dim); background:none;
-    cursor:pointer; padding:2px; border-radius:2px;
+    width:36px; height:32px; border:1px solid var(--hair); background:var(--panel-3);
+    cursor:pointer; padding:2px; border-radius:2px; transition:border-color 0.15s;
   }
-  #ibSizeSlider { width:70px; accent-color:var(--accent); cursor:pointer; }
+  #ibColorPicker:hover { border-color:var(--amber); }
+  #ibSizeSlider { width:80px; accent-color:var(--amber); cursor:pointer; }
   .ib-canvas-wrap {
     flex:1; position:relative; overflow:hidden;
     display:flex; align-items:center; justify-content:center;
@@ -172,37 +198,37 @@
   /* ── Fog of War ── */
   .ib-fog-panel {
     flex-shrink: 0;
-    align-items: center; gap: 6px; flex-wrap: wrap;
-    padding: 6px 14px;
-    background: rgba(0,0,0,.75);
-    border-bottom: 1px solid rgba(57,255,20,.2);
+    align-items: center; gap: 7px; flex-wrap: wrap;
+    padding: 8px 16px;
+    background: linear-gradient(180deg, rgba(20,33,28,0.96), rgba(7,16,12,0.96));
+    border-bottom: 1px solid var(--hair);
     font-family: 'Share Tech Mono', monospace;
   }
   .ib-fog-panel-label {
-    font-size: 8px; letter-spacing: .3em; color: rgba(57,255,20,.4);
-    margin-right: 4px; white-space: nowrap;
+    font-size: 9px; letter-spacing: .3em; color: var(--amber); opacity: 0.75;
+    font-weight: bold; margin-right: 6px; white-space: nowrap;
   }
   .ib-fog-tool {
-    padding: 5px 11px;
-    border: 1px solid rgba(57,255,20,.25); background: transparent;
-    color: rgba(57,255,20,.65); font-family: 'Share Tech Mono', monospace;
-    font-size: 9px; letter-spacing: .1em; cursor: pointer; white-space: nowrap;
-    transition: background .15s, color .15s, border-color .15s;
+    padding: 6px 12px;
+    border: 1px solid var(--hair); background: var(--panel-3);
+    color: var(--bone-2); font-family: 'Share Tech Mono', monospace;
+    font-size: 10.5px; letter-spacing: .04em; cursor: pointer; white-space: nowrap;
+    border-radius: 2px; transition: all .15s;
   }
-  .ib-fog-tool:hover { background: rgba(57,255,20,.1); color: #39ff14; }
+  .ib-fog-tool:hover { background: rgba(255,154,60,.1); color: var(--amber-hi); border-color: var(--amber); }
   .ib-fog-tool.active {
-    background: rgba(57,255,20,.18); color: #39ff14;
-    border-color: rgba(57,255,20,.65);
-    box-shadow: 0 0 8px rgba(57,255,20,.2);
+    background: var(--amber); color: #1a0f00;
+    border-color: var(--amber); font-weight: bold;
+    box-shadow: 0 0 10px var(--amber-glow);
   }
   .ib-fog-tool.ib-fog-danger {
-    border-color: rgba(255,255,255,.15); color: rgba(255,255,255,.4);
+    border-color: var(--hair); color: var(--dim);
   }
   .ib-fog-tool.ib-fog-danger:hover {
-    background: rgba(255,255,255,.07); color: rgba(255,255,255,.7);
+    background: rgba(198,66,37,.1); color: var(--rust); border-color: var(--rust);
   }
   .ib-fog-sep {
-    width: 1px; height: 22px; background: rgba(57,255,20,.2); margin: 0 4px;
+    width: 1px; height: 24px; background: var(--hair); margin: 0 5px;
     align-self: center;
   }
   .ib-fog-rect-preview {
@@ -246,12 +272,12 @@
   @keyframes ib-fog-blink { 50% { opacity: 0; } }
 
   .ib-release-btn {
-    border-color: rgba(57,255,20,.5) !important;
-    color: #39ff14 !important;
-    background: rgba(57,255,20,.08) !important;
-    text-shadow: 0 0 6px rgba(57,255,20,.4);
+    border-color: var(--green) !important;
+    color: var(--green) !important;
+    background: rgba(127,176,105,.12) !important;
+    text-shadow: 0 0 6px var(--green-glow);
   }
-  .ib-release-btn:hover { background: rgba(57,255,20,.16) !important; }
+  .ib-release-btn:hover { background: rgba(127,176,105,.2) !important; box-shadow: 0 0 12px var(--green-glow) !important; }
 
   /* ── PLAYER MARKERS + GM PINS ───────────────────────────────────
      Mirrors the Corvus marker visuals. Layer sits on top of the canvas;
@@ -396,6 +422,16 @@
   @keyframes ibmkBtnGlow {
     0%, 100% { box-shadow: 0 0 8px rgba(255,154,60,0.4); }
     50%      { box-shadow: 0 0 16px rgba(255,154,60,0.7); }
+  }
+  /* GM threat pin — rust accent to distinguish from the amber player marker */
+  .ib-pin-btn-style:hover {
+    border-color: var(--rust) !important; color: #ff7a4a !important;
+    background: rgba(198,66,37,0.1) !important; box-shadow: 0 0 10px var(--rust-glow);
+  }
+  .ib-pin-btn-style.active {
+    border-color: var(--rust) !important; color: #1a0500 !important;
+    background: var(--rust) !important; font-weight: bold;
+    box-shadow: 0 0 14px var(--rust-glow);
   }
   .ib-tool-sep {
     display: inline-block;

@@ -42,7 +42,7 @@
 .gmd-title::before { content:'◢'; color:var(--amber); font-size:11px; }
 .gmd-sub { color:var(--dim); font-size:9px; letter-spacing:2px; margin-top:-8px; }
 
-.gmd-section-label { color:var(--bone-2); font-size:10px; letter-spacing:2px; }
+.gmd-section-label { color:var(--bone-2); font-size:11px; letter-spacing:2px; }
 
 /* Recipient chips — single select */
 #gmdPlayerList {
@@ -51,8 +51,8 @@
   max-height:120px; overflow-y:auto;
 }
 .gmd-player-chip {
-  color:var(--bone-2); font-size:11px; cursor:pointer; letter-spacing:1px;
-  padding:5px 11px; border:1px solid var(--hair); background:var(--panel);
+  color:var(--bone-2); font-size:12px; cursor:pointer; letter-spacing:1px;
+  padding:6px 12px; border:1px solid var(--hair); background:var(--panel);
   transition:all 0.15s; user-select:none;
 }
 .gmd-player-chip:hover { border-color:var(--dim); color:var(--bone); }
@@ -66,11 +66,11 @@
 .gmd-tones { display:flex; gap:8px; }
 .gmd-tone {
   flex:1; text-align:center; cursor:pointer; user-select:none;
-  padding:7px 4px; border:1px solid var(--hair); background:var(--panel);
-  color:var(--bone-2); font-size:9px; letter-spacing:1.5px; transition:all 0.15s;
+  padding:8px 4px; border:1px solid var(--hair); background:var(--panel);
+  color:var(--bone-2); font-size:10px; letter-spacing:1.5px; transition:all 0.15s;
 }
 .gmd-tone:hover { color:var(--bone); }
-.gmd-tone .gmd-tone-icon { display:block; font-size:14px; margin-bottom:3px; }
+.gmd-tone .gmd-tone-icon { display:block; font-size:17px; margin-bottom:4px; }
 .gmd-tone[data-tone="mind"].active   { border-color:var(--plum);  color:var(--plum);  box-shadow:0 0 10px rgba(163,125,187,0.4); }
 .gmd-tone[data-tone="body"].active   { border-color:var(--green); color:var(--green); box-shadow:0 0 10px var(--green-glow); }
 .gmd-tone[data-tone="memory"].active { border-color:var(--amber); color:var(--amber); box-shadow:0 0 10px var(--amber-glow); }
@@ -78,8 +78,8 @@
 /* Quick presets */
 .gmd-presets { display:flex; flex-wrap:wrap; gap:6px; }
 .gmd-preset {
-  cursor:pointer; padding:4px 9px; font-size:9.5px; letter-spacing:0.5px;
-  border:1px dashed var(--hair); background:transparent; color:var(--dim);
+  cursor:pointer; padding:5px 10px; font-size:11px; letter-spacing:0.3px;
+  border:1px dashed var(--hair); background:transparent; color:var(--bone-2);
   transition:all 0.15s;
 }
 .gmd-preset:hover { border-color:var(--amber); color:var(--amber); border-style:solid; }
@@ -88,8 +88,8 @@
   width:100%; box-sizing:border-box;
   background:var(--ink); border:1px solid var(--hair);
   color:var(--bone); font-family:"Share Tech Mono",monospace;
-  font-size:12px; padding:11px; resize:vertical;
-  min-height:70px; outline:none; line-height:1.6;
+  font-size:15px; padding:13px; resize:vertical;
+  min-height:78px; outline:none; line-height:1.65; letter-spacing:0.3px;
 }
 #gmdText:focus { border-color:var(--amber); }
 #gmdText::placeholder { color:var(--dim-2); }

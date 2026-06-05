@@ -151,6 +151,7 @@ function _doLogin(nameUpper) {
       window.bvtInit?.();
       window.startGlobalIbWatcher?.();
       window.startHandoutWatcher?.();
+      window.startDirectiveWatcher?.();
       window.startPrputEvolveWatcher?.();
       window.startSupplyPanel?.();
       window.startRationsPanel?.();

@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="assets/css/wuerfel-duerfel.css">
 <link rel="stylesheet" href="assets/css/xp.css">
 <link rel="stylesheet" href="assets/css/handout.css">
+<link rel="stylesheet" href="assets/css/gm-directive.css">
 <link rel="stylesheet" href="assets/css/image-board.css">
 <link rel="stylesheet" href="assets/css/motion-tracker.css">
 <link rel="stylesheet" href="assets/css/black-veil.css">
@@ -87,6 +88,7 @@
         <button class="gm-wd-btn gm-dd-btn" onclick="openWuerfelLobby();closeGMTools()">Würfel Dürfel</button>
         <button class="gm-ib-btn gm-dd-btn" onclick="openImageBoard();closeGMTools()">Image Board</button>
         <button class="gm-ho-btn gm-dd-btn" onclick="openHandoutPanel();closeGMTools()">Transmission</button>
+        <button class="gm-dir-btn gm-dd-btn" onclick="openGMDirective();closeGMTools()">Directive</button>
         <button class="gm-xp-btn gm-dd-btn" onclick="openXPAward();closeGMTools()">XP Award</button>
         <button class="gm-session-btn gm-dd-btn" id="gmSessionBtn" onclick="toggleSession()">Session Active — Close Map</button>
         <button class="gm-dd-btn" onclick="openGMBroadcast();closeGMTools()">Login Screen Memories</button>
@@ -608,6 +610,54 @@
     </div>
     <div class="crt-neck"></div>
     <div class="crt-base"></div>
+  </div>
+</div>
+
+<!-- GM DIRECTIVE — compose panel (GM) -->
+<div id="gmDirectivePanel">
+  <div class="gmd-box">
+    <button class="gmd-close-btn" type="button" onclick="closeGMDirective()">×</button>
+    <div class="gmd-title">GM DIRECTIVE</div>
+    <div class="gmd-sub">// PRIVATE ROLEPLAY CUE — SINGLE OPERATIVE //</div>
+
+    <div class="gmd-section-label">EMPFÄNGER</div>
+    <div id="gmdPlayerList"></div>
+
+    <div class="gmd-section-label">TON</div>
+    <div class="gmd-tones">
+      <div class="gmd-tone active" data-tone="whisper" onclick="gmdSetTone('whisper')">
+        <span class="gmd-tone-icon">✉</span>FLÜSTERN</div>
+      <div class="gmd-tone" data-tone="body" onclick="gmdSetTone('body')">
+        <span class="gmd-tone-icon">☣</span>KÖRPER</div>
+      <div class="gmd-tone" data-tone="danger" onclick="gmdSetTone('danger')">
+        <span class="gmd-tone-icon">⚠</span>GEFAHR</div>
+    </div>
+
+    <div class="gmd-section-label">SCHNELL-VORLAGEN</div>
+    <div class="gmd-presets" id="gmdPresets"></div>
+
+    <textarea id="gmdText" placeholder="z.B. Dir wird schwindlig…"></textarea>
+
+    <div class="gmd-actions">
+      <span class="gmd-hint">STRG+ENTER = SENDEN</span>
+      <button class="gmd-cancel-btn" onclick="closeGMDirective()">ABBRUCH</button>
+      <button class="gmd-send-btn" id="gmdSendBtn" onclick="sendGMDirective()" disabled>► SENDEN</button>
+    </div>
+  </div>
+</div>
+
+<!-- GM DIRECTIVE — player flash overlay -->
+<div id="gmdOverlay">
+  <div class="gmd-ov-vignette"></div>
+  <div class="gmd-ov-card" id="gmdOvCard">
+    <span class="gmd-cnr tl"></span><span class="gmd-cnr tr"></span>
+    <span class="gmd-cnr bl"></span><span class="gmd-cnr br"></span>
+    <div class="gmd-ov-label" id="gmdOvLabel">PRIVATE DIRECTIVE</div>
+    <div class="gmd-ov-icon" id="gmdOvIcon">✉</div>
+    <div class="gmd-ov-text" id="gmdOvText"></div>
+    <div class="gmd-ov-from">// MU/TH/UR 6000 — EYES ONLY</div>
+    <div class="gmd-ov-bar"><div class="gmd-ov-bar-fill" id="gmdOvBar"></div></div>
+    <div class="gmd-ov-dismiss">[ KLICK / TASTE ZUM SCHLIESSEN ]</div>
   </div>
 </div>
 
@@ -1400,6 +1450,7 @@
 <script type="module" src="assets/js/xp.js"></script>
 <script type="module" src="assets/js/youtube-player.js"></script>
 <script type="module" src="assets/js/gm-broadcast.js"></script>
+<script type="module" src="assets/js/gm-directive.js"></script>
 <script type="module" src="assets/js/android-bay.js"></script>
 <script type="module" src="assets/js/muthur.js"></script>
 <script type="module" src="assets/js/reliability.js"></script>

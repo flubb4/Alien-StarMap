@@ -467,7 +467,7 @@ function renderWDLobby(d) {
       </div>
       <div>
         <div class="wd-subtitle" style="text-align:left;margin-bottom:8px;">// SELECT FIGHTERS</div>
-        <div class="wd-lobby-users">${chips || '<span style="color:#441100;font-size:10px">NO PLAYERS ONLINE</span>'}</div>
+        <div class="wd-lobby-users">${chips || '<span style="color:var(--dim);font-size:10px">NO PLAYERS ONLINE</span>'}</div>
       </div>
       <div>
         <div class="wd-subtitle" style="text-align:left;margin-bottom:8px;">// SELECT MODE</div>
@@ -522,7 +522,7 @@ function renderWDBetting(d) {
     const pts = scores[pname] || 0;
     // In depletion mode show numeric point total; classic shows win-pip dots
     const scoreDisplay = mode === 'depletion'
-      ? `<div style="font-size:11px;letter-spacing:2px;color:#cc6633;margin-top:4px;">${pts} PTS</div>`
+      ? `<div style="font-size:11px;letter-spacing:2px;color:var(--amber);margin-top:4px;">${pts} PTS</div>`
       : `<div class="wd-score-row">${Array.from({length:Math.max(pts,0)},()=>`<div class="wd-score-pip win"></div>`).join('')}</div>`;
 
     let betUI = '';
@@ -565,11 +565,11 @@ function renderWDBetting(d) {
           <button class="wd-lock-btn" onclick="wdLockBet()" ${selUsed?'disabled':''}>🔒 LOCK BET</button>`;
       }
     } else if (locked && isMe) {
-      betUI = `<div style="margin-top:12px;color:#44aa44;font-size:11px;letter-spacing:2px;">✓ BET LOCKED</div>`;
+      betUI = `<div style="margin-top:12px;color:var(--green);font-size:11px;letter-spacing:2px;">✓ BET LOCKED</div>`;
     } else if (!isMe && (isPlayer || wdMyRole === 'spectator')) {
       // opponent / spectator board — hidden bet info
-      betUI = locked ? `<div style="margin-top:12px;color:#44aa44;font-size:11px;letter-spacing:2px;">✓ LOCKED</div>` :
-                       `<div style="margin-top:12px;color:#885522;font-size:11px;letter-spacing:2px;">BETTING...</div>`;
+      betUI = locked ? `<div style="margin-top:12px;color:var(--green);font-size:11px;letter-spacing:2px;">✓ LOCKED</div>` :
+                       `<div style="margin-top:12px;color:var(--dim);font-size:11px;letter-spacing:2px;">BETTING...</div>`;
       if (mode === 'depletion') {
         const oppUsed = (d.usedBets||{})[pname] || [];
         const btns = Array.from({length:10},(_,i)=>i+1).map(n => {
@@ -580,7 +580,7 @@ function renderWDBetting(d) {
       }
     } else if (window.isGM && !isMe) {
       // GM spectating a board they're not playing — sees actual bets
-      betUI = `<div style="margin-top:10px;font-size:11px;color:#cc6633;letter-spacing:2px;">BET: ${bets[pname]||'—'}</div>`;
+      betUI = `<div style="margin-top:10px;font-size:11px;color:var(--amber);letter-spacing:2px;">BET: ${bets[pname]||'—'}</div>`;
       if (mode === 'depletion') {
         const oppUsed = (d.usedBets||{})[pname] || [];
         const btns = Array.from({length:10},(_,i)=>i+1).map(n => {
@@ -621,9 +621,9 @@ function renderWDRolling(d) {
   return `
     <div class="wd-rolling-wrap">
       <div class="wd-slam-text">WÜRFELN!</div>
-      <div style="margin-top:16px;font-size:10px;letter-spacing:3px;color:#885522">${d.p1}</div>
+      <div style="margin-top:16px;font-size:10px;letter-spacing:3px;color:var(--dim)">${d.p1}</div>
       <div class="wd-rolling-dice-row">${dice1}</div>
-      <div style="margin-top:10px;font-size:10px;letter-spacing:3px;color:#885522">${d.p2}</div>
+      <div style="margin-top:10px;font-size:10px;letter-spacing:3px;color:var(--dim)">${d.p2}</div>
       <div class="wd-rolling-dice-row">${dice2}</div>
     </div>`;
 }
@@ -722,8 +722,8 @@ function wdAnimateReveal(d) {
     if (!die) return;
     die.classList.add('dropped');
     die.textContent = '?';
-    die.style.color = '#885522';
-    die.style.borderColor = '#441100';
+    die.style.color = 'var(--dim)';
+    die.style.borderColor = 'var(--hair)';
   }
 
   function flipDie(pname, idx) {
@@ -737,7 +737,7 @@ function wdAnimateReveal(d) {
       } else {
         const faces = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
         die.textContent = faces[val] || val;
-        die.style.color = '#cc6633'; die.style.borderColor = '#441100';
+        die.style.color = 'var(--bone-2)'; die.style.borderColor = 'var(--hair)';
       }
     }, 250);
   }
@@ -815,10 +815,10 @@ function renderWDGameover(d) {
   if (isDepletion) {
     const reason = d.roundCapHit ? '10 ROUNDS — MOST POINTS WINS' : 'ALL BETS EXHAUSTED';
     sub = `<div class="wd-champion-sub">${reason}</div>
-           <div style="color:#885522;font-size:11px;letter-spacing:2px">${p1}: ${scores[p1]||0} PTS &nbsp;|&nbsp; ${p2}: ${scores[p2]||0} PTS</div>`;
+           <div style="color:var(--dim);font-size:11px;letter-spacing:2px">${p1}: ${scores[p1]||0} PTS &nbsp;|&nbsp; ${p2}: ${scores[p2]||0} PTS</div>`;
   } else if (d.roundCapHit) {
     sub = `<div class="wd-champion-sub">10 ROUNDS PLAYED — MOST DICE WINS</div>
-           <div style="color:#885522;font-size:11px;letter-spacing:2px">${p1}: ${dice[p1]||0} DICE &nbsp;|&nbsp; ${p2}: ${dice[p2]||0} DICE</div>`;
+           <div style="color:var(--dim);font-size:11px;letter-spacing:2px">${p1}: ${dice[p1]||0} DICE &nbsp;|&nbsp; ${p2}: ${dice[p2]||0} DICE</div>`;
   } else {
     const total = (dice[p1]||0)+(dice[p2]||0);
     sub = `<div class="wd-champion-sub">HOLDS ALL ${total} DICE</div>`;
@@ -826,7 +826,7 @@ function renderWDGameover(d) {
   const againBtn = window.isGM ? `<button class="wd-again-btn" onclick="openWuerfelLobby()">↺ PLAY AGAIN</button>` : '';
   return `
     <div class="wd-gameover">
-      <div style="font-size:10px;letter-spacing:4px;color:#885522;margin-bottom:12px">// GAME OVER //</div>
+      <div style="font-size:10px;letter-spacing:4px;color:var(--dim);margin-bottom:12px">// GAME OVER //</div>
       <div class="wd-champion-name">${champ}</div>
       ${sub}
       <div style="margin-top:20px">${againBtn}<button class="wd-lb-btn" onclick="wdOpenLeaderboard()">📊 STANDINGS</button></div>
@@ -839,7 +839,7 @@ window.wdOpenLeaderboard = async function() {
   window._wdLeaderboard = true;
   const el = document.getElementById('wdContent');
   const header = `<div class="wd-title">WÜRFEL DÜRFEL</div><div class="wd-subtitle">// HALL OF CHAMPIONS //</div><button class="wd-close-btn" onclick="closeWD()">✕ CLOSE</button>`;
-  el.innerHTML = header + `<div style="text-align:center;color:#885522;font-size:11px;letter-spacing:2px;padding:40px">LOADING RECORDS...</div>`;
+  el.innerHTML = header + `<div style="text-align:center;color:var(--dim);font-size:11px;letter-spacing:2px;padding:40px">LOADING RECORDS...</div>`;
   document.getElementById('wdOverlay').classList.add('open');
   try {
     await window._authReadyPromise;
@@ -849,7 +849,7 @@ window.wdOpenLeaderboard = async function() {
     }
   } catch(e) {
     if (window._wdLeaderboard) {
-      el.innerHTML = header + `<div style="text-align:center;color:#cc4444;font-size:11px;letter-spacing:2px;padding:40px">ERROR LOADING RECORDS</div>`;
+      el.innerHTML = header + `<div style="text-align:center;color:var(--rust);font-size:11px;letter-spacing:2px;padding:40px">ERROR LOADING RECORDS</div>`;
     }
   }
 };
@@ -867,26 +867,26 @@ function renderWDLeaderboard(stats) {
     .filter(p => p && p.name)
     .sort((a, b) => (b.wins||0)-(a.wins||0) || (a.losses||0)-(b.losses||0));
   if (!players.length) {
-    const resetBtn = window.isGM ? `<div style="margin-top:16px"><button onclick="wdResetLeaderboard()" style="background:transparent;border:1px solid #441111;color:#883333;font-family:'Share Tech Mono',monospace;font-size:9px;padding:6px 16px;cursor:pointer;letter-spacing:2px" onmouseover="this.style.borderColor='#cc3333';this.style.color='#cc3333'" onmouseout="this.style.borderColor='#441111';this.style.color='#883333'">⚠ RESET LEADERBOARD</button></div>` : '';
-    return `<div style="text-align:center;color:#885522;padding:50px 20px;font-size:11px;letter-spacing:3px">// NO RECORDS YET //${resetBtn}</div>`;
+    const resetBtn = window.isGM ? `<div style="margin-top:16px"><button onclick="wdResetLeaderboard()" style="background:transparent;border:1px solid rgba(198,66,37,0.35);color:rgba(198,66,37,0.8);font-family:'Share Tech Mono',monospace;font-size:9px;padding:6px 16px;cursor:pointer;letter-spacing:2px" onmouseover="this.style.borderColor='var(--rust)';this.style.color='var(--rust)'" onmouseout="this.style.borderColor='rgba(198,66,37,0.35)';this.style.color='rgba(198,66,37,0.8)'">⚠ RESET LEADERBOARD</button></div>` : '';
+    return `<div style="text-align:center;color:var(--dim);padding:50px 20px;font-size:11px;letter-spacing:3px">// NO RECORDS YET //${resetBtn}</div>`;
   }
   const rows = players.map((p, i) => {
     const total = (p.wins||0)+(p.losses||0);
     const rate  = total > 0 ? Math.round((p.wins/total)*100) : 0;
-    const rankColor = i===0 ? '#ff9944' : i===1 ? '#aaaaaa' : i===2 ? '#cc6633' : '#554422';
-    const nameColor = i===0 ? '#ff9944' : '#cc8844';
+    const rankColor = i===0 ? 'var(--amber-hi)' : i===1 ? '#c9c2ad' : i===2 ? 'var(--amber)' : 'var(--dim-2)';
+    const nameColor = i===0 ? 'var(--amber-hi)' : 'var(--bone-2)';
     return `<tr>
       <td style="color:${rankColor};font-size:10px;width:36px">#${i+1}</td>
       <td style="text-align:left;padding-left:12px;color:${nameColor}">${p.name}</td>
-      <td style="color:#44cc44">${p.wins||0}</td>
-      <td style="color:#cc4444">${p.losses||0}</td>
-      <td style="color:#885522">${total}</td>
-      <td style="color:#ffaa44">${rate}%</td>
-      <td style="color:#554422;font-size:9px;letter-spacing:0">${p.classicWins||0}C&nbsp;/&nbsp;${p.depletionWins||0}D</td>
+      <td style="color:var(--green)">${p.wins||0}</td>
+      <td style="color:var(--rust)">${p.losses||0}</td>
+      <td style="color:var(--dim)">${total}</td>
+      <td style="color:var(--amber)">${rate}%</td>
+      <td style="color:var(--dim-2);font-size:9px;letter-spacing:0">${p.classicWins||0}C&nbsp;/&nbsp;${p.depletionWins||0}D</td>
     </tr>`;
   }).join('');
   const resetBtn = window.isGM ? `<div style="text-align:center;margin-top:20px">
-    <button onclick="wdResetLeaderboard()" style="background:transparent;border:1px solid #441111;color:#883333;font-family:'Share Tech Mono',monospace;font-size:9px;padding:6px 16px;cursor:pointer;letter-spacing:2px;transition:all 0.2s" onmouseover="this.style.borderColor='#cc3333';this.style.color='#cc3333'" onmouseout="this.style.borderColor='#441111';this.style.color='#883333'">⚠ RESET LEADERBOARD</button>
+    <button onclick="wdResetLeaderboard()" style="background:transparent;border:1px solid rgba(198,66,37,0.35);color:rgba(198,66,37,0.8);font-family:'Share Tech Mono',monospace;font-size:9px;padding:6px 16px;cursor:pointer;letter-spacing:2px;transition:all 0.2s" onmouseover="this.style.borderColor='var(--rust)';this.style.color='var(--rust)'" onmouseout="this.style.borderColor='rgba(198,66,37,0.35)';this.style.color='rgba(198,66,37,0.8)'">⚠ RESET LEADERBOARD</button>
   </div>` : '';
   return `<div class="wd-leaderboard">
     <table class="wd-lb-table">

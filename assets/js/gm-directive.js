@@ -14,15 +14,15 @@ var dirRoot = function (id) { return ref(window.db, 'session/directive/' + id); 
 function nameToId(name) { return 'user_' + name.toUpperCase().replace(/[^A-Z0-9]/g, '_'); }
 
 var gmdSelected = null;   // selected recipient name
-var gmdTone     = 'whisper';
+var gmdTone     = 'mind';
 
 var GMD_PRESETS = [
+  'Du fühlst dich verfolgt.',
+  'Jemand beobachtet dich.',
+  'Deine Beine wollen sich nicht mehr bewegen.',
   'Dir wird schwindlig.',
-  'Du hörst ein Geräusch hinter dir.',
-  'Ein kalter Schauer läuft über deinen Rücken.',
-  'Dein Herz beginnt zu rasen.',
-  'Du riechst etwas Verbranntes.',
-  'Für einen Moment verschwimmt deine Sicht.'
+  'Dir fällt wieder etwas ein…',
+  'Ein vertrauter Geruch weckt eine Erinnerung.'
 ];
 
 // ── GM: open compose panel ────────────────────────────────────
@@ -31,7 +31,7 @@ window.openGMDirective = function () {
   var panel = document.getElementById('gmDirectivePanel');
   panel.classList.add('open');
   gmdSelected = null;
-  gmdSetTone('whisper');
+  gmdSetTone('mind');
   gmdBuildPresets();
   gmdPopulatePlayers();
   gmdUpdateSend();
@@ -121,14 +121,14 @@ window.startDirectiveWatcher = function () {
     if (!d || !d.ts || d.ts <= gmdLastTs) return;
     gmdLastTs = d.ts;
     if (window.isGM) return; // GM doesn't flash their own sends
-    gmdShow(d.text, d.tone || 'whisper');
+    gmdShow(d.text, d.tone || 'mind');
   });
 };
 
 // ── Player-side flash overlay ─────────────────────────────────
 var gmdTimer = null;
-var GMD_ICON = { whisper: '✉', body: '☣', danger: '⚠' };
-var GMD_LABEL = { whisper: 'PRIVATE DIRECTIVE', body: 'SOMATIC ALERT', danger: 'PRIORITY DIRECTIVE' };
+var GMD_ICON = { mind: '👁', body: '🫀', memory: '💭' };
+var GMD_LABEL = { mind: 'GEISTIGER EINDRUCK', body: 'KÖRPERLICHE EMPFINDUNG', memory: 'ERINNERUNG' };
 var GMD_DUR = 7000;
 
 function gmdShow(text, tone) {
@@ -136,12 +136,11 @@ function gmdShow(text, tone) {
   if (!ov) return;
   if (gmdTimer) { clearTimeout(gmdTimer); gmdTimer = null; }
 
-  ov.classList.remove('tone-body', 'tone-danger');
-  if (tone === 'body') ov.classList.add('tone-body');
-  else if (tone === 'danger') ov.classList.add('tone-danger');
+  ov.classList.remove('tone-mind', 'tone-body', 'tone-memory');
+  ov.classList.add('tone-' + (GMD_ICON[tone] ? tone : 'mind'));
 
-  document.getElementById('gmdOvLabel').textContent = GMD_LABEL[tone] || GMD_LABEL.whisper;
-  document.getElementById('gmdOvIcon').textContent = GMD_ICON[tone] || GMD_ICON.whisper;
+  document.getElementById('gmdOvLabel').textContent = GMD_LABEL[tone] || GMD_LABEL.mind;
+  document.getElementById('gmdOvIcon').textContent = GMD_ICON[tone] || GMD_ICON.mind;
   document.getElementById('gmdOvText').textContent = text;
 
   // restart card + bar animations (so back-to-back directives replay)

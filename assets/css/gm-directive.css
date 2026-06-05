@@ -71,9 +71,9 @@
 }
 .gmd-tone:hover { color:var(--bone); }
 .gmd-tone .gmd-tone-icon { display:block; font-size:14px; margin-bottom:3px; }
-.gmd-tone[data-tone="whisper"].active { border-color:var(--amber); color:var(--amber); box-shadow:0 0 10px var(--amber-glow); }
-.gmd-tone[data-tone="body"].active    { border-color:var(--chart); color:var(--chart); box-shadow:0 0 10px rgba(212,209,104,0.35); }
-.gmd-tone[data-tone="danger"].active  { border-color:var(--rust);  color:var(--rust);  box-shadow:0 0 10px rgba(198,66,37,0.4); }
+.gmd-tone[data-tone="mind"].active   { border-color:var(--plum);  color:var(--plum);  box-shadow:0 0 10px rgba(163,125,187,0.4); }
+.gmd-tone[data-tone="body"].active   { border-color:var(--green); color:var(--green); box-shadow:0 0 10px var(--green-glow); }
+.gmd-tone[data-tone="memory"].active { border-color:var(--amber); color:var(--amber); box-shadow:0 0 10px var(--amber-glow); }
 
 /* Quick presets */
 .gmd-presets { display:flex; flex-wrap:wrap; gap:6px; }
@@ -124,12 +124,13 @@
   position:fixed; inset:0; z-index:1400; display:none;
   align-items:center; justify-content:center;
   font-family:"Share Tech Mono",monospace;
-  --gmd-accent:var(--amber);
-  --gmd-glow:var(--amber-glow);
+  --gmd-accent:var(--plum);
+  --gmd-glow:rgba(163,125,187,0.42);
 }
 #gmdOverlay.open { display:flex; }
-#gmdOverlay.tone-body   { --gmd-accent:var(--chart); --gmd-glow:rgba(212,209,104,0.4); }
-#gmdOverlay.tone-danger { --gmd-accent:var(--rust);  --gmd-glow:rgba(198,66,37,0.45); }
+#gmdOverlay.tone-mind   { --gmd-accent:var(--plum);  --gmd-glow:rgba(163,125,187,0.42); }
+#gmdOverlay.tone-body   { --gmd-accent:var(--green); --gmd-glow:var(--green-glow); }
+#gmdOverlay.tone-memory { --gmd-accent:var(--amber); --gmd-glow:var(--amber-glow); }
 
 /* tone-tinted vignette pulse */
 .gmd-ov-vignette {

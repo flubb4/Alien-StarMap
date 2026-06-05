@@ -391,7 +391,8 @@ window.wdNextRound = function() {
 // ── Render dispatcher ────────────────────────────────────
 function renderWD(el, d) {
   // Keep title/subtitle
-  let inner = `<div class="wd-title">WÜRFEL DÜRFEL</div><div class="wd-subtitle">// 1v1 DICE COMBAT //</div>`;
+  let inner = `<div class="wd-corner tl"></div><div class="wd-corner tr"></div><div class="wd-corner bl"></div><div class="wd-corner br"></div>`;
+  inner += `<div class="wd-title">WÜRFEL DÜRFEL</div><div class="wd-subtitle">// 1v1 DICE COMBAT //</div>`;
   if (wdMyRole === 'gm') {
     inner += `<button class="wd-close-btn" onclick="wdGMClose()">✕ END GAME</button>`;
   } else {
@@ -733,13 +734,18 @@ function wdAnimateReveal(d) {
     die.style.animation = 'wdFlip 0.5s ease-in-out both';
     setTimeout(() => {
       if (val === 6) {
-        die.textContent = '⚅'; die.classList.add('six');
+        die.textContent = '⚅';
       } else {
         const faces = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
         die.textContent = faces[val] || val;
         die.style.color = 'var(--bone-2)'; die.style.borderColor = 'var(--hair)';
       }
     }, 250);
+    // after flip completes, fire the six success-flare (clear inline anim so the
+    // .six class animation isn't overridden by the inline wdFlip)
+    if (val === 6) {
+      setTimeout(() => { die.style.animation = ''; die.classList.add('six'); }, 500);
+    }
   }
 
   // Step 1: drop p1 dice

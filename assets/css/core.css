@@ -126,6 +126,7 @@
   .header-btn--bone  { border-color:var(--bone-2); color:var(--bone-2); }
   .header-btn--chart { border-color:var(--chart);  color:var(--chart); }
   .header-btn--teal  { border-color:var(--teal);   color:var(--teal); }
+  .header-btn .hicon { width:15px; height:15px; vertical-align:-3px; margin-right:7px; fill:currentColor; }
 
   .hdr-deck .header-btn,
   .hdr-deck #charSheetBtn, .hdr-deck #rationsBtn, .hdr-deck #supplyBtn,

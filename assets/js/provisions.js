@@ -574,9 +574,8 @@ window.startSupplyPanel = function() {};
     const btn = document.getElementById('rationsBtn');
     if (btn) {
       btn.classList.remove('rations-low', 'muesli-crisis');
-      if (c.beer === 0 || c.bar === 0 || total === 0) { btn.textContent = '🚨 PROVISIONS'; btn.classList.add('muesli-crisis'); }
-      else if (c.bar <= 3 || total <= 4 || c.beer <= 3) { btn.textContent = '⚠ PROVISIONS'; btn.classList.add('rations-low'); }
-      else { btn.textContent = '🍫 PROVISIONS'; }
+      if (c.beer === 0 || c.bar === 0 || total === 0) { btn.classList.add('muesli-crisis'); }
+      else if (c.bar <= 3 || total <= 4 || c.beer <= 3) { btn.classList.add('rations-low'); }
     }
   }
 

@@ -116,7 +116,7 @@
   /* ── TOOLBAR BUTTONS — flat tabs, amber fills on hover/active ───── */
   .header-btn {
     background:transparent; border:1px solid var(--hair); color:var(--bone);
-    font-family:var(--ui); font-weight:600; font-size:12.5px; padding:0 13px; height:34px;
+    font-family:var(--mono); font-weight:600; font-size:12px; padding:0 13px; height:34px;
     cursor:pointer; letter-spacing:.3px; text-transform:uppercase; transition:all .16s var(--ease);
     white-space:nowrap; min-width:0; text-align:center; border-radius:var(--r-s);
     display:inline-flex; align-items:center; gap:8px;
@@ -127,7 +127,7 @@
   .hdr-deck .header-btn,
   .hdr-deck #charSheetBtn, .hdr-deck #rationsBtn, .hdr-deck #supplyBtn,
   .hdr-deck #corvusBtn, .hdr-deck #bvBtn, .hdr-deck #initViewBtn, .hdr-deck #imageBoardBtn {
-    min-width:0; padding:0 13px; height:34px; font-size:12.5px; letter-spacing:.3px;
+    min-width:0; padding:0 13px; height:34px; font-family:var(--mono); font-size:12px; letter-spacing:.3px;
     border:1px solid var(--hair); color:var(--bone);
     background:transparent; text-transform:uppercase; border-radius:var(--r-s);
     display:inline-flex; align-items:center; gap:8px;
@@ -667,7 +667,7 @@
     background: rgba(198,66,37,0.08);
     border: 1px solid var(--rust);
     color: var(--rust);
-    font-family: var(--ui);
+    font-family: var(--mono);
     font-size: 13px; padding: 8px 18px; border-radius: var(--r-s);
     cursor: pointer; letter-spacing: .4px; font-weight: 600;
     transition: all .2s var(--ease);

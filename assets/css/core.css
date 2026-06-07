@@ -88,7 +88,7 @@
   .hdr-tgrp { position:relative; display:flex; align-items:center; gap:6px; padding:0 16px; }
   .hdr-tgrp + .hdr-tgrp { margin-left:0; padding-left:16px; border-left:1px solid var(--hair-soft); }
   /* group caption injected from data-group="crew|ship|ops" — floats above the button row, no HTML change */
-  .hdr-tgrp::before { content:attr(data-group); position:absolute; top:-14px; left:16px; font-family:var(--mono); font-size:9px; letter-spacing:2px; color:var(--dim); text-transform:uppercase; }
+  .hdr-tgrp::before { content:attr(data-group); position:absolute; top:-14px; left:16px; font-family:var(--mono); font-size:10px; letter-spacing:1.6px; color:var(--bone-2); text-transform:uppercase; }
   #gmSection.visible { margin-right:6px; padding-right:14px; border-right:1px solid var(--hair-soft); align-self:center; }
 
   /* ── ZONE 3 · INSTRUMENT CONSOLE ───────────────────────────────── */
@@ -99,9 +99,9 @@
   }
 
   /* each instrument is its own chip box, like the mockup's .chip / .relmini */
-  .instr   { display:flex; flex-direction:column; gap:3px; justify-content:center; padding:6px 12px; border:1px solid var(--hair); border-radius:var(--r-s); background:var(--panel-2); }
-  .instr-k { font-family:var(--mono); font-size:8.5px; letter-spacing:1.6px; color:var(--dim); text-transform:uppercase; line-height:1; white-space:nowrap; }
-  .instr-v { font-family:var(--mono); font-size:13px; font-weight:600; letter-spacing:.5px; color:var(--bone); line-height:1.1; display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .instr   { display:flex; flex-direction:column; gap:4px; justify-content:center; padding:7px 13px; border:1px solid var(--hair); border-radius:var(--r-s); background:var(--panel-2); }
+  .instr-k { font-family:var(--mono); font-size:9.5px; letter-spacing:1.2px; color:var(--bone-2); text-transform:uppercase; line-height:1; white-space:nowrap; }
+  .instr-v { font-family:var(--mono); font-size:14px; font-weight:700; letter-spacing:.3px; color:var(--bone); line-height:1.1; display:flex; align-items:center; gap:7px; white-space:nowrap; }
   .instr-date .instr-v { color:var(--chart); text-shadow:none; }
   .instr-sep { display:none; }
 
@@ -115,20 +115,20 @@
 
   /* ── TOOLBAR BUTTONS — flat tabs, amber fills on hover/active ───── */
   .header-btn {
-    background:transparent; border:1px solid var(--hair); color:var(--bone-2);
-    font-family:var(--ui); font-weight:600; font-size:11.5px; padding:0 12px; height:34px;
-    cursor:pointer; letter-spacing:.6px; text-transform:uppercase; transition:all .16s var(--ease);
+    background:transparent; border:1px solid var(--hair); color:var(--bone);
+    font-family:var(--ui); font-weight:600; font-size:12.5px; padding:0 13px; height:34px;
+    cursor:pointer; letter-spacing:.3px; text-transform:uppercase; transition:all .16s var(--ease);
     white-space:nowrap; min-width:0; text-align:center; border-radius:var(--r-s);
     display:inline-flex; align-items:center; gap:8px;
   }
-  .header-btn--plum, .header-btn--bone, .header-btn--chart, .header-btn--teal { border-color:var(--hair); color:var(--bone-2); }
+  .header-btn--plum, .header-btn--bone, .header-btn--chart, .header-btn--teal { border-color:var(--hair); color:var(--bone); }
   .header-btn .hicon { width:16px; height:16px; vertical-align:0; margin-right:0; fill:currentColor; }
 
   .hdr-deck .header-btn,
   .hdr-deck #charSheetBtn, .hdr-deck #rationsBtn, .hdr-deck #supplyBtn,
   .hdr-deck #corvusBtn, .hdr-deck #bvBtn, .hdr-deck #initViewBtn, .hdr-deck #imageBoardBtn {
-    min-width:0; padding:0 12px; height:34px; font-size:11.5px; letter-spacing:.6px;
-    border:1px solid var(--hair); color:var(--bone-2);
+    min-width:0; padding:0 13px; height:34px; font-size:12.5px; letter-spacing:.3px;
+    border:1px solid var(--hair); color:var(--bone);
     background:transparent; text-transform:uppercase; border-radius:var(--r-s);
     display:inline-flex; align-items:center; gap:8px;
   }
@@ -139,7 +139,7 @@
   .hdr-deck .header-btn--android:hover {
     border-color:var(--accent-line); color:var(--bone); background:var(--accent-dim); box-shadow:none;
   }
-  .hdr-deck .gm-tools-btn { font-size:11.5px; padding:0 14px; height:38px; letter-spacing:.8px; }
+  .hdr-deck .gm-tools-btn { font-size:12.5px; padding:0 15px; height:38px; letter-spacing:.4px; }
 
   .main { display:flex; flex:1; overflow:hidden; }
 

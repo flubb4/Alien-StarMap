@@ -52,7 +52,7 @@ window.dealInitiative = function() {
     if (!nameEl) return;
     let name = nameEl.textContent.replace('👑','').replace('YOU','').trim();
     if (!name) return;
-    const color = nameEl.style.color || '#cc88ff';
+    const color = nameEl.style.color || '#ff9a3c';
     players.push({name, color, type:'player'});
   });
   // If no players found in DOM yet, at least add self
@@ -63,42 +63,12 @@ window.dealInitiative = function() {
   const npcCount = parseInt(document.getElementById('npcSlotSelect').value) || 0;
   const npcs = [];
   for (let i = 1; i <= npcCount; i++) {
-    npcs.push({name: 'NPC / CREATURE ' + i, color:'#ff4400', type:'npc'});
+    npcs.push({name: 'NPC / CREATURE ' + i, color:'#c64225', type:'npc'});
   }
 
   const allEntries = [...players, ...npcs];
 
-  // Build deck 1-10, shuffle, deal one per entry
-  const deck = shuffleDeck(allEntries.length);
-  const entries = {};
-  allEntries.forEach((e, i) => {
-    const id = 'init_' + i;
-    entries[id] = {
-      id, name: e.name, color: e.color, type: e.type,
-      card: deck[i], round: initRound,
-      dealtAt: Date.now() + i * 800  // stagger reveal timing
-    };
-  });
-
-  if (currentInitStyle === 'picktable') {
-    // Build unassigned face-down deck, players pick themselves
-    const totalCards = allEntries.length;
-    const deckCards  = shuffleDeck(10); // always 10 cards on table
-    const pickDeck   = {};
-    for (let i = 0; i < 10; i++) {
-      pickDeck['card_'+i] = { index:i, value: deckCards[i], takenBy: '' };
-    }
-    const pickPlayers = {};
-    allEntries.forEach((e,i) => {
-      pickPlayers['pp_'+i] = { id:'pp_'+i, name:e.name, color:e.color, type:e.type, cardIndex: -1 };
-    });
-    const pickData = {
-      style:'picktable', round:initRound, dealtAt:Date.now(),
-      deck: pickDeck, players: pickPlayers, allRevealed: false
-    };
-    console.log('[Initiative] Dealing picktable:', JSON.stringify(pickData).substring(0,200));
-    set(initiativeRef, pickData);
-  } else if (currentInitStyle === 'alienhunt') {
+  if (currentInitStyle === 'alienhunt') {
     // 10 moving aliens, players shoot to claim a number
     const huntDeck = shuffleDeck(10);
     const huntAliens = {};
@@ -115,7 +85,20 @@ window.dealInitiative = function() {
       aliens: huntAliens, players: huntPlayers
     });
   } else {
-    set(initiativeRef, { entries, round: initRound, dealtAt: Date.now(), style: currentInitStyle });
+    // PICK FROM TABLE (default) — 10 face-down cards, players pick their own
+    const deckCards = shuffleDeck(10);
+    const pickDeck  = {};
+    for (let i = 0; i < 10; i++) {
+      pickDeck['card_'+i] = { index:i, value: deckCards[i], takenBy: '' };
+    }
+    const pickPlayers = {};
+    allEntries.forEach((e,i) => {
+      pickPlayers['pp_'+i] = { id:'pp_'+i, name:e.name, color:e.color, type:e.type, cardIndex: -1 };
+    });
+    set(initiativeRef, {
+      style:'picktable', round:initRound, dealtAt:Date.now(),
+      deck: pickDeck, players: pickPlayers, allRevealed: false
+    });
   }
 };
 
@@ -149,7 +132,7 @@ function shuffleDeck(count) {
   return deck.slice(0, Math.min(count, 10));
 }
 
-let currentInitStyle = 'transmission';
+let currentInitStyle = 'picktable';
 let gmPickingForNpc = null;    // NPC entry the GM is currently picking a card for
 let lastPickTableData = null;  // cached data for NPC-selection re-renders
 let lastAlienHuntData = null;  // cached data for alien hunt NPC re-renders
@@ -191,7 +174,7 @@ function renderInitiative(data) {
   if (!area) return;
 
   if (!data) {
-    area.innerHTML = '<div style="text-align:center;color:#330044;font-size:11px;letter-spacing:3px;padding:40px 0">AWAITING INITIATIVE DRAW</div>';
+    area.innerHTML = '<div style="text-align:center;color:var(--im-ink-faint);font-size:11px;letter-spacing:3px;padding:40px 0">AWAITING INITIATIVE DRAW</div>';
     return;
   }
 
@@ -206,181 +189,11 @@ function renderInitiative(data) {
 
   area.innerHTML = '';
 
-  if (style === 'picktable') {
-    renderPickTable(area, data, now);
-    const nextBtn = document.getElementById('initNextRoundBtn');
-    if (nextBtn) nextBtn.style.display = window.isGM ? '' : 'none';
-    return;
-  }
-
-  if (style === 'alienhunt') {
-    renderAlienHunt(area, data, now);
-    const nextBtn = document.getElementById('initNextRoundBtn');
-    if (nextBtn) nextBtn.style.display = window.isGM ? '' : 'none';
-    return;
-  }
-
-  const sorted = Object.values(data.entries || {}).sort((a, b) => a.card - b.card);
-  const label = document.createElement('div');
-  label.className = 'init-section-label';
-  label.textContent = '// INITIATIVE ORDER — LOWEST ACTS FIRST';
-  area.appendChild(label);
-
-  if      (style === 'transmission') renderTransmission(area, sorted, now);
-  else if (style === 'cardflip')     renderCardFlip(area, sorted, now);
-  else if (style === 'slotmachine')  renderSlotMachine(area, sorted, now);
-  else if (style === 'redalert')     renderRedAlert(area, sorted, now);
-
-  renderSwapSection(area, sorted.map(e => ({...e, val: e.card})), data, style);
+  if (style === 'alienhunt') renderAlienHunt(area, data, now);
+  else                       renderPickTable(area, data, now);
 
   const nextBtn = document.getElementById('initNextRoundBtn');
   if (nextBtn) nextBtn.style.display = window.isGM ? '' : 'none';
-}
-
-// ── STYLE 1: TRANSMISSION (original) ────────────────────────────────────────
-function renderTransmission(area, sorted, now) {
-  sorted.forEach((entry, idx) => {
-    const delay = Math.max(0, Math.min(entry.dealtAt - now, 3000));
-    const row = document.createElement('div');
-    row.className = 'init-row';
-    row.innerHTML = `
-      <div class="init-row-rank">${idx+1}.</div>
-      <div class="init-card" style="border-color:${entry.color}33">
-        <div class="init-card-number" style="color:${entry.color};border-color:${entry.color}33" id="initNum_${entry.id}">${entry.card}</div>
-        <div class="init-card-info">
-          <div class="init-card-name" style="color:${entry.color}">${entry.name}</div>
-          <div class="init-card-type">${entry.type==='npc'?'// NPC / CREATURE':'// OPERATIVE'}</div>
-        </div>
-      </div>`;
-    area.appendChild(row);
-    setTimeout(() => {
-      row.classList.add('revealed');
-      const numEl = document.getElementById('initNum_'+entry.id);
-      if (!numEl) return;
-      numEl.classList.add('glitching');
-      let ticks=0, max=14+Math.floor(Math.random()*8);
-      const iv = setInterval(() => {
-        numEl.textContent = Math.floor(Math.random()*10)+1;
-        if (++ticks >= max) { clearInterval(iv); numEl.textContent=entry.card; numEl.classList.remove('glitching'); }
-      }, 120);
-    }, delay);
-  });
-}
-
-// ── STYLE 2: CARD FLIP ───────────────────────────────────────────────────────
-function renderCardFlip(area, sorted, now) {
-  const grid = document.createElement('div');
-  grid.className = 'flip-grid';
-  sorted.forEach((entry, idx) => {
-    const delay = Math.max(0, Math.min(idx * 700, 5000));
-    const wrap = document.createElement('div');
-    wrap.className = 'flip-card-wrap';
-    wrap.innerHTML = `
-      <div class="flip-card-inner">
-        <div class="flip-card-front" style="border-color:${entry.color}44">
-          <span style="font-size:32px">🂠</span>
-          <span style="font-size:9px;color:${entry.color}66;letter-spacing:2px;margin-top:6px">${entry.name}</span>
-        </div>
-        <div class="flip-card-back" style="border-color:${entry.color}">
-          <div class="flip-back-num" style="color:${entry.color}">${entry.card}</div>
-          <div class="flip-back-name" style="color:${entry.color}">${entry.name}</div>
-          <div style="font-size:8px;color:${entry.color}66;margin-top:4px">${entry.type==='npc'?'NPC':'OPERATIVE'}</div>
-        </div>
-      </div>`;
-    grid.appendChild(wrap);
-    setTimeout(() => wrap.classList.add('flipped'), delay + 400);
-  });
-  area.appendChild(grid);
-
-  // Sorted order list below after all flipped
-  setTimeout(() => {
-    const ol = document.createElement('div');
-    ol.className = 'init-section-label';
-    ol.style.marginTop = '16px';
-    ol.textContent = '// ORDER: ' + sorted.map(e=>e.name+'('+e.card+')').join(' → ');
-    area.appendChild(ol);
-  }, sorted.length * 700 + 1200);
-}
-
-// ── STYLE 3: SLOT MACHINE ────────────────────────────────────────────────────
-function renderSlotMachine(area, sorted, now) {
-  const grid = document.createElement('div');
-  grid.className = 'slot-grid';
-  sorted.forEach((entry, idx) => {
-    const cell = document.createElement('div');
-    cell.className = 'slot-cell';
-    cell.style.borderColor = entry.color + '55';
-    cell.innerHTML = `
-      <div class="slot-name" style="color:${entry.color}">${entry.name}</div>
-      <div class="slot-number slot-spinning" style="color:${entry.color}" id="slot_${entry.id}">?</div>
-      <div style="font-size:8px;color:${entry.color}55;letter-spacing:1px">${entry.type==='npc'?'NPC':'OPERATIVE'}</div>`;
-    grid.appendChild(cell);
-
-    // Spin then lock in staggered
-    const lockDelay = 800 + idx * 900;
-    setTimeout(() => {
-      const el = document.getElementById('slot_'+entry.id);
-      if (!el) return;
-      let ticks=0, spinDur=28+Math.floor(Math.random()*18);
-      const iv = setInterval(() => {
-        el.textContent = Math.floor(Math.random()*10)+1;
-        if (++ticks >= spinDur) {
-          clearInterval(iv);
-          el.textContent = entry.card;
-          el.classList.remove('slot-spinning');
-          el.style.textShadow = `0 0 20px ${entry.color}`;
-        }
-      }, 80);
-    }, lockDelay);
-  });
-  area.appendChild(grid);
-
-  // Final order after all locked
-  setTimeout(() => {
-    const ol = document.createElement('div');
-    ol.className = 'init-section-label';
-    ol.style.marginTop='16px';
-    ol.textContent = '// FINAL ORDER: '+sorted.map(e=>e.card+':'+e.name).join(' → ');
-    area.appendChild(ol);
-  }, 800 + sorted.length * 900 + 2000);
-}
-
-// ── STYLE 4: RED ALERT ───────────────────────────────────────────────────────
-function renderRedAlert(area, sorted, now) {
-  // Flash header
-  area.style.background = 'rgba(80,0,0,0.2)';
-  setTimeout(() => area.style.background = '', 600);
-
-  const board = document.createElement('div');
-  board.className = 'alert-board';
-
-  // Show pending first
-  sorted.forEach(entry => {
-    const pend = document.createElement('div');
-    pend.className = 'alert-pending-row';
-    pend.id = 'alertPend_'+entry.id;
-    pend.innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:#440000;animation:pulse 0.5s infinite"></div><span>${entry.name} — RECEIVING...</span>`;
-    board.appendChild(pend);
-  });
-  area.appendChild(board);
-
-  // Replace pending with actual rows one by one
-  sorted.forEach((entry, idx) => {
-    const delay = 600 + idx * 900;
-    setTimeout(() => {
-      const pend = document.getElementById('alertPend_'+entry.id);
-      if (pend) {
-        const row = document.createElement('div');
-        row.className = 'alert-row';
-        row.innerHTML = `
-          <div class="alert-row-num">${entry.card}</div>
-          <div class="alert-row-name" style="color:${entry.color}">${entry.name}</div>
-          <div class="alert-row-type">${entry.type==='npc'?'NPC':'OPERATIVE'}</div>`;
-        pend.replaceWith(row);
-        setTimeout(() => row.classList.add('show'), 30);
-      }
-    }, delay);
-  });
 }
 
 // ── STYLE 6: ALIEN HUNT (interactive – 10 moving aliens, shoot to claim) ─────
@@ -478,8 +291,8 @@ function renderAlienHunt(area, data, now) {
       index: ad.index,
       x:     saved ? saved.x  : 8 + Math.random() * 80,
       y:     saved ? saved.y  : 12 + Math.random() * 72,
-      vx:    saved ? saved.vx : (Math.random()>.5?1:-1) * (0.012+Math.random()*0.02),
-      vy:    saved ? saved.vy : (Math.random()>.5?1:-1) * (0.008+Math.random()*0.015),
+      vx:    saved ? saved.vx : (Math.random()>.5?1:-1) * (0.007+Math.random()*0.011),
+      vy:    saved ? saved.vy : (Math.random()>.5?1:-1) * (0.005+Math.random()*0.008),
       dead:  taken,
       takenBy: ad.takenBy || '',
       value: ad.value
@@ -492,7 +305,7 @@ function renderAlienHunt(area, data, now) {
     const emoji  = emojiTypes[i % emojiTypes.length];
     const taken  = state.dead;
     const taker  = taken ? playerList.find(p => p.name===state.takenBy) : null;
-    const tcolor = taker ? taker.color : '#cc88ff';
+    const tcolor = taker ? taker.color : '#ff9a3c';
 
     const alien = document.createElement('div');
     alien.className = 'hunt-alien' + (taken ? ' dead' : '');
@@ -502,9 +315,9 @@ function renderAlienHunt(area, data, now) {
     alien.innerHTML = `
       <div class="hunt-alien-inner">
         <span class="hunt-alien-emoji">${taken?'💀':emoji}</span>
-        <span class="hunt-alien-badge" style="background:#020008;border-color:${taken?tcolor+'88':'#220033'};color:${taken?tcolor:'#220033'}">${taken?ad.value:'?'}</span>
+        <span class="hunt-alien-badge" style="background:#06100b;border-color:${taken?tcolor+'88':'#3f3a2c'};color:${taken?tcolor:'#6e6650'}">${taken?ad.value:'?'}</span>
       </div>
-      <div class="hunt-alien-name" style="color:${taken?tcolor:'#330044'}">${taken?state.takenBy:'???'}</div>
+      <div class="hunt-alien-name" style="color:${taken?tcolor:'#6e6650'}">${taken?state.takenBy:'???'}</div>
     `;
 
     if (!taken && canShoot) {
@@ -514,7 +327,7 @@ function renderAlienHunt(area, data, now) {
 
         // Determine shooter info
         const shooterName  = gmCanPickForNpc ? gmPickingForNpc.name : window.myName;
-        const shooterColor = gmCanPickForNpc ? (gmPickingForNpc.color||'#ff4400') : (myEntry?myEntry.color:'#cc88ff');
+        const shooterColor = gmCanPickForNpc ? (gmPickingForNpc.color||'#c64225') : (myEntry?myEntry.color:'#ff9a3c');
         const shooterEntry = gmCanPickForNpc ? gmPickingForNpc : myEntry;
 
         // Local visual shot (animation)
@@ -692,7 +505,7 @@ function renderSwapSection(area, participants, data, style) {
     if (isPending || isPendingGm)
       row.style.cssText = `border-color:${p.color};background:rgba(255,200,0,0.07);animation-delay:${i*60}ms`;
     else if (isTarget || isGmTarget)
-      row.style.cssText = `border-color:#cc88ff66;background:rgba(200,100,255,0.1);cursor:pointer;animation-delay:${i*60}ms`;
+      row.style.cssText = `border-color:rgba(255,154,60,0.5);background:rgba(255,154,60,0.10);cursor:pointer;animation-delay:${i*60}ms`;
     else
       row.style.cssText = `border-color:${p.color}33;animation-delay:${i*60}ms`;
 
@@ -705,13 +518,13 @@ function renderSwapSection(area, participants, data, style) {
 
     if (isTarget) {
       const hint = document.createElement('span');
-      hint.style.cssText = 'font-size:9px;color:#cc88ff;letter-spacing:1px;margin-left:auto;flex-shrink:0';
+      hint.style.cssText = 'font-size:9px;color:var(--im-ink-bright);letter-spacing:1px;margin-left:auto;flex-shrink:0';
       hint.textContent = '⇄ SWAP HERE';
       row.appendChild(hint);
       row.addEventListener('click', () => executeInitiativeSwap(pendingSwapName, p.name, data, style));
     } else if (isGmTarget) {
       const hint = document.createElement('span');
-      hint.style.cssText = 'font-size:9px;color:#cc88ff;letter-spacing:1px;margin-left:auto;flex-shrink:0';
+      hint.style.cssText = 'font-size:9px;color:var(--im-gm);letter-spacing:1px;margin-left:auto;flex-shrink:0';
       hint.textContent = '⇄ HIERHER';
       row.appendChild(hint);
       row.addEventListener('click', () => executeGmOverrideSwap(pendingGmSwapName, p.name, data, style));
@@ -731,7 +544,7 @@ function renderSwapSection(area, participants, data, style) {
       row.appendChild(btn);
     } else if (hasSwapped && (isMe || isNpcForGM)) {
       const used = document.createElement('span');
-      used.style.cssText = 'font-size:8px;color:#cc88ff33;letter-spacing:1px;margin-left:auto';
+      used.style.cssText = 'font-size:8px;color:var(--im-ink-faint);letter-spacing:1px;margin-left:auto';
       used.textContent = 'SWAP USED';
       row.appendChild(used);
     }
@@ -926,31 +739,32 @@ function renderPickTable(area, data, now) {
     const taken     = !!(card.takenBy && card.takenBy !== '');
     const takenByMe = card.takenBy === window.myName;
     const takerEntry = playerList.find(p=>p.name===card.takenBy);
-    const takerColor = takerEntry ? takerEntry.color : '#cc88ff';
+    const takerColor = takerEntry ? takerEntry.color : '#ff9a3c';
     const showValue  = takenByMe || allRev;
-    const revColor   = takenByMe ? (myEntry&&myEntry.color||'#cc88ff') : takerColor;
+    const revColor   = takenByMe ? (myEntry&&myEntry.color||'#ff9a3c') : takerColor;
 
+    const isPickable = !taken && (!myPicked || gmCanPickForNpc);
     const wrap = document.createElement('div');
-    wrap.className = 'pick-card' + (takenByMe?' picked':'');
-    if (!taken && (!myPicked || gmCanPickForNpc)) wrap.style.cursor = 'pointer';
+    wrap.className = 'pick-card' + ((takenByMe || (allRev && taken)) ? ' picked' : '') + (isPickable ? ' pickable' : '');
+    if (isPickable) wrap.style.cursor = 'pointer';
 
     const inner = document.createElement('div');
     inner.className = 'pick-card-inner';
 
     const front = document.createElement('div');
     front.className = 'pick-card-front' + (taken&&!takenByMe?' taken':'');
-    front.innerHTML = '<div class="pick-card-suit">🂠</div><div style="font-size:9px;color:#553388;letter-spacing:1px;margin-top:4px">#'+(card.index+1)+'</div>';
+    front.innerHTML = '<div class="pick-card-suit">🂠</div><div class="pick-card-idx">#'+(card.index+1)+'</div>';
 
     const back = document.createElement('div');
     back.className = 'pick-card-back';
-    back.style.borderColor = showValue ? revColor : '#330055';
-    back.innerHTML = '<div class="pick-card-back-num" style="color:'+(showValue?revColor:'#330055')+'">'+(showValue?card.value:'?')+'</div>'
-      +'<div class="pick-card-back-name" style="color:'+(showValue?revColor:'#220033')+'">'+(takenByMe?window.myName:(allRev&&card.takenBy?card.takenBy:''))+'</div>';
+    back.style.borderColor = showValue ? revColor : '#3f3a2c';
+    back.innerHTML = '<div class="pick-card-back-num" style="color:'+(showValue?revColor:'#6e6650')+'">'+(showValue?card.value:'?')+'</div>'
+      +'<div class="pick-card-back-name" style="color:'+(showValue?revColor:'#6e6650')+'">'+(takenByMe?window.myName:(allRev&&card.takenBy?card.takenBy:''))+'</div>';
 
     inner.appendChild(front); inner.appendChild(back); wrap.appendChild(inner);
     grid.appendChild(wrap);
 
-    if (!taken && (!myPicked || gmCanPickForNpc)) {
+    if (isPickable) {
       wrap.addEventListener('mouseenter', ()=>wrap.classList.add('hovering'));
       wrap.addEventListener('mouseleave', ()=>wrap.classList.remove('hovering'));
       wrap.addEventListener('click', ()=>{

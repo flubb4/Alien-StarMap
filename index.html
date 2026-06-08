@@ -773,44 +773,45 @@
       <div class="init-status-pill"><span class="init-status-dot"></span>COMBAT ACTIVE</div>
     </div>
     <div class="init-header-center">
-      <div class="init-title">Initiative Draw</div>
-      <div class="init-subtitle">ALIEN RPG // COMBAT ROUND // TRANSMISSION PROTOCOL</div>
+      <div class="init-title">Combat Initiative</div>
+      <div class="init-subtitle">WEYLAND-YUTANI // COMBAT ROUND PROTOCOL</div>
     </div>
     <div class="init-header-right">
-      <button class="init-close-btn" onclick="openCharSheet()" style="margin-right:8px">📋 CHARACTER</button>
-      <button class="init-close-btn" onclick="closeInitiative()">✕ CLOSE</button>
+      <button class="init-close-btn" onclick="openCharSheet()" style="margin-right:8px">CHARACTER</button>
+      <button class="init-close-btn init-close-btn--danger" onclick="closeInitiative()">CLOSE</button>
     </div>
   </div>
 
   <div class="init-setup" id="initSetup" style="display:none">
-    <div class="init-setup-title">// Animation Style</div>
-    <div class="init-style-row" id="initStyleRow">
-      <button class="init-style-btn active" data-style="transmission" onclick="selectInitStyle(this)">📡 Transmission</button>
-      <button class="init-style-btn" data-style="cardflip" onclick="selectInitStyle(this)">🃏 Card Flip</button>
-      <button class="init-style-btn" data-style="slotmachine" onclick="selectInitStyle(this)">🎰 Slot Machine</button>
-      <button class="init-style-btn" data-style="redalert" onclick="selectInitStyle(this)">🔴 Red Alert</button>
-      <button class="init-style-btn" data-style="picktable" onclick="selectInitStyle(this)">🖐 Pick from Table</button>
-      <button class="init-style-btn" data-style="alienhunt" onclick="selectInitStyle(this)">👾 Alien Hunt</button>
-    </div>
-    <div class="init-setup-title">// GM Configuration</div>
-    <div class="init-setup-row">
-      <span class="init-npc-label">NPC / Creature slots:</span>
-      <select class="init-npc-select" id="npcSlotSelect">
-        <option value="0">0 NPCs</option>
-        <option value="1">1 NPC</option>
-        <option value="2">2 NPCs</option>
-        <option value="3">3 NPCs</option>
-        <option value="4">4 NPCs</option>
-        <option value="5">5 NPCs</option>
-        <option value="6">6 NPCs</option>
-      </select>
-      <button class="init-deal-btn" onclick="dealInitiative()">⚡ Deal Cards</button>
-      <button class="init-clear-btn" onclick="clearInitiative()">↺ Clear</button>
+    <div class="init-setup-grid">
+      <div class="init-setup-field">
+        <div class="init-setup-title">// Draw Mode</div>
+        <div class="init-style-row" id="initStyleRow">
+          <button class="init-style-btn active" data-style="picktable" onclick="selectInitStyle(this)"><span class="init-style-ic">🖐</span> Pick from Table</button>
+          <button class="init-style-btn" data-style="alienhunt" onclick="selectInitStyle(this)"><span class="init-style-ic">👾</span> Alien Hunt</button>
+        </div>
+      </div>
+      <div class="init-setup-field">
+        <div class="init-setup-title">// NPC / Creature Slots</div>
+        <select class="init-npc-select" id="npcSlotSelect">
+          <option value="0">0 NPCs</option>
+          <option value="1">1 NPC</option>
+          <option value="2">2 NPCs</option>
+          <option value="3">3 NPCs</option>
+          <option value="4">4 NPCs</option>
+          <option value="5">5 NPCs</option>
+          <option value="6">6 NPCs</option>
+        </select>
+      </div>
+      <div class="init-setup-actions">
+        <button class="init-deal-btn" onclick="dealInitiative()">⚡ Deal</button>
+        <button class="init-clear-btn" onclick="clearInitiative()">↺ Clear</button>
+      </div>
     </div>
   </div>
 
   <div class="init-round-bar">
-    <span class="init-round-label">ROUND</span>
+    <span class="init-round-label">Round</span>
     <span class="init-round-num" id="initRoundNum">1</span>
     <button class="init-round-btn" id="initNextRoundBtn" style="display:none" onclick="nextInitiativeRound()">▶ Next Round</button>
   </div>

@@ -84,12 +84,11 @@
   header .sub { font-family:var(--mono); font-size:9px; color:var(--dim); letter-spacing:1.5px; margin-top:2px; text-transform:uppercase; }
 
   /* ── ZONE 2 · ACTION DECK — grouped tab rail ───────────────────── */
-  .hdr-deck { flex:1; min-width:0; display:flex; align-items:flex-end; flex-wrap:nowrap; justify-content:safe center; gap:0; overflow-x:auto; }
-  .hdr-deck::-webkit-scrollbar { height:0; }
+  .hdr-deck { flex:1; min-width:0; display:flex; align-items:flex-end; align-content:center; flex-wrap:wrap; justify-content:center; gap:0; row-gap:8px; }
   .hdr-tgrp { position:relative; display:flex; align-items:center; gap:6px; padding:16px 16px 0; }
   .hdr-tgrp + .hdr-tgrp { margin-left:0; padding-left:16px; border-left:1px solid var(--hair-soft); }
-  /* group caption injected from data-group="crew|ship|ops" — sits in the reserved top padding so the deck's
-     horizontal scroll never clips it; no HTML change */
+  /* group caption injected from data-group="crew|ship|ops" — sits in the reserved top padding (not floating
+     above the row) so it is never clipped, including when the deck wraps to two lines; no HTML change */
   .hdr-tgrp::before { content:attr(data-group); position:absolute; top:0; left:16px; font-family:var(--mono); font-size:10px; letter-spacing:1.6px; color:var(--bone-2); text-transform:uppercase; }
   #gmSection.visible { margin-right:6px; padding-right:14px; border-right:1px solid var(--hair-soft); align-self:flex-end; }
 

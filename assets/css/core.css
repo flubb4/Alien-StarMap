@@ -124,6 +124,8 @@
   }
   .header-btn--plum, .header-btn--bone, .header-btn--chart, .header-btn--teal { border-color:var(--hair); color:var(--bone); }
   .header-btn .hicon { width:16px; height:16px; vertical-align:0; margin-right:0; fill:currentColor; }
+  /* Planet-Icon fuellt seine Box randvoll aus -> etwas mehr Luft zum Text */
+  #rationsBtn .hicon { margin-right:3px; }
 
   .hdr-deck .header-btn,
   .hdr-deck #charSheetBtn, .hdr-deck #rationsBtn, .hdr-deck #supplyBtn,

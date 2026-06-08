@@ -1044,16 +1044,19 @@
     <button class="ib-tool-btn ib-release-btn" onclick="ibRelease()">✅ FREIGEBEN</button>
   </div>
   <div class="ib-canvas-wrap" id="ibCanvasWrap">
-    <img id="ibImage" alt="">
-    <canvas id="ibCoverCanvas"></canvas>
-    <canvas id="ibCanvas"></canvas>
-    <canvas id="ibTrackerCanvas"></canvas>
+    <div id="ibZoomLayer">
+      <img id="ibImage" alt="">
+      <canvas id="ibCoverCanvas"></canvas>
+      <canvas id="ibCanvas"></canvas>
+      <canvas id="ibTrackerCanvas"></canvas>
+      <div id="ibFogRectPreview" style="display:none"></div>
+      <div id="ibMarkerLayer" class="ib-marker-layer"></div>
+    </div>
     <div id="mtHint"></div>
     <div class="ib-placeholder" id="ibPlaceholder">Waiting for GM to load an image...</div>
     <div id="ibStressPanel" class="ib-gm-only"></div>
-    <div id="ibFogRectPreview" style="display:none"></div>
-    <div id="ibMarkerLayer" class="ib-marker-layer"></div>
     <div id="ibMarkerHint" class="ib-marker-hint"></div>
+    <div id="ibZoomHint">MAUSRAD: ZOOM · MITTLERE TASTE: PAN</div>
   </div>
   <div class="ib-staging-overlay" id="ibStagingOverlay" style="display:none">
     <div class="ib-staging-icon">■ ■ ■</div>

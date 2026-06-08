@@ -23,6 +23,102 @@ var ibStressUnsub        = null;
 var ibLoadedImageKey     = null;  // fingerprint of currently loaded image to detect real changes
 var ibAllDrawnStrokes    = [];    // ordered annotation stroke list for full replay after canvas clear
 
+// ── Zoom / pan ──────────────────────────────────────────────────────────────
+var ibZoom     = 1;
+var ibPanX     = 0;
+var ibPanY     = 0;
+var ibPanning  = false;
+var ibPanStart = null;
+var ibZoomWired = false;
+var IB_ZOOM_MIN = 1, IB_ZOOM_MAX = 6;
+
+function ibGetZoomLayer() { return document.getElementById('ibZoomLayer'); }
+
+function ibClampPan() {
+  var wrap = ibGetWrap();
+  if (!wrap) return;
+  var w = wrap.clientWidth, h = wrap.clientHeight;
+  var minX = w - w * ibZoom, minY = h - h * ibZoom;
+  if (ibPanX > 0) ibPanX = 0;
+  if (ibPanX < minX) ibPanX = minX;
+  if (ibPanY > 0) ibPanY = 0;
+  if (ibPanY < minY) ibPanY = minY;
+}
+
+function ibApplyTransform() {
+  var layer = ibGetZoomLayer();
+  if (layer) layer.style.transform = 'translate(' + ibPanX + 'px,' + ibPanY + 'px) scale(' + ibZoom + ')';
+}
+
+// Convert a viewport (clientX/Y) point into canvas-internal coords, undoing
+// the current zoom/pan. All drawing/marker/tracker math uses canvas-internal
+// space, so every input handler funnels through here.
+window.ibScreenToContent = function(clientX, clientY) {
+  var wrap = ibGetWrap();
+  if (!wrap) return { x: clientX, y: clientY };
+  var r = wrap.getBoundingClientRect();
+  return {
+    x: (clientX - r.left - ibPanX) / ibZoom,
+    y: (clientY - r.top  - ibPanY) / ibZoom,
+  };
+};
+
+function ibZoomAt(clientX, clientY, factor) {
+  var wrap = ibGetWrap();
+  if (!wrap) return;
+  var r = wrap.getBoundingClientRect();
+  var wx = clientX - r.left, wy = clientY - r.top;
+  var cx = (wx - ibPanX) / ibZoom, cy = (wy - ibPanY) / ibZoom;
+  var newZoom = Math.max(IB_ZOOM_MIN, Math.min(IB_ZOOM_MAX, ibZoom * factor));
+  if (newZoom === ibZoom) return;
+  ibZoom = newZoom;
+  ibPanX = wx - cx * ibZoom;
+  ibPanY = wy - cy * ibZoom;
+  if (ibZoom === 1) { ibPanX = 0; ibPanY = 0; }
+  ibClampPan();
+  ibApplyTransform();
+}
+
+function ibResetZoom() {
+  ibZoom = 1; ibPanX = 0; ibPanY = 0;
+  ibApplyTransform();
+}
+
+function ibSetupZoomPan() {
+  if (ibZoomWired) return;
+  var wrap = ibGetWrap();
+  var layer = ibGetZoomLayer();
+  if (!wrap || !layer) return;
+  ibZoomWired = true;
+
+  // Listen on the zoom layer (the map) so wheel over HUD panels (e.g. the GM
+  // stress overview) keeps scrolling instead of zooming.
+  layer.addEventListener('wheel', function(e) {
+    if (!ibIsOpen) return;
+    e.preventDefault();
+    ibZoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.15 : 1 / 1.15);
+  }, { passive: false });
+
+  // Middle-mouse drag pans — never conflicts with the left-button pen.
+  layer.addEventListener('mousedown', function(e) {
+    if (e.button !== 1) return;
+    e.preventDefault();
+    ibPanning = true;
+    ibPanStart = { x: e.clientX, y: e.clientY, px: ibPanX, py: ibPanY };
+    wrap.classList.add('ib-panning');
+  });
+  window.addEventListener('mousemove', function(e) {
+    if (!ibPanning) return;
+    ibPanX = ibPanStart.px + (e.clientX - ibPanStart.x);
+    ibPanY = ibPanStart.py + (e.clientY - ibPanStart.y);
+    ibClampPan();
+    ibApplyTransform();
+  });
+  window.addEventListener('mouseup', function(e) {
+    if (e.button === 1 && ibPanning) { ibPanning = false; wrap.classList.remove('ib-panning'); }
+  });
+}
+
 function ibGetOverlay()      { return document.getElementById('imageBoardOverlay'); }
 function ibGetCanvas()       { return document.getElementById('ibCanvas'); }
 function ibGetCoverCanvas()  { return document.getElementById('ibCoverCanvas'); }
@@ -262,6 +358,7 @@ function ibStartListeners() {
         ibGetCtx().clearRect(0, 0, c.width, c.height);
         ibLocalStrokes.clear();
         ibAllDrawnStrokes = [];
+        ibResetZoom();
       }
     } else {
       img.src = '';
@@ -351,7 +448,9 @@ function ibDoOpen() {
     el.style.display = window.isGM ? '' : 'none';
   });
   document.getElementById('ibColorPicker').value = window.colorFromName(window.myName);
+  ibResetZoom();
   ibResizeCanvas();
+  ibSetupZoomPan();
   // Explicit clean slate before listeners replay strokes from Firebase
   var _c = ibGetCanvas(); ibGetCtx().clearRect(0, 0, _c.width, _c.height);
   ibSetupDrawing();
@@ -448,6 +547,8 @@ window.closeImageBoard = function() {
   ibStopStressWatch();
   if (window.mtStop) window.mtStop();
   ibDrawing = false;
+  ibPanning = false;
+  ibResetZoom();
   ibCurrentStroke = null;
   ibRevealMode = false;
   ibFogMode       = false;
@@ -626,15 +727,14 @@ window.handleCoverImageSelect = function(input) {
 };
 
 function ibEventPos(e) {
-  var c = ibGetCanvas();
-  var rect = c.getBoundingClientRect();
-  if (e.touches && e.touches.length) {
-    return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
-  }
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  var cx, cy;
+  if (e.touches && e.touches.length) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+  else { cx = e.clientX; cy = e.clientY; }
+  return window.ibScreenToContent(cx, cy);
 }
 
 function ibPointerDown(e) {
+  if (e.button !== undefined && e.button !== 0) return;  // left button / touch only
   var img = ibGetImage();
   if (!img.src || img.style.display === 'none') return;
   // Motion tracker takes precedence: placing a tracker / dropping a blip
@@ -1029,6 +1129,6 @@ function ibShowNsfwToast(type) {
 }
 
 window.addEventListener('resize', function() {
-  if (ibIsOpen) ibResizeCanvas();
+  if (ibIsOpen) { ibResetZoom(); ibResizeCanvas(); }
 });
 // ── END IMAGE BOARD ─────────────────────────────────────────────────────────

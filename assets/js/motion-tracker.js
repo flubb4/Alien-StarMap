@@ -113,12 +113,11 @@ window.mtToggleBlipMode = function() {
 window.mtHandleClick = function(e) {
   if (!mtMode) return false;
   const c = document.getElementById('ibCanvas');
-  if (!c || !window.ibToNorm) return false;
-  const rect = c.getBoundingClientRect();
+  if (!c || !window.ibToNorm || !window.ibScreenToContent) return false;
   const cx = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
   const cy = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
-  const px = cx - rect.left;
-  const py = cy - rect.top;
+  const pt = window.ibScreenToContent(cx, cy);
+  const px = pt.x, py = pt.y;
   const norm = window.ibToNorm(px, py);
   if (!norm) return true;
 
@@ -183,9 +182,10 @@ function mtAttachInput() {
   const wrap = document.getElementById('ibCanvasWrap');
   if (wrap) {
     mtMoveHandler = e => {
-      const rect = wrap.getBoundingClientRect();
-      mtCursor.x = e.clientX - rect.left;
-      mtCursor.y = e.clientY - rect.top;
+      if (!window.ibScreenToContent) return;
+      const pt = window.ibScreenToContent(e.clientX, e.clientY);
+      mtCursor.x = pt.x;
+      mtCursor.y = pt.y;
     };
     wrap.addEventListener('mousemove', mtMoveHandler);
   }
@@ -203,10 +203,9 @@ function mtAttachInput() {
   const c = document.getElementById('ibCanvas');
   if (c) {
     mtCtxHandler = e => {
-      if (!window.isGM || !window.ibToPix) return;
-      const rect = c.getBoundingClientRect();
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
+      if (!window.isGM || !window.ibToPix || !window.ibScreenToContent) return;
+      const pt = window.ibScreenToContent(e.clientX, e.clientY);
+      const px = pt.x, py = pt.y;
       const trackers = Object.values(mtTrackers || {});
       for (const t of trackers) {
         const tp = window.ibToPix(t.nx, t.ny);

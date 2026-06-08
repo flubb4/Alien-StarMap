@@ -79,11 +79,9 @@ function ibmkOnLayerClick(e) {
   if (e.target.closest('.ib-marker, .ib-gmpin')) return;
 
   const wrap = document.getElementById('ibCanvasWrap');
-  if (!wrap || !window.ibToNorm) return;
-  const r = wrap.getBoundingClientRect();
-  const px = e.clientX - r.left;
-  const py = e.clientY - r.top;
-  const norm = window.ibToNorm(px, py);
+  if (!wrap || !window.ibToNorm || !window.ibScreenToContent) return;
+  const pt = window.ibScreenToContent(e.clientX, e.clientY);
+  const norm = window.ibToNorm(pt.x, pt.y);
   if (!norm) return;
   if (norm.nx < 0 || norm.nx > 1 || norm.ny < 0 || norm.ny > 1) return;
 

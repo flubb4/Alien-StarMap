@@ -53,7 +53,7 @@
   @keyframes ibTitlePulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
   .ib-tools {
-    display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap;
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
   }
   .ib-tool-group {
     display:flex; align-items:center; gap:7px;
@@ -76,32 +76,48 @@
   .ib-tool-group:first-child::before { left:0; }
   .ib-gm-group::before { color:var(--amber); opacity:0.8; }
   .ib-tool-btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    height:32px; box-sizing:border-box; padding:0 13px;
     background:var(--panel-3); border:1px solid var(--hair); color:var(--bone);
     font-family:"Share Tech Mono",monospace; font-size:11.5px; line-height:1;
-    padding:7px 13px; cursor:pointer; letter-spacing:0.5px; white-space:nowrap;
-    border-radius:2px; transition:all 0.15s;
+    cursor:pointer; letter-spacing:0.5px; white-space:nowrap;
+    border-radius:3px; transition:all 0.15s;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),
+               inset 0 -1px 0 rgba(0,0,0,0.28),
+               0 1px 2px rgba(0,0,0,0.35);
   }
   .ib-tool-btn:hover {
     border-color:var(--amber); color:var(--amber-hi);
-    background:rgba(255,154,60,0.1); box-shadow:0 0 12px var(--amber-glow);
+    background:rgba(255,154,60,0.1);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),
+               0 0 12px var(--amber-glow);
   }
+  .ib-tool-btn:active { transform:translateY(1px); }
   .ib-tool-btn.active {
     border-color:var(--amber); color:#1a0f00; background:var(--amber);
-    box-shadow:0 0 14px var(--amber-glow); font-weight:bold;
+    box-shadow:0 0 14px var(--amber-glow),
+               inset 0 1px 0 rgba(255,255,255,0.25);
+    font-weight:bold;
   }
   .ib-close-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    height:32px; box-sizing:border-box; padding:0 15px;
     background:var(--panel-3); border:1px solid var(--rust); color:var(--rust);
     font-family:"Share Tech Mono",monospace; font-size:11px;
-    padding:7px 15px; cursor:pointer; letter-spacing:2px; transition:all 0.15s;
-    border-radius:2px; white-space:nowrap;
+    cursor:pointer; letter-spacing:2px; transition:all 0.15s;
+    border-radius:3px; white-space:nowrap;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),
+               inset 0 -1px 0 rgba(0,0,0,0.28),
+               0 1px 2px rgba(0,0,0,0.35);
   }
   .ib-close-btn:hover { color:#e8755c; background:rgba(198,66,37,0.14); box-shadow:0 0 12px var(--rust-glow); }
+  .ib-close-btn:active { transform:translateY(1px); }
   #ibColorPicker {
-    width:36px; height:32px; border:1px solid var(--hair); background:var(--panel-3);
-    cursor:pointer; padding:2px; border-radius:2px; transition:border-color 0.15s;
+    width:34px; height:32px; box-sizing:border-box; border:1px solid var(--hair); background:var(--panel-3);
+    cursor:pointer; padding:2px; border-radius:3px; transition:border-color 0.15s;
   }
   #ibColorPicker:hover { border-color:var(--amber); }
-  #ibSizeSlider { width:80px; accent-color:var(--amber); cursor:pointer; }
+  #ibSizeSlider { width:80px; height:32px; accent-color:var(--amber); cursor:pointer; }
   .ib-canvas-wrap {
     flex:1; position:relative; overflow:hidden;
     display:flex; align-items:center; justify-content:center;

@@ -230,13 +230,10 @@ function dtBuildLayout() {
       <div class="dt-console" id="dtConsole"></div>
       <div class="dt-stage">
         <div class="dt-table">
-          <div class="dt-table-rim"></div>
           <div class="dt-table-surface">
             <div class="dt-table-grid"></div>
             <div class="dt-table-marking">WEYLAND-YUTANI</div>
             <div class="dt-table-marking dt-table-marking--sub">SURFACE 04 // KEEP CLEAR</div>
-            <div class="dt-bolt tl"></div><div class="dt-bolt tr"></div>
-            <div class="dt-bolt bl"></div><div class="dt-bolt br"></div>
             <div class="dt-dice-layer" id="dtDiceLayer"></div>
           </div>
         </div>
@@ -423,6 +420,7 @@ function dtRenderDice(roll, animate) {
   if (!layer) return;
   dtClearTimers();
   layer.innerHTML = '';
+  layer.classList.toggle('static', !animate);
   if (result) { result.classList.remove('show'); result.innerHTML = ''; }
 
   const dice = dtAllDice(roll);
@@ -441,9 +439,14 @@ function dtRenderDice(roll, animate) {
     if (!animate) { el.classList.add('settled'); return; }
 
     const delay = i * 110;
-    const flight = 650;
+    const flight = 700;
     maxSettle = Math.max(maxSettle, delay + flight);
 
+    // per-die throw physics: random entry vector + landing bounce direction
+    el.style.setProperty('--fx', Math.round(Math.random() * 180 - 90) + 'px');
+    el.style.setProperty('--fy', Math.round(380 + Math.random() * 180) + 'px');
+    el.style.setProperty('--bx', (Math.random() * 12 - 6).toFixed(1) + 'px');
+    el.style.setProperty('--by', (Math.random() * 10 - 8).toFixed(1) + 'px');
     el.classList.add('thrown');
     el.style.animationDelay = delay + 'ms';
     // tumble faces while in flight
@@ -453,6 +456,7 @@ function dtRenderDice(roll, animate) {
     dtTimers.push(iv);
     dtTimers.push(setTimeout(() => {
       clearInterval(iv);
+      el.style.animationDelay = '0ms';
       el.className = el.className.replace(/face-\d/, 'face-' + d.v);
       el.classList.add('settled');
       if (d.v === 6) el.classList.add('six');

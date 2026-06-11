@@ -439,7 +439,8 @@ function dtRenderDice(roll, animate) {
     if (!animate) { el.classList.add('settled'); return; }
 
     const delay = i * 110;
-    const flight = 700;
+    const flight = 850;            // matches dtThrow duration
+    const touchdown = 440;         // ~52% of dtThrow: die hits the table
     maxSettle = Math.max(maxSettle, delay + flight);
 
     // per-die throw physics: random entry vector + landing bounce direction
@@ -454,10 +455,13 @@ function dtRenderDice(roll, animate) {
       el.className = el.className.replace(/face-\d/, 'face-' + (1 + Math.floor(Math.random() * 6)));
     }, 90);
     dtTimers.push(iv);
+    // stop face tumbling at touchdown, finals (glow/ring) once the bounce ends
     dtTimers.push(setTimeout(() => {
       clearInterval(iv);
-      el.style.animationDelay = '0ms';
       el.className = el.className.replace(/face-\d/, 'face-' + d.v);
+    }, delay + touchdown));
+    dtTimers.push(setTimeout(() => {
+      el.style.animationDelay = '0ms';
       el.classList.add('settled');
       if (d.v === 6) el.classList.add('six');
       if (d.stress && d.v === 1) el.classList.add('facehugger');

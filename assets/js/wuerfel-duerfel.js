@@ -641,14 +641,10 @@ function renderWDReveal(d) {
 
   function boardReveal(pname, rollArr) {
     const wl = winner === pname ? 'winner' : (loser === pname ? 'loser' : '');
-    const pc = pname === p1 ? 'pc1' : 'pc2';
-    const dice = rollArr.map((v,i) =>
-      `<div class="wd-die ${pc}" id="wd-die-${pname}-${i}" data-val="${v}">⚀</div>`
-    ).join('');
     return `
       <div class="wd-reveal-board ${wl}" id="wdBoard-${pname}">
         <div class="wd-reveal-name">${pname}</div>
-        <div class="wd-dice-row" id="wdDice-${pname}">${dice}</div>
+        <div class="wd-dice-table" id="wdDice-${pname}"></div>
         <div class="wd-sixes-count" id="wdSixes-${pname}"></div>
         <div class="wd-transfer-label" id="wdXfer-${pname}" style="opacity:0"></div>
       </div>`;
@@ -708,6 +704,75 @@ function renderWDReveal(d) {
     ${wdHistoryHTML(d)}`;
 }
 
+// ── Reveal dice (dice-table style) ─────────────────────────
+const WD_SIX_COLORS = {
+  pc1: { bg:'#33220a', fg:'#ffc370' },  // amber / gold
+  pc2: { bg:'#54190d', fg:'#f0e6d2' },  // derelict rust
+};
+
+// success-face for the 6 — geometry from the dice-table six artwork
+function wdSixSVG(pc) {
+  const { bg, fg } = WD_SIX_COLORS[pc] || WD_SIX_COLORS.pc1;
+  return `
+    <svg class="wd-sym wd-sym-six" viewBox="0 0 500 500" aria-hidden="true">
+      <rect width="500" height="500" rx="80" ry="80" fill="${bg}"/>
+      <rect x="75" y="75" width="350" height="350" rx="55" ry="55" fill="none" stroke="${fg}" stroke-width="16"/>
+      <line x1="75" y1="250" x2="210" y2="250" stroke="${fg}" stroke-width="16" stroke-linecap="round"/>
+      <line x1="290" y1="250" x2="425" y2="250" stroke="${fg}" stroke-width="16" stroke-linecap="round"/>
+      <line x1="250" y1="75" x2="250" y2="210" stroke="${fg}" stroke-width="16" stroke-linecap="round"/>
+      <line x1="250" y1="290" x2="250" y2="425" stroke="${fg}" stroke-width="16" stroke-linecap="round"/>
+      <polygon points="250,205 295,250 250,295 205,250" fill="${fg}"/>
+      <text x="115" y="195" font-family="'Arial Rounded MT Bold','Arial',sans-serif" font-size="115" font-weight="bold" fill="${fg}" text-anchor="middle" dominant-baseline="central">6</text>
+    </svg>`;
+}
+
+// scatter dice on the board (percent coords, min distance, rejection sampling)
+function wdScatter(n) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    let best = null;
+    for (let t = 0; t < 60; t++) {
+      const p = { x: 14 + Math.random() * 72, y: 18 + Math.random() * 64 };
+      const dMin = Math.min(Infinity, ...pts.map(q => Math.hypot(p.x - q.x, (p.y - q.y) * 1.4)));
+      if (dMin > 24) { best = p; break; }
+      if (!best || dMin > best.d) best = { ...p, d: dMin };
+    }
+    pts.push({ x: best.x, y: best.y });
+  }
+  return pts;
+}
+
+// spawn + throw one player's dice onto their board; returns dice count
+function wdThrowDice(pname, pc, rollArr) {
+  const layer = document.getElementById(`wdDice-${pname}`);
+  if (!layer) return 0;
+  layer.innerHTML = '';
+  const positions = wdScatter(rollArr.length);
+  rollArr.forEach((v, i) => {
+    const el = document.createElement('div');
+    el.className = `wd-die ${pc} face-${v}`;
+    el.style.left = positions[i].x + '%';
+    el.style.top  = positions[i].y + '%';
+    el.style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
+    el.innerHTML = `<div class="wd-num"></div>` + wdSixSVG(pc);
+    layer.appendChild(el);
+
+    el.classList.add('thrown');
+    el.style.animationDelay = (i * 110) + 'ms';
+    // tumble faces while in flight
+    const iv = setInterval(() => {
+      el.className = el.className.replace(/face-\d/, 'face-' + (1 + Math.floor(Math.random() * 6)));
+    }, 90);
+    setTimeout(() => {
+      clearInterval(iv);
+      el.className = el.className.replace(/face-\d/, 'face-' + v);
+      el.classList.add('settled');
+      if (v === 6) el.classList.add('six');
+    }, i * 110 + 650);
+  });
+  return rollArr.length;
+}
+
 // ── Reveal cinematic animation ─────────────────────────────
 function wdAnimateReveal(d) {
   const p1 = d.p1, p2 = d.p2;
@@ -716,40 +781,13 @@ function wdAnimateReveal(d) {
   const s1 = (rolls.sixes||{})[p1]||0, s2 = (rolls.sixes||{})[p2]||0;
   const { winner, loser, transfer, isTie, riskBonus, bluffBonus, tiePot } = wdCalcTransfer(d);
 
-  const STEP = 110;        // stagger between dice of one player
-  const FLIGHT = 850;      // total throw animation duration (matches CSS wdThrow)
-  const TOUCHDOWN = 440;   // ~52% of flight: die lands, face locks in
-  const FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
+  const STEP = 110;       // stagger between dice (same as dice table)
+  const FLIGHT = 650;     // dtThrow duration
 
-  function throwDie(pname, idx, fromLeft) {
-    const die = document.getElementById(`wd-die-${pname}-${idx}`);
-    if (!die) return;
-    const val = parseInt(die.dataset.val);
-    // randomized throw vector per die
-    const dir = fromLeft ? -1 : 1;
-    die.style.setProperty('--rot', (Math.random()*24 - 12).toFixed(1) + 'deg');
-    die.style.setProperty('--fx', (dir * (40 + Math.random()*60)).toFixed(0) + 'px');
-    die.style.setProperty('--fy', (300 + Math.random()*140).toFixed(0) + 'px');
-    die.style.setProperty('--bx', (Math.random()*10 - 5).toFixed(1) + 'px');
-    die.style.setProperty('--by', (-(4 + Math.random()*5)).toFixed(1) + 'px');
-    die.classList.add('thrown');
-    // tumble faces during flight
-    const tumble = setInterval(() => {
-      die.textContent = FACES[1 + Math.floor(Math.random()*6)];
-    }, 90);
-    setTimeout(() => {
-      clearInterval(tumble);
-      die.textContent = FACES[val] || val;
-    }, TOUCHDOWN);
-    if (val === 6) {
-      setTimeout(() => die.classList.add('six'), FLIGHT);
-    }
-  }
-
-  // Step 1: both players' dice fly in simultaneously (p1 from left, p2 from right)
-  r1.forEach((_, i) => { setTimeout(() => throwDie(p1, i, true),  i * STEP); });
-  r2.forEach((_, i) => { setTimeout(() => throwDie(p2, i, false), i * STEP); });
-  let t = Math.max(r1.length, r2.length) * STEP + FLIGHT + 300;
+  // Step 1: both players' dice fly in simultaneously, dice-table style
+  const n1 = wdThrowDice(p1, 'pc1', r1);
+  const n2 = wdThrowDice(p2, 'pc2', r2);
+  let t = (Math.max(n1, n2) - 1) * STEP + FLIGHT + 350;
 
   // Step 5: show sixes counts
   setTimeout(() => {

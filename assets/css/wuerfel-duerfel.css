@@ -273,6 +273,7 @@
   padding:18px;
   background:var(--panel-2);
   transition:all 0.4s var(--ease);
+  overflow:hidden; /* incoming dice start far below the board */
 }
 .wd-reveal-board.winner {
   border-color:var(--accent-line);
@@ -292,11 +293,25 @@
   box-shadow:0 4px 10px -2px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);
   opacity:0;
 }
-.wd-die.dropped { opacity:1; animation:wdDropIn 0.45s cubic-bezier(0.2,1.3,0.4,1) both; }
+/* player colors (match lobby chips: p1 = amber, p2 = rust) */
+.wd-die.pc1 { border-color:rgba(255,154,60,0.45); color:var(--amber-hi); }
+.wd-die.pc2 { border-color:rgba(198,66,37,0.55); color:#e8784f; }
+
+/* thrown-in flight (dice-table style) — linear duration, easing per segment */
+.wd-die.thrown {
+  opacity:1;
+  transform:rotate(var(--rot,0deg));
+  animation:wdThrow 0.85s linear backwards;
+}
 .wd-die.six {
   color:#1a1206; border-color:var(--amber-hi);
   background:linear-gradient(150deg, var(--amber-hi), var(--amber));
   animation:wdSuccessFlare 0.6s ease-out both;
+}
+.wd-die.pc2.six {
+  color:#fbe9e2; border-color:#e8784f;
+  background:linear-gradient(150deg, #e8784f, var(--rust));
+  animation:wdSuccessFlareRust 0.6s ease-out both;
 }
 .wd-sixes-count {
   font-family:var(--ui); font-weight:700; font-size:13px; letter-spacing:1px; margin-top:12px;
@@ -397,21 +412,31 @@
 .gm-wd-btn:hover { border-color:var(--amber); color:var(--amber-hi); background:var(--amber-soft); }
 
 /* ═══ ANIMATIONS ═══════════════════════════════════════════════ */
-@keyframes wdDropIn {
-  0%   { transform:translateY(-26px) rotate(-8deg) scale(0.6); opacity:0; }
-  70%  { transform:translateY(5px)   rotate(2deg)  scale(1.06); opacity:1; }
-  100% { transform:translateY(0)     rotate(0)     scale(1); opacity:1; }
-}
-@keyframes wdFlip {
-  0%   { transform:rotateX(0)    scale(1); }
-  49%  { transform:rotateX(90deg) scale(1.08); }
-  50%  { transform:rotateX(90deg) scale(1.08); }
-  100% { transform:rotateX(0)    scale(1); }
+@keyframes wdThrow {
+  0% {
+    transform:translate(var(--fx,-50px), var(--fy,360px)) rotate(calc(var(--rot,0deg) + 540deg)) scale(1.5);
+    opacity:0; filter:blur(2px);
+    animation-timing-function:cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+  6%  { opacity:1; }
+  52% {
+    transform:translate(0,0) rotate(calc(var(--rot,0deg) - 30deg)) scale(1.12);
+    filter:blur(0);
+    animation-timing-function:cubic-bezier(0.3,0,0.6,1);
+  }
+  70% { transform:translate(var(--bx,0px), var(--by,-5px)) rotate(calc(var(--rot,0deg) + 8deg)) scale(0.96); }
+  85% { transform:translate(0,0) rotate(calc(var(--rot,0deg) - 3deg)) scale(1.03); }
+  100% { transform:rotate(var(--rot,0deg)) scale(1); opacity:1; }
 }
 @keyframes wdSuccessFlare {
   0%   { transform:scale(1);    box-shadow:0 0 0 rgba(255,154,60,0); }
   45%  { transform:scale(1.22) rotate(-3deg); box-shadow:0 0 26px rgba(255,195,112,0.7); }
   100% { transform:scale(1)    rotate(0);     box-shadow:0 4px 12px -2px rgba(255,154,60,0.35); }
+}
+@keyframes wdSuccessFlareRust {
+  0%   { transform:scale(1);    box-shadow:0 0 0 rgba(198,66,37,0); }
+  45%  { transform:scale(1.22) rotate(-3deg); box-shadow:0 0 26px rgba(232,120,79,0.7); }
+  100% { transform:scale(1)    rotate(0);     box-shadow:0 4px 12px -2px rgba(198,66,37,0.4); }
 }
 @keyframes wdCallSlam {
   0%   { transform:scale(2.6); opacity:0; filter:blur(6px); }

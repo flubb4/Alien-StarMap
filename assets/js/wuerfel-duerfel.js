@@ -641,8 +641,9 @@ function renderWDReveal(d) {
 
   function boardReveal(pname, rollArr) {
     const wl = winner === pname ? 'winner' : (loser === pname ? 'loser' : '');
+    const pc = pname === p1 ? 'pc1' : 'pc2';
     const dice = rollArr.map((v,i) =>
-      `<div class="wd-die" id="wd-die-${pname}-${i}" data-val="${v}">${v===6?'⚅':'⚀'}</div>`
+      `<div class="wd-die ${pc}" id="wd-die-${pname}-${i}" data-val="${v}">⚀</div>`
     ).join('');
     return `
       <div class="wd-reveal-board ${wl}" id="wdBoard-${pname}">
@@ -715,51 +716,40 @@ function wdAnimateReveal(d) {
   const s1 = (rolls.sixes||{})[p1]||0, s2 = (rolls.sixes||{})[p2]||0;
   const { winner, loser, transfer, isTie, riskBonus, bluffBonus, tiePot } = wdCalcTransfer(d);
 
-  const STEP = 160;
-  let t = 0;
+  const STEP = 110;        // stagger between dice of one player
+  const FLIGHT = 850;      // total throw animation duration (matches CSS wdThrow)
+  const TOUCHDOWN = 440;   // ~52% of flight: die lands, face locks in
+  const FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
 
-  function showDie(pname, idx) {
-    const die = document.getElementById(`wd-die-${pname}-${idx}`);
-    if (!die) return;
-    die.classList.add('dropped');
-    die.textContent = '?';
-    die.style.color = 'var(--dim)';
-    die.style.borderColor = 'var(--hair)';
-  }
-
-  function flipDie(pname, idx) {
+  function throwDie(pname, idx, fromLeft) {
     const die = document.getElementById(`wd-die-${pname}-${idx}`);
     if (!die) return;
     const val = parseInt(die.dataset.val);
-    die.style.animation = 'wdFlip 0.5s ease-in-out both';
+    // randomized throw vector per die
+    const dir = fromLeft ? -1 : 1;
+    die.style.setProperty('--rot', (Math.random()*24 - 12).toFixed(1) + 'deg');
+    die.style.setProperty('--fx', (dir * (40 + Math.random()*60)).toFixed(0) + 'px');
+    die.style.setProperty('--fy', (300 + Math.random()*140).toFixed(0) + 'px');
+    die.style.setProperty('--bx', (Math.random()*10 - 5).toFixed(1) + 'px');
+    die.style.setProperty('--by', (-(4 + Math.random()*5)).toFixed(1) + 'px');
+    die.classList.add('thrown');
+    // tumble faces during flight
+    const tumble = setInterval(() => {
+      die.textContent = FACES[1 + Math.floor(Math.random()*6)];
+    }, 90);
     setTimeout(() => {
-      if (val === 6) {
-        die.textContent = '⚅';
-      } else {
-        const faces = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
-        die.textContent = faces[val] || val;
-        die.style.color = 'var(--bone-2)'; die.style.borderColor = 'var(--hair)';
-      }
-    }, 250);
-    // after flip completes, fire the six success-flare (clear inline anim so the
-    // .six class animation isn't overridden by the inline wdFlip)
+      clearInterval(tumble);
+      die.textContent = FACES[val] || val;
+    }, TOUCHDOWN);
     if (val === 6) {
-      setTimeout(() => { die.style.animation = ''; die.classList.add('six'); }, 500);
+      setTimeout(() => die.classList.add('six'), FLIGHT);
     }
   }
 
-  // Step 1: drop p1 dice
-  r1.forEach((_, i) => { setTimeout(() => showDie(p1, i), t + i * STEP); });
-  t += r1.length * STEP + 200;
-
-  // Step 2: drop p2 dice
-  r2.forEach((_, i) => { setTimeout(() => showDie(p2, i), t + i * STEP); });
-  t += r2.length * STEP + 300;
-
-  // Step 3+4: flip all dice to reveal
-  r1.forEach((_, i) => { setTimeout(() => flipDie(p1, i), t + i * 80); });
-  r2.forEach((_, i) => { setTimeout(() => flipDie(p2, i), t + r1.length*80 + i * 80); });
-  t += (r1.length + r2.length) * 80 + 400;
+  // Step 1: both players' dice fly in simultaneously (p1 from left, p2 from right)
+  r1.forEach((_, i) => { setTimeout(() => throwDie(p1, i, true),  i * STEP); });
+  r2.forEach((_, i) => { setTimeout(() => throwDie(p2, i, false), i * STEP); });
+  let t = Math.max(r1.length, r2.length) * STEP + FLIGHT + 300;
 
   // Step 5: show sixes counts
   setTimeout(() => {

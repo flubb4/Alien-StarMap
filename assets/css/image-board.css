@@ -21,103 +21,141 @@
     font-family:"Share Tech Mono",monospace;
   }
   #imageBoardOverlay.open { display:flex; }
-  .ib-header {
-    width:100%; position:relative;
-    background:linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%);
+  /* ══ TOP BAR — flat modern console deck (matches main header shell) ══ */
+  .ib-bar {
+    flex-shrink:0;
+    display:flex; align-items:stretch;
+    background:var(--panel);
     border-bottom:1px solid var(--hair);
-    box-shadow:0 2px 16px rgba(0,0,0,0.55);
-    padding:18px 18px 13px;
-    display:flex; align-items:flex-end; justify-content:space-between;
-    flex-shrink:0; gap:18px;
+    padding:10px 18px 12px;
   }
-  /* animated amber instrument seam along the bottom edge */
-  .ib-header::after {
-    content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px;
-    background:linear-gradient(90deg, transparent, var(--amber), transparent);
-    opacity:0.45; animation:ibHeaderSeam 3.6s ease-in-out infinite;
+  .ib-brand {
+    display:flex; align-items:center; gap:11px;
+    padding-right:18px;
+    border-right:1px solid var(--hair-soft);
   }
-  @keyframes ibHeaderSeam { 0%,100%{opacity:0.2} 50%{opacity:0.6} }
-
-  .ib-title {
-    font-family:"Orbitron",sans-serif; font-size:15px; font-weight:900;
-    letter-spacing:4px; color:var(--amber);
-    text-shadow:0 0 14px var(--amber-glow);
+  .ib-brand-dot {
+    width:8px; height:8px; border-radius:50%; flex-shrink:0;
+    background:var(--amber); box-shadow:0 0 8px var(--amber-glow);
+    animation:pulse 2s infinite;
+  }
+  .ib-brand-title {
+    font-family:var(--ui); font-size:15px; font-weight:700;
+    letter-spacing:.5px; color:var(--bone);
+    line-height:1.15; white-space:nowrap;
+  }
+  .ib-brand-sub {
+    font-family:var(--mono); font-size:9px; color:var(--dim);
+    letter-spacing:1.5px; margin-top:2px;
     text-transform:uppercase; white-space:nowrap;
-    padding-bottom:5px; display:flex; align-items:center; gap:9px;
   }
-  .ib-title::before {
-    content:''; width:8px; height:8px; border-radius:50%;
-    background:var(--amber); box-shadow:0 0 9px var(--amber);
-    animation:ibTitlePulse 2.4s ease-in-out infinite;
-  }
-  @keyframes ibTitlePulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  .ib-tools {
-    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  .ib-bar-tools {
+    display:flex; align-items:stretch;
+    flex:1; flex-wrap:wrap; row-gap:12px; min-width:0;
+    margin-left:18px;
   }
-  .ib-tool-group {
-    display:flex; align-items:center; gap:7px;
+  /* Tool group: hairline-separated cluster with tiny label on top */
+  .ib-grp {
     position:relative;
-    padding:0 15px;
-    border-left:1px solid var(--hair);
+    display:flex; align-items:flex-end; gap:7px;
+    padding:17px 18px 0 0;
   }
-  .ib-tool-group:first-child { padding-left:0; border-left:none; }
-  .ib-tool-group::before {
-    content: attr(data-group-label);
-    position:absolute;
-    top:-15px; left:15px;
-    font-family:"Share Tech Mono",monospace;
-    font-size:9px; letter-spacing:2px; font-weight:bold;
-    color:var(--dim);
-    text-transform:uppercase;
-    white-space:nowrap;
-    pointer-events:none;
+  .ib-grp + .ib-grp { padding-left:18px; border-left:1px solid var(--hair-soft); }
+  .ib-grp::before {
+    content:attr(data-group);
+    position:absolute; top:0; left:0;
+    font-family:var(--mono); font-size:10px; letter-spacing:1.6px;
+    color:var(--bone-2); text-transform:uppercase;
+    pointer-events:none; user-select:none;
   }
-  .ib-tool-group:first-child::before { left:0; }
-  .ib-gm-group::before { color:var(--amber); opacity:0.8; }
+  .ib-grp + .ib-grp::before { left:18px; }
+
   .ib-tool-btn {
-    display:inline-flex; align-items:center; justify-content:center; gap:6px;
-    height:32px; box-sizing:border-box; padding:0 13px;
-    background:var(--panel-3); border:1px solid var(--hair); color:var(--bone);
-    font-family:"Share Tech Mono",monospace; font-size:11.5px; line-height:1;
-    cursor:pointer; letter-spacing:0.5px; white-space:nowrap;
-    border-radius:3px; transition:all 0.15s;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),
-               inset 0 -1px 0 rgba(0,0,0,0.28),
-               0 1px 2px rgba(0,0,0,0.35);
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    height:34px; box-sizing:border-box; padding:0 13px;
+    background:transparent; border:1px solid var(--hair); color:var(--bone);
+    font-family:var(--mono); font-weight:600; font-size:11.5px; line-height:1;
+    letter-spacing:.3px; text-transform:uppercase; white-space:nowrap;
+    cursor:pointer; border-radius:var(--r-s);
+    transition:all .16s var(--ease);
   }
   .ib-tool-btn:hover {
-    border-color:var(--amber); color:var(--amber-hi);
-    background:rgba(255,154,60,0.1);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),
-               0 0 12px var(--amber-glow);
+    border-color:var(--accent-line); background:var(--accent-dim); color:var(--bone);
   }
   .ib-tool-btn:active { transform:translateY(1px); }
   .ib-tool-btn.active {
-    border-color:var(--amber); color:#1a0f00; background:var(--amber);
-    box-shadow:0 0 14px var(--amber-glow),
-               inset 0 1px 0 rgba(255,255,255,0.25);
-    font-weight:bold;
+    background:var(--amber); border-color:var(--amber); color:#1a0f00;
+    font-weight:700;
   }
+
   .ib-close-btn {
-    display:inline-flex; align-items:center; justify-content:center;
-    height:32px; box-sizing:border-box; padding:0 15px;
-    background:var(--panel-3); border:1px solid var(--rust); color:var(--rust);
-    font-family:"Share Tech Mono",monospace; font-size:11px;
-    cursor:pointer; letter-spacing:2px; transition:all 0.15s;
-    border-radius:3px; white-space:nowrap;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),
-               inset 0 -1px 0 rgba(0,0,0,0.28),
-               0 1px 2px rgba(0,0,0,0.35);
+    align-self:flex-end; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    height:34px; box-sizing:border-box; padding:0 16px; margin-left:18px;
+    background:transparent; border:1px solid rgba(198,66,37,0.55); color:#e8755c;
+    font-family:var(--mono); font-weight:600; font-size:11.5px; line-height:1;
+    letter-spacing:.5px; text-transform:uppercase; white-space:nowrap;
+    cursor:pointer; border-radius:var(--r-s);
+    transition:all .16s var(--ease);
   }
-  .ib-close-btn:hover { color:#e8755c; background:rgba(198,66,37,0.14); box-shadow:0 0 12px var(--rust-glow); }
+  .ib-close-btn span { font-size:13px; line-height:1; }
+  .ib-close-btn:hover {
+    border-color:var(--rust); background:rgba(198,66,37,0.13); color:#ffb09d;
+  }
   .ib-close-btn:active { transform:translateY(1px); }
-  #ibColorPicker {
-    width:34px; height:32px; box-sizing:border-box; border:1px solid var(--hair); background:var(--panel-3);
-    cursor:pointer; padding:2px; border-radius:3px; transition:border-color 0.15s;
+
+  /* ── GM command strip (second row, GM-only) ── */
+  .ib-bar-gm {
+    background:var(--panel-2);
+    padding-top:8px; padding-bottom:11px;
   }
-  #ibColorPicker:hover { border-color:var(--amber); }
-  #ibSizeSlider { width:80px; height:32px; accent-color:var(--amber); cursor:pointer; }
+  .ib-gm-chip {
+    align-self:flex-end; flex-shrink:0;
+    display:inline-flex; align-items:center;
+    height:34px; padding:0 13px; margin-right:18px;
+    background:var(--accent-dim);
+    border:1px solid var(--accent-line); border-radius:var(--r-s);
+    font-family:var(--ui); font-size:12px; font-weight:700;
+    letter-spacing:2px; color:var(--amber);
+    user-select:none;
+  }
+  .ib-bar-gm .ib-bar-tools { margin-left:0; }
+
+  /* ── Draw controls: color swatch + size slider ── */
+  #ibColorPicker {
+    width:34px; height:34px; box-sizing:border-box; flex-shrink:0;
+    border:1px solid var(--hair); background:transparent;
+    cursor:pointer; padding:4px; border-radius:var(--r-s);
+    transition:border-color .16s var(--ease);
+  }
+  #ibColorPicker:hover { border-color:var(--accent-line); }
+  #ibColorPicker::-webkit-color-swatch-wrapper { padding:0; }
+  #ibColorPicker::-webkit-color-swatch { border:none; border-radius:4px; }
+  #ibColorPicker::-moz-color-swatch { border:none; border-radius:4px; }
+
+  #ibSizeSlider {
+    -webkit-appearance:none; appearance:none;
+    width:96px; height:34px; background:transparent; cursor:pointer;
+  }
+  #ibSizeSlider::-webkit-slider-runnable-track {
+    height:3px; border-radius:99px; background:var(--hair);
+  }
+  #ibSizeSlider::-webkit-slider-thumb {
+    -webkit-appearance:none; appearance:none;
+    width:14px; height:14px; margin-top:-5.5px; border-radius:50%;
+    background:var(--amber); border:none;
+    transition:box-shadow .16s var(--ease);
+  }
+  #ibSizeSlider:hover::-webkit-slider-thumb { box-shadow:0 0 0 5px var(--accent-dim); }
+  #ibSizeSlider::-moz-range-track {
+    height:3px; border-radius:99px; background:var(--hair);
+  }
+  #ibSizeSlider::-moz-range-thumb {
+    width:14px; height:14px; border-radius:50%;
+    background:var(--amber); border:none;
+  }
+
   .ib-canvas-wrap {
     flex:1; position:relative; overflow:hidden;
     display:flex; align-items:center; justify-content:center;
@@ -132,12 +170,12 @@
     will-change:transform;
   }
   #ibZoomHint {
-    position:absolute; left:50%; bottom:10px; transform:translateX(-50%);
+    position:absolute; left:50%; bottom:12px; transform:translateX(-50%);
     z-index:6; pointer-events:none;
-    font-family:"Share Tech Mono",monospace; font-size:9px; letter-spacing:2px;
-    color:var(--bone-2); background:rgba(8,10,8,0.7);
-    border:1px solid var(--hair); border-radius:3px;
-    padding:4px 10px; opacity:0.55; white-space:nowrap;
+    font-family:var(--mono); font-size:9px; letter-spacing:1.5px;
+    color:var(--bone-2); background:rgba(10,16,13,0.8);
+    border:1px solid var(--hair); border-radius:99px;
+    padding:5px 14px; opacity:0.6; white-space:nowrap;
   }
   #ibImage {
     position:absolute;
@@ -172,19 +210,20 @@
 
   /* ── GM Stress Panel (read-only mirror of character-sheet stressLevel) ── */
   #ibStressPanel {
-    position:absolute; top:12px; right:12px; z-index:5;
-    background:rgba(8,10,8,0.88);
-    border:1px solid var(--border);
-    padding:10px 14px 8px;
-    font-family:"Share Tech Mono",monospace;
+    position:absolute; top:14px; right:14px; z-index:5;
+    background:rgba(10,16,13,0.92);
+    border:1px solid var(--hair);
+    border-radius:var(--r);
+    padding:11px 14px 9px;
+    font-family:var(--mono);
     min-width:220px; max-width:280px;
     pointer-events:none;
-    box-shadow:0 0 16px rgba(0,0,0,0.6);
+    box-shadow:0 10px 30px rgba(0,0,0,0.5);
   }
   .ib-stress-title {
-    font-size:9px; letter-spacing:3px; color:var(--accent);
-    margin-bottom:8px; padding-bottom:5px;
-    border-bottom:1px solid #1a2a1a;
+    font-size:9px; letter-spacing:2px; color:var(--amber);
+    margin-bottom:8px; padding-bottom:6px;
+    border-bottom:1px solid var(--hair-soft);
   }
   .ib-stress-row {
     display:flex; align-items:center; gap:8px;
@@ -212,16 +251,18 @@
   }
   .ib-confirm-overlay.open { display:flex; }
   .ib-confirm-box {
-    background:var(--panel); border:1px solid var(--accent2);
-    padding:24px 32px; text-align:center;
-    box-shadow:0 0 32px rgba(255,68,0,0.3);
+    background:var(--panel-2); border:1px solid var(--hair);
+    border-radius:var(--r);
+    padding:26px 34px; text-align:center;
+    box-shadow:0 18px 50px rgba(0,0,0,0.6);
   }
   .ib-confirm-title {
-    font-family:"Orbitron",sans-serif; font-size:11px; letter-spacing:3px;
-    color:var(--accent2); margin-bottom:10px; text-transform:uppercase;
+    font-family:var(--ui); font-size:13px; font-weight:700; letter-spacing:1px;
+    color:#e8755c; margin-bottom:8px; text-transform:uppercase;
   }
   .ib-confirm-msg {
-    font-size:11px; letter-spacing:2px; color:var(--text); margin-bottom:18px;
+    font-family:var(--mono); font-size:12px; letter-spacing:.5px;
+    color:var(--bone-2); margin-bottom:20px;
   }
   .ib-confirm-btns { display:flex; gap:12px; justify-content:center; }
   .ib-confirm-yes { border-color:var(--accent2) !important; color:var(--accent2) !important; }
@@ -231,36 +272,38 @@
   .ib-fog-panel {
     flex-shrink: 0;
     align-items: center; gap: 7px; flex-wrap: wrap;
-    padding: 8px 16px;
-    background: linear-gradient(180deg, rgba(20,33,28,0.96), rgba(7,16,12,0.96));
+    padding: 9px 18px;
+    background: var(--panel-2);
     border-bottom: 1px solid var(--hair);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: var(--mono);
   }
   .ib-fog-panel-label {
-    font-size: 9px; letter-spacing: .3em; color: var(--amber); opacity: 0.75;
-    font-weight: bold; margin-right: 6px; white-space: nowrap;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1.6px;
+    color: var(--amber); white-space: nowrap; margin-right: 8px;
+    text-transform: uppercase;
   }
   .ib-fog-tool {
-    padding: 6px 12px;
-    border: 1px solid var(--hair); background: var(--panel-3);
-    color: var(--bone-2); font-family: 'Share Tech Mono', monospace;
-    font-size: 10.5px; letter-spacing: .04em; cursor: pointer; white-space: nowrap;
-    border-radius: 2px; transition: all .15s;
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 30px; box-sizing: border-box; padding: 0 12px;
+    border: 1px solid var(--hair); background: transparent;
+    color: var(--bone); font-family: var(--mono); font-weight: 600;
+    font-size: 11px; line-height: 1; letter-spacing: .3px;
+    text-transform: uppercase; cursor: pointer; white-space: nowrap;
+    border-radius: var(--r-s); transition: all .16s var(--ease);
   }
-  .ib-fog-tool:hover { background: rgba(255,154,60,.1); color: var(--amber-hi); border-color: var(--amber); }
+  .ib-fog-tool:hover { background: var(--accent-dim); color: var(--bone); border-color: var(--accent-line); }
   .ib-fog-tool.active {
     background: var(--amber); color: #1a0f00;
-    border-color: var(--amber); font-weight: bold;
-    box-shadow: 0 0 10px var(--amber-glow);
+    border-color: var(--amber); font-weight: 700;
   }
   .ib-fog-tool.ib-fog-danger {
-    border-color: var(--hair); color: var(--dim);
+    border-color: var(--hair); color: var(--bone-2);
   }
   .ib-fog-tool.ib-fog-danger:hover {
-    background: rgba(198,66,37,.1); color: var(--rust); border-color: var(--rust);
+    background: rgba(198,66,37,.12); color: #ffb09d; border-color: var(--rust);
   }
   .ib-fog-sep {
-    width: 1px; height: 24px; background: var(--hair); margin: 0 5px;
+    width: 1px; height: 22px; background: var(--hair-soft); margin: 0 6px;
     align-self: center;
   }
   .ib-fog-rect-preview {
@@ -279,10 +322,11 @@
     flex-shrink: 0;
     align-items: center; justify-content: center; gap: 14px;
     padding: 7px 18px;
-    background: rgba(245,166,35,.1);
-    border-bottom: 1px solid rgba(245,166,35,.3);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 10px; letter-spacing: .22em; color: #f5a623;
+    background: var(--accent-dim);
+    border-bottom: 1px solid var(--accent-line);
+    font-family: var(--mono);
+    font-size: 11px; letter-spacing: 1.5px; color: var(--amber);
+    text-transform: uppercase;
   }
   .ib-staging-overlay {
     position: absolute; inset: 0; z-index: 50;
@@ -306,10 +350,9 @@
   .ib-release-btn {
     border-color: var(--green) !important;
     color: var(--green) !important;
-    background: rgba(127,176,105,.12) !important;
-    text-shadow: 0 0 6px var(--green-glow);
+    background: rgba(127,176,105,.10) !important;
   }
-  .ib-release-btn:hover { background: rgba(127,176,105,.2) !important; box-shadow: 0 0 12px var(--green-glow) !important; }
+  .ib-release-btn:hover { background: rgba(127,176,105,.22) !important; }
 
   /* ── PLAYER MARKERS + GM PINS ───────────────────────────────────
      Mirrors the Corvus marker visuals. Layer sits on top of the canvas;
@@ -419,51 +462,33 @@
     text-shadow: 0 0 4px rgba(0,0,0,.9);
   }
 
-  /* "+ PIN" button: rust accent so it reads as GM-only/different */
-  #ibPinBtn {
-    border-color: rgba(198,66,37,0.5);
-    color: #c64225;
-  }
-  #ibPinBtn:hover { border-color: #c64225; color: #ff7a4a; background: rgba(198,66,37,0.08); }
-  #ibPinBtn.active {
-    border-color: #c64225; color: #ff7a4a;
-    background: rgba(198,66,37,0.18);
-    box-shadow: 0 0 10px rgba(198,66,37,.45);
-  }
-
-  /* "📍 MARKER" button: cyan/amber accent — player-facing primary action */
+  /* "📍 MARKER" button: amber accent — player-facing primary action */
   .ib-marker-btn-style {
-    border-color: rgba(255,154,60,0.6) !important;
-    color: #ffc370 !important;
-    font-weight: 700;
-    letter-spacing: 2px !important;
+    border-color: var(--accent-line);
+    color: var(--amber-hi);
   }
   .ib-marker-btn-style:hover {
-    border-color: #ff9a3c !important;
-    color: #ffd99a !important;
-    background: rgba(255,154,60,0.10) !important;
-    box-shadow: 0 0 10px rgba(255,154,60,0.30);
+    border-color: var(--amber);
+    color: var(--amber-hi);
+    background: var(--accent-dim);
   }
   .ib-marker-btn-style.active {
-    border-color: #ff9a3c !important;
-    color: #ff9a3c !important;
-    background: rgba(255,154,60,0.20) !important;
-    box-shadow: 0 0 12px rgba(255,154,60,0.50);
-    animation: ibmkBtnGlow 1.4s ease-in-out infinite;
-  }
-  @keyframes ibmkBtnGlow {
-    0%, 100% { box-shadow: 0 0 8px rgba(255,154,60,0.4); }
-    50%      { box-shadow: 0 0 16px rgba(255,154,60,0.7); }
+    border-color: var(--amber);
+    color: #1a0f00;
+    background: var(--amber);
   }
   /* GM threat pin — rust accent to distinguish from the amber player marker */
+  .ib-pin-btn-style {
+    border-color: rgba(198,66,37,0.55);
+    color: #e8755c;
+  }
   .ib-pin-btn-style:hover {
-    border-color: var(--rust) !important; color: #ff7a4a !important;
-    background: rgba(198,66,37,0.1) !important; box-shadow: 0 0 10px var(--rust-glow);
+    border-color: var(--rust); color: #ffb09d;
+    background: rgba(198,66,37,0.13);
   }
   .ib-pin-btn-style.active {
-    border-color: var(--rust) !important; color: #1a0500 !important;
-    background: var(--rust) !important; font-weight: bold;
-    box-shadow: 0 0 14px var(--rust-glow);
+    border-color: var(--rust); color: #fff;
+    background: var(--rust);
   }
   .ib-tool-sep {
     display: inline-block;

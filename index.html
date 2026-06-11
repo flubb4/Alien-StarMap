@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="assets/css/xp.css">
 <link rel="stylesheet" href="assets/css/handout.css">
 <link rel="stylesheet" href="assets/css/gm-directive.css">
-<link rel="stylesheet" href="assets/css/image-board.css">
+<link rel="stylesheet" href="assets/css/image-board.css?v=2">
 <link rel="stylesheet" href="assets/css/motion-tracker.css">
 <link rel="stylesheet" href="assets/css/black-veil.css">
 <link rel="stylesheet" href="assets/css/youtube-player.css">
@@ -982,40 +982,52 @@
 <input type="file" id="imageBoardFileInput" accept="image/*" style="display:none" onchange="handleImageSelect(this)">
 <input type="file" id="coverImageFileInput" accept="image/*" style="display:none" onchange="handleCoverImageSelect(this)">
 <div id="imageBoardOverlay">
-  <div class="ib-header">
-    <span class="ib-title">// Image Board</span>
-    <div class="ib-tools">
-      <div class="ib-tool-group" data-group-label="PLAYER">
-        <button class="ib-tool-btn ib-marker-btn-style" id="ibMarkerBtn" onclick="ibmkToggleMode()" title="Klick aufs Bild = setzt deinen Marker (Position)">📍 MARKER</button>
+  <div class="ib-bar ib-bar-main">
+    <div class="ib-brand">
+      <span class="ib-brand-dot"></span>
+      <div>
+        <div class="ib-brand-title">Image Board</div>
+        <div class="ib-brand-sub">Shared Visual Feed</div>
+      </div>
+    </div>
+    <div class="ib-bar-tools">
+      <div class="ib-grp" data-group="Draw">
         <input type="color" id="ibColorPicker" value="#ff4444" title="Pen color">
         <input type="range" id="ibSizeSlider" min="2" max="20" value="4" title="Pen size">
         <button class="ib-tool-btn" id="ibEraserBtn" onclick="ibToggleEraser()">⬜ Eraser</button>
+      </div>
+      <div class="ib-grp" data-group="Tactical">
+        <button class="ib-tool-btn ib-marker-btn-style" id="ibMarkerBtn" onclick="ibmkToggleMode()" title="Klick aufs Bild = setzt deinen Marker (Position)">📍 Marker</button>
         <button class="ib-tool-btn" id="mtTrackerBtn" onclick="mtToggleTrackerPlacement()">📡 Motion Tracker</button>
+      </div>
+      <div class="ib-grp" data-group="Module">
         <button class="ib-tool-btn" onclick="openCharSheet()">📋 Character</button>
         <button class="ib-tool-btn" onclick="openSupplyPanel()">📦 Supply</button>
         <button class="ib-tool-btn" onclick="openDiceTable()">🎲 Dice</button>
       </div>
+    </div>
+    <button class="ib-close-btn" onclick="closeImageBoard()"><span>✕</span>Close</button>
+  </div>
 
-      <div class="ib-tool-group ib-gm-group ib-gm-only" data-group-label="GM · SETUP">
+  <div class="ib-bar ib-bar-gm ib-gm-only">
+    <span class="ib-gm-chip">GM</span>
+    <div class="ib-bar-tools">
+      <div class="ib-grp" data-group="Setup">
         <button class="ib-tool-btn" onclick="document.getElementById('imageBoardFileInput').click()">📁 Load Image</button>
         <button class="ib-tool-btn" onclick="document.getElementById('coverImageFileInput').click()">🗺 Load Cover</button>
         <button class="ib-tool-btn" id="ibFogMenuBtn" onclick="ibToggleFogPanel()">🌫 Fog ▾</button>
         <button class="ib-tool-btn ib-release-btn" id="ibReleaseBtn" onclick="ibRelease()" style="display:none">✅ FREIGEBEN</button>
       </div>
-
-      <div class="ib-tool-group ib-gm-group ib-gm-only" data-group-label="GM · MARKER">
-        <button class="ib-tool-btn ib-pin-btn-style" id="ibPinBtn" onclick="ibmkTogglePinMode()" title="GM: setzt einen beschrifteten Pin (NPC / Threat)">+ PIN</button>
+      <div class="ib-grp" data-group="Marker">
+        <button class="ib-tool-btn ib-pin-btn-style" id="ibPinBtn" onclick="ibmkTogglePinMode()" title="GM: setzt einen beschrifteten Pin (NPC / Threat)">+ Pin</button>
         <button class="ib-tool-btn" id="mtBlipBtn" onclick="mtToggleBlipMode()">🎯 Blip</button>
         <button class="ib-tool-btn" id="mtClearBtn" onclick="mtClearTrackers()" title="Rechtsklick auf einen Tracker löscht ihn einzeln">🗑 Tracker leeren</button>
       </div>
-
-      <div class="ib-tool-group ib-gm-group ib-gm-only" data-group-label="GM · SESSION">
+      <div class="ib-grp" data-group="Session">
         <button class="ib-tool-btn" onclick="openInitiative()">⚡ Initiative</button>
         <button class="ib-tool-btn" onclick="openGMDirective()">📨 Directive</button>
         <button class="ib-tool-btn" onclick="clearImageBoard()">🗑 Clear</button>
       </div>
-
-      <button class="ib-close-btn" onclick="closeImageBoard()">✕ Close</button>
     </div>
   </div>
   <div id="ibClearConfirm" class="ib-confirm-overlay">

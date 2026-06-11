@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <style>
+      .number6 {
+        font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', 'Arial', sans-serif;
+        font-size: 115px;
+        font-weight: bold;
+        fill: #111111;
+      }
+    </style>
+  </defs>
+
+  <rect width="500" height="500" rx="80" ry="80" fill="#ffe000" />
+
+  <rect x="75" y="75" width="350" height="350" rx="55" ry="55" fill="none" stroke="#111111" stroke-width="16" />
+
+  <line x1="75" y1="250" x2="210" y2="250" stroke="#111111" stroke-width="16" stroke-linecap="round" />
+  <line x1="290" y1="250" x2="425" y2="250" stroke="#111111" stroke-width="16" stroke-linecap="round" />
+
+  <line x1="250" y1="75" x2="250" y2="210" stroke="#111111" stroke-width="16" stroke-linecap="round" />
+  <line x1="250" y1="290" x2="250" y2="425" stroke="#111111" stroke-width="16" stroke-linecap="round" />
+
+  <polygon points="250,205 295,250 250,295 205,250" fill="#111111" />
+
+  <text x="115" y="195" class="number6" text-anchor="middle" dominant-baseline="central">6</text>
+</svg>

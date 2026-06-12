@@ -350,7 +350,61 @@
 .dt-skin-status.on  { color:var(--green); }
 .dt-skin-status.off { color:var(--rust); }
 .dt-skin-card.active .dt-skin-status { color:var(--amber-hi); }
+.dt-skin-status.pend { color:var(--amber); }
 .dt-skin-hint { margin-top:10px; font-size:10px; letter-spacing:1px; color:var(--dim); }
+
+/* ── MYSTERY / PENDING / REVEAL ─────────────────────────────── */
+.dt-die.dt-die-mystery {
+  background:linear-gradient(145deg, #1a222c 0%, #0c1118 50%, #04070c 100%);
+  border-color:#2c3a46;
+  display:flex; align-items:center; justify-content:center;
+}
+.dt-mystery-q {
+  font-family:"Share Tech Mono",monospace; font-size:28px; font-weight:700;
+  color:var(--teal); opacity:0.65; text-shadow:0 0 12px rgba(110,192,196,0.6);
+}
+
+.dt-skin-card.mystery { opacity:0.5; cursor:not-allowed; }
+.dt-skin-card.mystery::after {
+  content:""; position:absolute; inset:0; border-radius:var(--r-s); pointer-events:none;
+  background:repeating-linear-gradient(135deg, transparent, transparent 9px, rgba(0,0,0,0.35) 9px, rgba(0,0,0,0.35) 12px);
+}
+.dt-skin-card.mystery .dt-skin-name { color:var(--dim); letter-spacing:0; }
+
+.dt-skin-card.pending {
+  border-color:var(--amber);
+  animation:dtPendingPulse 1.6s ease-in-out infinite;
+}
+.dt-skin-card.pending:hover { background:rgba(255,154,60,0.08); }
+.dt-skin-card.pending .dt-mystery-q {
+  color:var(--amber); text-shadow:0 0 14px rgba(255,154,60,0.8);
+  animation:dtMysteryFlicker 2.2s steps(1) infinite;
+}
+.dt-skin-card.pending .dt-skin-name { color:var(--amber-hi); }
+@keyframes dtPendingPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(255,154,60,0); }
+  50%     { box-shadow:0 0 18px 2px rgba(255,154,60,0.45); }
+}
+@keyframes dtMysteryFlicker {
+  0%,100% { opacity:0.9; } 8% { opacity:0.3; } 12% { opacity:0.9; }
+  44% { opacity:0.9; } 47% { opacity:0.2; } 50% { opacity:0.9; }
+  73% { opacity:0.9; } 75% { opacity:0.45; } 78% { opacity:0.9; }
+}
+
+/* SKINS button pulse when an encrypted drop is waiting */
+.dt-skins-btn.pulse {
+  border-color:var(--amber); color:var(--amber);
+  animation:dtSkinsBtnPulse 1.4s ease-in-out infinite;
+}
+.dt-skins-btn.pulse:hover { background:var(--amber); color:var(--ink); }
+.dt-skins-badge {
+  display:inline-block; margin-left:4px; padding:0 5px;
+  background:var(--amber); color:var(--ink); font-weight:700; border-radius:2px;
+}
+@keyframes dtSkinsBtnPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(255,154,60,0); }
+  50%     { box-shadow:0 0 16px 2px rgba(255,154,60,0.55); }
+}
 
 /* mini preview die inside skin cards */
 .dt-die.dt-die-preview {
@@ -380,6 +434,188 @@
 .dt-toast-body b { color:var(--bone); }
 .dt-toast-res { font-size:16px; color:var(--green); margin-top:5px; letter-spacing:1px; font-weight:700; }
 .dt-toast.panic .dt-toast-res b { color:var(--rust); }
+
+/* ── SUPPLY CAPSULE (centered skin-unlock reveal) ───────────── */
+#dtCapsuleWrap {
+  position:fixed; inset:0; z-index:1700;
+  display:none; align-items:center; justify-content:center;
+  pointer-events:none;
+  font-family:"Share Tech Mono",monospace;
+}
+#dtCapsuleWrap.arriving, #dtCapsuleWrap.idle, #dtCapsuleWrap.opening,
+#dtCapsuleWrap.burst, #dtCapsuleWrap.revealed, #dtCapsuleWrap.closing { display:flex; }
+#dtCapsuleWrap::before {
+  content:""; position:absolute; inset:0; opacity:0; transition:opacity 0.4s;
+  background:radial-gradient(circle at 50% 46%, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.9) 75%);
+}
+#dtCapsuleWrap.opening::before, #dtCapsuleWrap.burst::before,
+#dtCapsuleWrap.revealed::before { opacity:1; }
+#dtCapsuleWrap.opening, #dtCapsuleWrap.burst, #dtCapsuleWrap.revealed { pointer-events:auto; }
+#dtCapsuleWrap.closing { transition:opacity 0.4s; opacity:0; }
+
+.dt-cap-stage { position:relative; width:340px; height:420px; }
+
+/* capsule shell — two clipped halves so it can split open */
+.dt-capsule {
+  position:absolute; left:50%; top:50%; width:150px; height:240px;
+  transform:translate(-50%,-50%); cursor:pointer; pointer-events:auto;
+}
+.dt-capsule::before { /* glow aura */
+  content:""; position:absolute; inset:-40px; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,154,60,0.32) 0%, transparent 65%);
+  animation:dtCapAura 1.8s ease-in-out infinite;
+}
+@keyframes dtCapAura { 0%,100%{opacity:0.5;transform:scale(0.92)} 50%{opacity:1;transform:scale(1.06)} }
+
+.dt-cap-half { position:absolute; inset:0; }
+.dt-cap-half.left  { clip-path:inset(-60px 50% -60px -60px); }
+.dt-cap-half.right { clip-path:inset(-60px -60px -60px 50%); }
+
+.dt-cap-art { position:absolute; inset:0; filter:drop-shadow(0 14px 22px rgba(0,0,0,0.7)); }
+.dt-cap-body {
+  position:absolute; left:0; right:0; top:14px; bottom:14px;
+  border-radius:64px;
+  background:linear-gradient(100deg, #4a545e 0%, #2a323b 38%, #161c22 70%, #0c1014 100%);
+  border:1px solid #5a666f;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.6), inset 14px 0 26px rgba(255,255,255,0.07), inset -18px 0 30px rgba(0,0,0,0.65);
+}
+.dt-cap-fin {
+  position:absolute; left:50%; transform:translateX(-50%);
+  width:64px; height:18px; border-radius:5px;
+  background:linear-gradient(180deg, #565f68, #20262c);
+  border:1px solid #5a666f;
+}
+.dt-cap-fin.top { top:0; }
+.dt-cap-fin.bottom { bottom:0; }
+.dt-cap-window {
+  position:absolute; left:50%; top:42px; transform:translateX(-50%);
+  width:62px; height:62px; border-radius:50%;
+  background:radial-gradient(circle at 38% 32%, #11303a 0%, #07141c 60%, #03080c 100%);
+  border:3px solid #4a565f;
+  box-shadow:inset 0 0 14px rgba(110,192,196,0.35), 0 0 12px rgba(110,192,196,0.25);
+  display:flex; align-items:center; justify-content:center;
+}
+.dt-cap-q {
+  font-size:30px; font-weight:700; color:var(--teal);
+  text-shadow:0 0 14px rgba(110,192,196,0.9);
+  animation:dtMysteryFlicker 2.2s steps(1) infinite;
+}
+.dt-cap-label {
+  position:absolute; left:0; right:0; top:118px; text-align:center;
+  font-size:10px; letter-spacing:3px; color:#8d9aa3;
+}
+.dt-cap-stripes {
+  position:absolute; left:10px; right:10px; bottom:42px; height:16px;
+  background:repeating-linear-gradient(45deg, #b87f1f 0 10px, #241c10 10px 20px);
+  border:1px solid rgba(0,0,0,0.55); opacity:0.85;
+}
+.dt-cap-seam {
+  position:absolute; left:50%; top:8px; bottom:8px; width:2px; transform:translateX(-50%);
+  background:rgba(255,255,255,0.07);
+}
+
+/* tag line under the capsule */
+.dt-cap-tag {
+  position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+  white-space:nowrap; font-size:12px; letter-spacing:2px; color:var(--amber);
+  text-shadow:0 0 10px rgba(255,154,60,0.5);
+  animation:dtPanicText 1.4s ease-in-out infinite;
+}
+
+/* ── states ── */
+/* arrival: drop from above with overshoot */
+.arriving .dt-capsule { animation:dtCapDrop 0.9s cubic-bezier(0.22,0.9,0.32,1.18) both; }
+@keyframes dtCapDrop {
+  0%   { transform:translate(-50%,-58vh) rotate(7deg); }
+  78%  { transform:translate(-50%,-46%) rotate(-2deg); }
+  100% { transform:translate(-50%,-50%) rotate(0deg); }
+}
+.arriving .dt-cap-tag { opacity:0; }
+
+/* idle: gentle hover bob */
+.idle .dt-capsule { animation:dtCapBob 2.6s ease-in-out infinite; }
+@keyframes dtCapBob {
+  0%,100% { transform:translate(-50%,-50%) rotate(0deg); }
+  50%     { transform:translate(-50%,-54%) rotate(1.4deg); }
+}
+
+/* opening: violent shake, seam ignites */
+.opening .dt-capsule { animation:dtCapShake 0.1s linear infinite; }
+@keyframes dtCapShake {
+  0%   { transform:translate(calc(-50% - 3px),-50%) rotate(-1.6deg); }
+  25%  { transform:translate(-50%,calc(-50% + 2px)) rotate(1.2deg); }
+  50%  { transform:translate(calc(-50% + 3px),-50%) rotate(-0.8deg); }
+  75%  { transform:translate(-50%,calc(-50% - 2px)) rotate(1.6deg); }
+  100% { transform:translate(calc(-50% - 2px),-50%) rotate(0deg); }
+}
+.opening .dt-cap-seam {
+  background:linear-gradient(180deg, transparent, #fff4d6 30%, #ffb054 70%, transparent);
+  box-shadow:0 0 18px 4px rgba(255,176,84,0.9);
+  animation:dtSeamIgnite 0.8s ease-in both;
+}
+@keyframes dtSeamIgnite { 0%{opacity:0.2} 100%{opacity:1} }
+.opening .dt-cap-tag { opacity:0; }
+
+/* burst: halves fly apart, flash, prize pops out */
+.burst .dt-cap-tag, .revealed .dt-cap-tag { display:none; }
+.burst .dt-capsule, .revealed .dt-capsule { cursor:default; pointer-events:none; }
+.burst .dt-capsule::before { opacity:0; }
+.burst .dt-cap-half.left  { animation:dtCapHalfL 0.7s cubic-bezier(0.25,0.6,0.35,1) both; }
+.burst .dt-cap-half.right { animation:dtCapHalfR 0.7s cubic-bezier(0.25,0.6,0.35,1) both; }
+@keyframes dtCapHalfL {
+  0% { transform:none; opacity:1; }
+  100% { transform:translate(-130px,18px) rotate(-22deg); opacity:0; }
+}
+@keyframes dtCapHalfR {
+  0% { transform:none; opacity:1; }
+  100% { transform:translate(130px,18px) rotate(22deg); opacity:0; }
+}
+.revealed .dt-cap-half { opacity:0; }
+
+.dt-cap-flash {
+  position:absolute; left:50%; top:50%; width:26px; height:26px; border-radius:50%;
+  transform:translate(-50%,-50%) scale(0); pointer-events:none;
+  background:radial-gradient(circle, #fff8e6 0%, rgba(255,176,84,0.85) 45%, transparent 70%);
+}
+.burst .dt-cap-flash { animation:dtCapFlash 0.85s ease-out both; }
+@keyframes dtCapFlash {
+  0%   { transform:translate(-50%,-50%) scale(0); opacity:1; }
+  40%  { transform:translate(-50%,-50%) scale(16); opacity:1; }
+  100% { transform:translate(-50%,-50%) scale(22); opacity:0; }
+}
+
+/* prize: the unlocked skin die */
+.dt-cap-prize {
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  display:none; flex-direction:column; align-items:center; gap:10px;
+  pointer-events:none; text-align:center;
+}
+.burst .dt-cap-prize, .revealed .dt-cap-prize { display:flex; }
+.burst .dt-cap-prize { animation:dtPrizePop 0.6s 0.18s cubic-bezier(0.2,1.5,0.4,1) both; }
+@keyframes dtPrizePop {
+  0%   { transform:translate(-50%,-50%) scale(0.1) rotate(-260deg); opacity:0; }
+  100% { transform:translate(-50%,-50%) scale(1) rotate(0deg); opacity:1; }
+}
+.dt-cap-prize .dt-die-preview {
+  width:96px; height:96px; border-radius:16px;
+  box-shadow:0 0 34px 6px rgba(255,154,60,0.35), 0 12px 26px rgba(0,0,0,0.7);
+}
+.dt-cap-prize .dt-die-preview .dt-num { font-size:48px; }
+.revealed .dt-cap-prize .dt-die-preview { animation:dtPrizeFloat 3s ease-in-out infinite; }
+@keyframes dtPrizeFloat {
+  0%,100% { transform:translateY(0) rotate(-2deg); }
+  50%     { transform:translateY(-10px) rotate(2deg); }
+}
+.dt-cap-prize-name {
+  font-size:20px; letter-spacing:3px; color:var(--bone);
+  text-shadow:0 0 14px rgba(255,154,60,0.5);
+}
+.dt-cap-prize-status { font-size:11px; letter-spacing:4px; color:var(--green); }
+.dt-cap-prize-hint {
+  margin-top:8px; font-size:10px; letter-spacing:2px; color:var(--dim);
+  opacity:0; animation:dtCapHintIn 0.5s ease-out 1s both, dtPanicText 1.6s ease-in-out 1.5s infinite;
+}
+@keyframes dtCapHintIn { 0%{opacity:0} 100%{opacity:1} }
 
 /* ── RESPONSIVE ─────────────────────────────────────────────── */
 @media (max-width: 860px) {

@@ -160,6 +160,7 @@ function _doLogin(nameUpper) {
       window.startReactorWatcher?.();
       window.startM08FpWatcher?.();
       window.startM08MiWatcher?.();
+      window.startDiceSkinWatcher?.();
     }, 300);
   });
 }

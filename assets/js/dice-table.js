@@ -47,6 +47,8 @@ let dtSkinSubbed     = false;
 let dtSkinPanelOpen  = false;
 let dtSkinViewPlayer = null;  // GM: whose unlocks are shown in the panel
 let dtPlayerList     = [];    // GM: known player names
+let dtPrevPending    = null;  // pending unlock ids from previous snapshot (null = no snapshot yet)
+let dtCapsuleActive  = null;  // skin id currently shown in the supply capsule
 
 // ── Open / close ──────────────────────────────────────────────────
 window.openDiceTable = function() {
@@ -54,6 +56,7 @@ window.openDiceTable = function() {
   dtEnsureCharSub();
   dtEnsureSkinSub();
   dtBuildLayout();
+  dtUpdateSkinBadge();
   dtRenderConsole();
   if (dtCurrentRoll) {
     dtRenderDice(dtCurrentRoll, false);
@@ -72,12 +75,16 @@ function dtEnsureCharSub() {
   dtCharSubbed = true;
   onValue(ref(window.db, 'characters/' + window.myName), snap => {
     dtMyChar = snap.val() || {};
+    dtCheckSkinUnlocks();
     if (document.getElementById('dtOverlay').classList.contains('open')) {
       dtRenderConsole();
       dtRenderSkinPanel();
     }
   });
 }
+
+// subscribe right after login so unlock drops arrive even with the table closed
+window.startDiceSkinWatcher = function() { dtEnsureCharSub(); };
 
 // ── Dice skins (stored at characters/{player}/diceSkins) ─────────
 function dtEnsureSkinSub() {
@@ -106,6 +113,31 @@ function dtEffectiveSkin() {
   return 'default';
 }
 
+// unlocked by the GM but not yet revealed by the player
+function dtPendingSkins(data) {
+  return Object.keys(DT_SKINS).filter(id =>
+    id !== 'default' && data?.unlocked?.[id] && !data?.seen?.[id]);
+}
+
+function dtCheckSkinUnlocks() {
+  if (window.isGM) return;
+  const pending = dtPendingSkins(dtMySkinData());
+  const fresh = dtPrevPending === null
+    ? pending
+    : pending.filter(id => !dtPrevPending.includes(id));
+  dtPrevPending = pending;
+  dtUpdateSkinBadge();
+  if (fresh.length) dtShowCapsule();
+}
+
+function dtUpdateSkinBadge() {
+  const btn = document.querySelector('.dt-skins-btn');
+  if (!btn) return;
+  const pending = !window.isGM && dtPendingSkins(dtMySkinData()).length > 0;
+  btn.classList.toggle('pulse', pending);
+  btn.innerHTML = pending ? '◈ SKINS <span class="dt-skins-badge">!</span>' : '◈ SKINS';
+}
+
 window.dtToggleSkinPanel = function() {
   dtSkinPanelOpen = !dtSkinPanelOpen;
   if (dtSkinPanelOpen) {
@@ -124,6 +156,10 @@ function dtRefreshPlayerList() {
 
 function dtPreviewHTML(id) {
   return `<div class="dt-die dt-die-preview skin-${id} face-5"><div class="dt-num"></div></div>`;
+}
+
+function dtMysteryPreviewHTML() {
+  return `<div class="dt-die dt-die-preview dt-die-mystery"><span class="dt-mystery-q">?</span></div>`;
 }
 
 function dtRenderSkinPanel() {
@@ -156,16 +192,41 @@ function dtRenderSkinPanel() {
   for (const id of Object.keys(DT_SKINS)) {
     const unlocked = dtSkinUnlocked(id, data, own && isGM);
     const active   = activeId === id;
-    const click    = own
+    const pending  = id !== 'default' && !!data?.unlocked?.[id] && !data?.seen?.[id];
+
+    if (own && !isGM && pending) {
+      // unlocked by GM, not yet revealed — encrypted drop, tap to decrypt
+      html += `
+        <button class="dt-skin-card pending" data-skin="${id}" onclick="dtRevealSkin('${id}')">
+          ${dtMysteryPreviewHTML()}
+          <div class="dt-skin-name">INCOMING CARGO</div>
+          <div class="dt-skin-status pend">TAP TO DECRYPT</div>
+        </button>`;
+      continue;
+    }
+    if (own && !isGM && !unlocked) {
+      // locked — players never see what it is
+      html += `
+        <button class="dt-skin-card mystery" disabled>
+          ${dtMysteryPreviewHTML()}
+          <div class="dt-skin-name">▓▒░ █████ ░▒▓</div>
+          <div class="dt-skin-status off">ENCRYPTED</div>
+        </button>`;
+      continue;
+    }
+
+    const click = own
       ? (unlocked ? `dtPickSkin('${id}')` : '')
       : `dtGMToggleSkin('${viewing}','${id}')`;
-    const status = active ? 'ACTIVE' : (unlocked ? 'UNLOCKED' : 'LOCKED');
+    const status = active ? 'ACTIVE'
+      : (!own && pending) ? 'PENDING'
+      : (unlocked ? 'UNLOCKED' : 'LOCKED');
     html += `
       <button class="dt-skin-card ${active ? 'active' : ''} ${unlocked ? '' : 'locked'}"
         ${click ? `onclick="${click}"` : 'disabled'}>
         ${dtPreviewHTML(id)}
         <div class="dt-skin-name">${DT_SKINS[id].name}</div>
-        <div class="dt-skin-status ${unlocked ? 'on' : 'off'}">${status}</div>
+        <div class="dt-skin-status ${unlocked ? (pending && !own ? 'pend' : 'on') : 'off'}">${status}</div>
       </button>`;
   }
   html += '</div>';
@@ -192,7 +253,90 @@ window.dtGMToggleSkin = function(player, id) {
   if (!window.isGM || !DT_SKINS[id] || id === 'default') return;
   const cur = !!(dtAllChars[player] || {}).diceSkins?.unlocked?.[id];
   set(ref(window.db, 'characters/' + player + '/diceSkins/unlocked/' + id), cur ? null : true);
+  // locking again resets the reveal so a future unlock drops as a fresh mystery
+  if (cur) set(ref(window.db, 'characters/' + player + '/diceSkins/seen/' + id), null);
 };
+
+// ── Supply capsule (centered unlock reveal) ───────────────────────
+// pending card in the panel routes here too
+window.dtRevealSkin = function(id) {
+  dtShowCapsule(id);
+};
+
+function dtCapsuleHTML(id) {
+  const shell = `
+    <div class="dt-cap-art">
+      <div class="dt-cap-fin top"></div>
+      <div class="dt-cap-body">
+        <div class="dt-cap-window"><span class="dt-cap-q">?</span></div>
+        <div class="dt-cap-label">W-Y CARGO</div>
+        <div class="dt-cap-stripes"></div>
+        <div class="dt-cap-seam"></div>
+      </div>
+      <div class="dt-cap-fin bottom"></div>
+    </div>`;
+  return `
+    <div class="dt-cap-stage">
+      <div class="dt-cap-flash"></div>
+      <div class="dt-capsule" onclick="dtOpenCapsule()">
+        <div class="dt-cap-half left">${shell}</div>
+        <div class="dt-cap-half right">${shell}</div>
+      </div>
+      <div class="dt-cap-prize">
+        ${dtPreviewHTML(id)}
+        <div class="dt-cap-prize-name">${DT_SKINS[id].name}</div>
+        <div class="dt-cap-prize-status">DICE SKIN UNLOCKED</div>
+        <div class="dt-cap-prize-hint">// ANTIPPEN ZUM SCHLIESSEN</div>
+      </div>
+      <div class="dt-cap-tag">// INCOMING SUPPLY CAPSULE — TAP TO OPEN</div>
+    </div>`;
+}
+
+function dtShowCapsule(forceId) {
+  if (window.isGM || dtCapsuleActive || !window.myName) return;
+  const pending = dtPendingSkins(dtMySkinData());
+  const id = forceId && pending.includes(forceId) ? forceId : pending[0];
+  if (!id) return;
+  dtCapsuleActive = id;
+  let wrap = document.getElementById('dtCapsuleWrap');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'dtCapsuleWrap';
+    document.body.appendChild(wrap);
+  }
+  wrap.innerHTML = dtCapsuleHTML(id);
+  wrap.className = 'arriving';
+  setTimeout(() => {
+    if (dtCapsuleActive === id && wrap.className === 'arriving') wrap.className = 'idle';
+  }, 1100);
+}
+
+window.dtOpenCapsule = function() {
+  const wrap = document.getElementById('dtCapsuleWrap');
+  if (!wrap || !dtCapsuleActive) return;
+  if (wrap.className !== 'idle' && wrap.className !== 'arriving') return;
+  wrap.className = 'opening';
+  setTimeout(() => { wrap.className = 'burst'; }, 800);
+  setTimeout(() => {
+    wrap.className = 'revealed';
+    wrap.onclick = dtDismissCapsule;
+  }, 1600);
+};
+
+function dtDismissCapsule() {
+  const wrap = document.getElementById('dtCapsuleWrap');
+  const id = dtCapsuleActive;
+  if (!wrap || !id) return;
+  wrap.onclick = null;
+  wrap.className = 'closing';
+  set(ref(window.db, 'characters/' + window.myName + '/diceSkins/seen/' + id), true);
+  setTimeout(() => {
+    wrap.className = '';
+    wrap.innerHTML = '';
+    dtCapsuleActive = null;
+    dtShowCapsule(); // next pending drop, if any
+  }, 450);
+}
 
 // ── Shared roll listener ──────────────────────────────────────────
 window._authReadyPromise.then(() => {

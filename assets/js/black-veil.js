@@ -54,6 +54,10 @@ function bvUpdateBtnState(unlocked) {
     btn.classList.remove('unlocked');
     btn.title = 'Project Black Veil — locked (no fragments unlocked yet)';
   }
+  const count = document.getElementById('bvProgCount');
+  const fill  = document.getElementById('bvProgFill');
+  if (count) count.textContent = `${unlocked.length}/10`;
+  if (fill)  fill.style.width = `${unlocked.length * 10}%`;
 }
 
 window.openBVPanel = function() {
@@ -114,10 +118,10 @@ function bvRenderToggles(unlocked) {
   if (!grid) return;
   grid.innerHTML = BV_FRAGMENTS.map(f => {
     const on = unlocked.includes(f.id);
-    return `<div class="bv-toggle-row">
+    return `<div class="bv-toggle-row ${on?'on':''}">
       <div><span class="bv-toggle-id">${String(f.id).padStart(2,'0')}/10</span>${f.android} ${f.name}</div>
       <button class="bv-toggle-btn ${on?'on':''}" onclick="bvToggleFragment(${f.id})">
-        ${on ? '✓ ACTIVE' : '— LOCKED'}
+        ${on ? 'ACTIVE' : 'LOCKED'}
       </button>
     </div>`;
   }).join('');
@@ -129,8 +133,8 @@ function bvRenderCards(unlocked) {
   if (unlocked.length === 0) {
     c.innerHTML = `<div class="bv-empty">
       <div class="bv-empty-icon">🧬</div>
-      <div>NO FRAGMENTS UNLOCKED</div>
-      <div style="margin-top:8px;font-size:10px;opacity:.5;">AWAITING GM AUTHORIZATION</div>
+      <div>No fragments unlocked</div>
+      <div class="bv-empty-sub">Awaiting GM authorization</div>
     </div>`;
     return;
   }
@@ -139,28 +143,28 @@ function bvRenderCards(unlocked) {
     <div class="bv-frag-card">
       <div class="bv-fc-hd">
         <div>
-          <div class="bv-fc-num">FRAGMENT ${String(f.id).padStart(2,'0')} / 10</div>
-          <div class="bv-fc-aid">${f.android} <span style="font-size:11px;color:#4a8866">${f.name}</span></div>
+          <div class="bv-fc-num">Fragment ${String(f.id).padStart(2,'0')} / 10</div>
+          <div class="bv-fc-aid">${f.android} <span class="bv-fc-callsign">${f.name}</span></div>
         </div>
-        <div class="bv-fc-cls">BLACK VEIL</div>
+        <div class="bv-fc-cls">Black Veil</div>
       </div>
       <div class="bv-fc-bd">
-        <div class="bv-fc-mission">MISSION: <b>${f.mission}</b></div>
+        <div class="bv-fc-mission">Mission: <b>${f.mission}</b></div>
         <div>
-          <div class="bv-fc-plbl">PARAMETER: ${f.param}</div>
+          <div class="bv-fc-plbl">Parameter: ${f.param}</div>
           <div class="bv-fc-pval">${f.value}</div>
         </div>
         <div>
-          <div class="bv-bar-lbl"><span>${f.param}</span><span>${f.bar}%</span></div>
+          <div class="bv-bar-lbl"><span>${f.param}</span><span class="bv-bar-pct">${f.bar}%</span></div>
           <div class="bv-bar-track"><div class="bv-bar-fill" style="width:${f.bar}%"></div></div>
         </div>
         <div class="bv-ctx">
-          <div class="bv-ctx-lbl">ENVIRONMENTAL CONTEXT</div>
+          <div class="bv-ctx-lbl">Environmental Context</div>
           ${f.context}
         </div>
-        <div class="bv-sg">${f.status.map(([l,v,c])=>`<div>
-          <span class="bv-sl">${l}</span>
-          <span class="bv-sv ${c}">${v}</span>
+        <div class="bv-sg">${f.status.map(([l,v,c])=>`<div class="bv-chip ${c}">
+          <span class="bv-chip-k">${l}</span>
+          <span class="bv-chip-v">${v}</span>
         </div>`).join('')}</div>
       </div>
       <div class="bv-fc-ft">

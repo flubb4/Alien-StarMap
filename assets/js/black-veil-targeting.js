@@ -489,7 +489,7 @@ function bvtResetView() {
   const btn   = document.getElementById('bvtToggleBtn');
   if (panel) panel.style.display = 'none';
   if (cards) cards.style.display = '';
-  if (btn)   btn.textContent = 'TARGETING ANALYSIS ▶';
+  if (btn)   { btn.textContent = 'Targeting Analysis'; btn.classList.remove('on'); }
 }
 const _bvtOrigOpen  = window.openBVPanel;
 const _bvtOrigClose = window.closeBVPanel;
@@ -548,8 +548,9 @@ window.bvtClearAll = function() {
 // ── View Toggle ──
 window.bvtToggleView = function() {
   bvtView = (bvtView === 'targeting') ? 'fragments' : 'targeting';
-  document.getElementById('bvtToggleBtn').textContent =
-    bvtView === 'targeting' ? '◀ FRAGMENTS' : 'TARGETING ANALYSIS ▶';
+  const tBtn = document.getElementById('bvtToggleBtn');
+  tBtn.textContent = bvtView === 'targeting' ? '◀ Fragments' : 'Targeting Analysis';
+  tBtn.classList.toggle('on', bvtView === 'targeting');
   document.getElementById('bvCardsContainer').style.display = bvtView === 'fragments' ? '' : 'none';
   document.getElementById('bvtPanel').style.display          = bvtView === 'targeting' ? 'flex' : 'none';
   if (bvtView === 'targeting') bvtRender();
@@ -701,7 +702,7 @@ function bvtDrawMiniMap() {
     ctx.globalAlpha = 1;
   }
   // Border
-  ctx.strokeStyle = '#1a3320';
+  ctx.strokeStyle = '#1e3329';
   ctx.lineWidth = 1;
   ctx.strokeRect(dx + 0.5, dy + 0.5, dw - 1, dh - 1);
 
@@ -772,7 +773,7 @@ function bvtRender() {
     else if (isWrong) cls += ' invalid';
 
     const status =
-      !isUnlocked ? '<span class="bvt-stat locked">— LOCKED</span>' :
+      !isUnlocked ? '<span class="bvt-stat locked">LOCKED</span>' :
       isCorrect   ? '<span class="bvt-stat ok">✓ ACTIVE</span>' :
       isWrong     ? '<span class="bvt-stat err">⚠ INVALID</span>' :
                     '<span class="bvt-stat idle">AWAITING INPUT</span>';
@@ -816,25 +817,31 @@ function bvtRender() {
   panel.innerHTML = `
     <div class="bvt-col bvt-col-filters">
       <div class="bvt-col-hd">
-        <span class="bvt-col-title">// PARAMETER INPUT</span>
-        <button class="bvt-clear-btn" onclick="bvtClearAll()">RESET ALL</button>
+        <div>
+          <span class="bvt-col-kicker">Targeting Analysis</span>
+          <span class="bvt-col-title">Parameter Input</span>
+        </div>
+        <button class="bv-btn bv-btn--danger bv-btn--sm" onclick="bvtClearAll()">Reset All</button>
       </div>
       <div class="bvt-filters">${filtersHtml}</div>
     </div>
     <div class="bvt-col bvt-col-results">
       <div class="bvt-col-hd">
-        <span class="bvt-col-title">// CANDIDATE STAR MAP</span>
+        <div>
+          <span class="bvt-col-kicker">Match Candidates</span>
+          <span class="bvt-col-title">Candidate Star Map</span>
+        </div>
         <span class="${counterCls}">${matches.length} / ${BVT_SYSTEMS.length}</span>
       </div>
       <div class="bvt-active-summary">
-        <span>${active.length} / 10 FILTERS ACTIVE</span>
+        <span>${active.length} / 10 Filters Active</span>
         ${isSolved ? '<span class="bvt-locked-tag">◆ TARGET ACQUIRED</span>' : ''}
       </div>
       <div class="bvt-map-wrap">
         <canvas id="bvtMiniMap"></canvas>
         <div class="bvt-map-controls">
-          <button class="bvt-map-ctrl" onclick="bvtResetMapView()" title="Reset view">⟲ FIT</button>
-          <div class="bvt-map-hint">⊙ WHEEL: ZOOM · DRAG: PAN</div>
+          <button class="bvt-map-ctrl" onclick="bvtResetMapView()" title="Reset view">⟲ Fit</button>
+          <div class="bvt-map-hint">Wheel: Zoom · Drag: Pan</div>
         </div>
       </div>
       ${noMatchHtml}

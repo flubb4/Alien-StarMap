@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="assets/css/gm-directive.css">
 <link rel="stylesheet" href="assets/css/image-board.css?v=2">
 <link rel="stylesheet" href="assets/css/motion-tracker.css">
-<link rel="stylesheet" href="assets/css/black-veil.css">
+<link rel="stylesheet" href="assets/css/black-veil.css?v=2">
 <link rel="stylesheet" href="assets/css/youtube-player.css">
 <link rel="stylesheet" href="assets/css/android-bay.css">
 <link rel="stylesheet" href="assets/css/muthur.css">
@@ -928,29 +928,39 @@
 <div id="bvOverlay">
   <div id="bvOverlayHeader">
     <div class="bv-header-left">
-      <h2>🧬 PROJECT BLACK VEIL</h2>
-      <div class="bv-sub">ANDROID MEMORY EXTRACT — ENVIRONMENTAL PARAMETER FRAGMENTS</div>
+      <div class="bv-brand-badge">BV</div>
+      <div>
+        <h2>Project Black Veil</h2>
+        <div class="bv-sub">Android Memory Extract · Environmental Parameter Fragments</div>
+      </div>
+    </div>
+    <div class="bv-progress">
+      <div class="bv-progress-top">
+        <span class="bv-prog-k">Fragments</span>
+        <span class="bv-prog-v" id="bvProgCount">0/10</span>
+      </div>
+      <div class="bv-progress-track"><div class="bv-progress-fill" id="bvProgFill"></div></div>
     </div>
     <div class="bv-header-right">
-      <button id="bvtToggleBtn" onclick="bvtToggleView()">TARGETING ANALYSIS ▶</button>
-      <button id="bvGMBtn" onclick="bvToggleGMPanel()">GM ACCESS</button>
-      <button id="bvCloseBtn" onclick="closeBVPanel()">[ CLOSE ]</button>
+      <button id="bvtToggleBtn" class="bv-btn bv-btn--accent" onclick="bvtToggleView()">Targeting Analysis</button>
+      <button id="bvGMBtn" class="bv-btn bv-btn--gm" onclick="bvToggleGMPanel()">GM Access</button>
+      <button id="bvCloseBtn" class="bv-btn" onclick="closeBVPanel()">✕ Close</button>
     </div>
   </div>
   <div id="bvBody">
     <div id="bvGMPanel">
-      <div class="bv-gm-title">// GM CONTROL — FRAGMENT RELEASE</div>
+      <div class="bv-gm-title">GM Control — Fragment Release</div>
       <div id="bvGMLogin">
         <input type="password" id="bvGMPw" placeholder="GM PASSWORD"
           onkeydown="if(event.key==='Enter')bvGMAuth()">
-        <button id="bvGMLoginBtn" onclick="bvGMAuth()">AUTHENTICATE</button>
+        <button id="bvGMLoginBtn" class="bv-btn bv-btn--gm" onclick="bvGMAuth()">Authenticate</button>
         <span id="bvGMErr"></span>
       </div>
       <div id="bvGMControls">
         <div class="bv-toggle-grid" id="bvToggleGrid"></div>
         <div class="bv-gm-actions">
-          <button class="bv-gm-act-btn green" onclick="bvUnlockAll()">UNLOCK ALL</button>
-          <button class="bv-gm-act-btn red"   onclick="bvLockAll()">LOCK ALL</button>
+          <button class="bv-btn bv-btn--accent bv-btn--sm" onclick="bvUnlockAll()">Unlock All</button>
+          <button class="bv-btn bv-btn--danger bv-btn--sm" onclick="bvLockAll()">Lock All</button>
         </div>
       </div>
     </div>
@@ -1469,8 +1479,8 @@
 <script type="module" src="assets/js/provisions.js"></script>
 <script type="module" src="assets/js/character-sheet.js"></script>
 <script type="module" src="assets/js/wuerfel-duerfel.js?v=3"></script>
-<script type="module" src="assets/js/black-veil.js"></script>
-<script type="module" src="assets/js/black-veil-targeting.js"></script>
+<script type="module" src="assets/js/black-veil.js?v=2"></script>
+<script type="module" src="assets/js/black-veil-targeting.js?v=2"></script>
 <script type="module" src="assets/js/image-board.js"></script>
 <script type="module" src="assets/js/image-board-markers.js"></script>
 <script type="module" src="assets/js/motion-tracker.js"></script>

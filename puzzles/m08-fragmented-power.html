@@ -6,14 +6,159 @@
 <title>RLS HERMES-7 — FRAGMENTED POWER NETWORK</title>
 <link rel="stylesheet" href="../assets/css/puzzle-grid.css?v=20260613d">
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ══ MODERN THEME — scoped to Fragmented Power (overrides shared retro chrome) ══ */
 :root {
-  --bg:#0a0e0a; --bg2:#111411; --bg3:#1a1d1a; --bg4:#221f18;
-  --accent:#ffb000; --accent-hi:#ffd06a; --accent-dim:#8a6a2a; --accent-dark:#5a4418;
-  --live:#7fb069; --live-dim:#2a4a2a;
-  --text:#e0b870; --text-dim:#8a6a2a; --border:#3a2a0a; --red:#ff3a3a;
-  --glow-accent:0 0 12px rgba(255,176,0,.40);
-  --glow-live:0 0 12px rgba(127,176,105,.50);
+  --bg:#0b0d11; --bg2:#13161c; --bg3:#1b1f27; --bg4:#242a35;
+  --accent:#ffb000; --accent-hi:#ffcf73; --accent-dim:#6d5a30; --accent-dark:#3a2f18;
+  --live:#5fd596; --live-dim:#1f4733;
+  --text:#dde2ea; --text-dim:#828b99; --border:#272d37; --red:#ff5d5d;
+  --glow-accent:none;
+  --glow-live:0 0 22px rgba(95,213,150,.28);
+  --ui:'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --mono:'JetBrains Mono','Consolas',monospace;
+  --r:14px; --r-s:9px; --ease:cubic-bezier(.4,0,.2,1);
 }
+
+/* kill the CRT scanline + vignette layers */
+body::before, body::after { display:none !important; }
+html, body { font-family:var(--ui); letter-spacing:.2px; }
+
+/* ── full-bleed station backdrop ────────────────────────── */
+body {
+  background:
+    linear-gradient(rgba(7,9,12,.74), rgba(7,9,12,.86)),
+    url('../assets/images/m08-fp-bg.png') center/cover no-repeat fixed,
+    var(--bg);
+}
+
+/* main UI floats as a frosted-glass terminal panel over the scene */
+#pg-main {
+  margin-top:34px;
+  padding:24px 22px 30px;
+  background:rgba(11,13,18,.55);
+  border:1px solid rgba(255,176,0,.22);
+  border-radius:var(--r);
+  box-shadow:0 24px 70px rgba(0,0,0,.6), 0 0 60px rgba(255,176,0,.06), inset 0 0 0 1px rgba(255,255,255,.02);
+  backdrop-filter:blur(14px) saturate(1.05);
+  -webkit-backdrop-filter:blur(14px) saturate(1.05);
+}
+
+/* ── header ─────────────────────────────────────────────── */
+.term-head {
+  border:1px solid var(--border); border-radius:var(--r);
+  background:rgba(19,22,28,.5);
+  padding:18px 20px;
+}
+.term-head .ascii { display:none; }
+.pg-brand { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.pg-brand .pg-chip {
+  font-family:var(--mono); font-size:10px; font-weight:500; letter-spacing:1.5px;
+  color:var(--accent); background:rgba(255,176,0,.08);
+  border:1px solid var(--accent-dim); border-radius:999px; padding:5px 12px; white-space:nowrap;
+}
+.pg-brand .pg-titles h1 {
+  margin:0; font-size:21px; font-weight:700; letter-spacing:1px; color:var(--text);
+}
+.pg-brand .pg-titles p {
+  margin:2px 0 0; font-family:var(--mono); font-size:10.5px; letter-spacing:.5px; color:var(--text-dim);
+}
+.term-head .meta {
+  font-family:var(--mono); font-size:10px; letter-spacing:1px; color:var(--text-dim);
+  border-top:1px solid var(--border); margin-top:14px; padding-top:12px; gap:18px;
+}
+.term-head .meta strong { color:var(--accent); }
+
+/* ── status bar ─────────────────────────────────────────── */
+.status-cell {
+  border:1px solid var(--border); border-radius:var(--r-s);
+  background:rgba(19,22,28,.5); padding:12px 14px;
+}
+.status-cell .label { color:var(--text-dim); font-size:9px; letter-spacing:1.5px; }
+.status-cell .value {
+  font-family:var(--mono); font-size:22px; font-weight:600; letter-spacing:1px;
+  color:var(--live); text-shadow:none;
+}
+.status-cell.warn .value { color:var(--accent); text-shadow:none; }
+
+/* ── core cards ─────────────────────────────────────────── */
+#fp-cores { gap:14px; }
+.fp-core {
+  border:1px solid var(--border); border-radius:var(--r);
+  background:rgba(19,22,28,.52);
+  gap:9px; padding:14px 10px 22px;
+  transition:transform .18s var(--ease), border-color .18s var(--ease), box-shadow .25s var(--ease), background .25s var(--ease);
+}
+.fp-core:hover { transform:translateY(-3px); border-color:var(--accent-dim); box-shadow:0 8px 24px rgba(0,0,0,.45); }
+.fp-core .fc-icon {
+  width:46px; height:46px; font-size:0; color:var(--text-dim);
+  transition:color .25s var(--ease), filter .25s var(--ease);
+}
+.fp-core .fc-icon svg { width:100%; height:100%; display:block; }
+.fp-core .fc-name { font-family:var(--ui); font-size:11.5px; font-weight:600; letter-spacing:.6px; color:var(--text); }
+.fp-core .fc-sub  { font-family:var(--mono); font-size:8.5px; letter-spacing:.8px; color:var(--text-dim); }
+.fp-core .fc-order {
+  top:9px; right:9px; width:24px; height:24px; border-radius:50%;
+  background:var(--live); color:#06140d; font-family:var(--mono); font-weight:600; font-size:12px;
+  display:none; align-items:center; justify-content:center; text-shadow:none;
+}
+.fp-core.online .fc-order { display:flex; }
+.fp-core .fc-status {
+  bottom:9px; font-family:var(--mono); font-size:8px; letter-spacing:2px; color:var(--text-dim);
+}
+.fp-core.online {
+  border-color:var(--live-dim);
+  background:linear-gradient(180deg, var(--bg3), var(--bg2));
+  box-shadow:var(--glow-live);
+}
+.fp-core.online .fc-icon { color:var(--live); filter:drop-shadow(0 0 8px rgba(95,213,150,.45)); }
+.fp-core.online .fc-status { color:var(--live); }
+.fp-core.reject { border-color:var(--red) !important; box-shadow:0 0 22px rgba(255,93,93,.35); }
+
+/* ── console ────────────────────────────────────────────── */
+.pg-console {
+  border:1px solid var(--border); border-radius:var(--r);
+  background:rgba(11,13,18,.55); font-family:var(--mono); font-size:11px; line-height:1.7;
+}
+.pg-console .line.err .msg { text-shadow:none; }
+
+/* ── info row ───────────────────────────────────────────── */
+.info-row { font-family:var(--mono); color:var(--text-dim); }
+.info-row .key {
+  background:var(--bg3); border:1px solid var(--border); border-radius:6px;
+  color:var(--accent); padding:2px 8px;
+}
+
+/* ── observer badge ─────────────────────────────────────── */
+.observer-badge {
+  font-family:var(--mono); border-radius:999px; border:1px solid var(--accent-dim);
+  background:rgba(11,13,17,.85); backdrop-filter:blur(4px); padding:5px 12px;
+}
+
+/* ── GM panel + buttons ─────────────────────────────────── */
+#pg-gm-panel {
+  border:1px solid var(--border); border-radius:var(--r);
+  background:rgba(13,16,22,.96); backdrop-filter:blur(6px); padding:14px 16px;
+}
+#pg-gm-panel h3 { font-family:var(--ui); font-weight:700; }
+#pg-gm-panel .gm-btn {
+  border:1px solid var(--border); border-radius:var(--r-s); background:var(--bg3);
+  color:var(--text); font-family:var(--ui); font-weight:500; font-size:11px;
+  letter-spacing:.5px; padding:8px 10px; transition:background .15s var(--ease), border-color .15s var(--ease);
+}
+#pg-gm-panel .gm-btn:hover { background:var(--bg4); border-color:var(--accent-dim); }
+#pg-gm-panel .gm-btn.go { border-color:var(--live-dim); color:var(--live); }
+#pg-gm-panel .gm-btn.go:hover { background:rgba(95,213,150,.1); }
+
+/* ── success ────────────────────────────────────────────── */
+#pg-success .head { text-shadow:none; }
+#pg-success .big {
+  font-family:var(--ui); font-weight:700; border:1px solid var(--live-dim);
+  border-radius:var(--r); background:var(--bg2); text-shadow:none;
+  box-shadow:var(--glow-live);
+}
+#pg-success .sub { font-family:var(--mono); }
 </style>
 </head>
 <body>
@@ -24,6 +169,13 @@
 
 <div class="pg-wrap" id="pg-main">
   <div class="term-head">
+    <div class="pg-brand">
+      <span class="pg-chip">W-Y · HYPERDYNE 9000</span>
+      <div class="pg-titles">
+        <h1>FRAGMENTED POWER</h1>
+        <p>Core Ignition Sequencer v3.7.2 · RLS HERMES-7</p>
+      </div>
+    </div>
     <div class="ascii" id="pg-ascii"></div>
     <div class="meta">
       <span>NODE: <strong id="pg-node">—</strong></span>
@@ -105,12 +257,18 @@ window.PUZZLE_CONFIG = {
 
   // display order is intentionally scrambled — the solution order is the puzzle
   cores: [
-    { id: 'SEC',   name: 'SECURITY',     sub: 'LOCKS / ARMORY',   icon: '▲' },
-    { id: 'NAV',   name: 'NAVIGATION',   sub: 'STAR PLOT',        icon: '✦' },
-    { id: 'LIFE',  name: 'LIFE-SUPPORT', sub: 'O2 / SCRUBBER',    icon: '✚' },
-    { id: 'COMMS', name: 'COMMS',        sub: 'SUBSPACE LINK',    icon: '⌁' },
-    { id: 'DRIVE', name: 'DRIVE',        sub: 'FUSION GIMBAL',    icon: '⚙' },
-    { id: 'CRYO',  name: 'CRYO',         sub: 'HYPERSLEEP BAY',   icon: '❄' }
+    { id: 'SEC',   name: 'SECURITY',     sub: 'LOCKS / ARMORY',
+      icon: '<svg viewBox="0 0 512 512" fill="currentColor"><path d="M254.28 17.313c-81.048 0-146.624 65.484-146.624 146.406V236h49.594v-69.094c0-53.658 43.47-97.187 97.03-97.187 53.563 0 97.032 44.744 97.032 97.186V236h49.594v-72.28c0-78.856-65.717-146.407-146.625-146.407zM85.157 254.688c-14.61 22.827-22.844 49.148-22.844 76.78 0 88.358 84.97 161.5 191.97 161.5 106.998 0 191.968-73.142 191.968-161.5 0-27.635-8.26-53.95-22.875-76.78H85.155zM254 278.625c22.34 0 40.875 17.94 40.875 40.28 0 16.756-10.6 31.23-25.125 37.376l32.72 98.126h-96.376l32.125-98.125c-14.526-6.145-24.532-20.62-24.532-37.374 0-22.338 17.972-40.28 40.312-40.28z"/></svg>' },
+    { id: 'NAV',   name: 'NAVIGATION',   sub: 'STAR PLOT',
+      icon: '<svg viewBox="0 0 512 512" fill="currentColor"><path d="M203.97 23l-18.032 4.844 11.656 43.468c-25.837 8.076-50.32 21.653-71.594 40.75L94.53 80.594l-13.218 13.22 31.376 31.374c-19.467 21.125-33.414 45.53-41.813 71.343l-42.313-11.343-4.843 18.063 42.25 11.313c-6.057 27.3-6.157 55.656-.345 83L23.72 308.78l4.843 18.064 41.812-11.22c6.693 21.225 17.114 41.525 31.25 59.876l-29.97 52.688-16.81 29.593 29.56-16.842 52.657-29.97c18.41 14.216 38.784 24.69 60.094 31.407l-11.22 41.844 18.033 4.81 11.218-41.905c27.345 5.808 55.698 5.686 83-.375l11.312 42.28 18.063-4.81-11.344-42.376c25.812-8.4 50.217-22.315 71.342-41.78l31.375 31.373 13.22-13.218-31.47-31.47c19.09-21.266 32.643-45.738 40.72-71.563l43.53 11.657 4.813-18.063-43.625-11.686c5.68-27.044 5.576-55.06-.344-82.063l43.97-11.78-4.813-18.063L440.908 197c-6.73-20.866-17.08-40.79-31.032-58.844l29.97-52.656 16.842-29.563-29.593 16.844-52.656 29.97c-17.998-13.875-37.874-24.198-58.657-30.906l11.783-44L309.5 23l-11.78 43.97c-27-5.925-55.02-6.05-82.064-.376L203.97 23zm201.56 85L297.25 298.313l-.75.437-40.844-40.875-148.72 148.72-2.186 1.25 109.125-191.75 41.78 41.78L405.532 108zm-149.686 10.594c21.858 0 43.717 5.166 63.594 15.47l-116.625 66.342-2.22 1.28-1.28 2.22-66.25 116.406c-26.942-52.04-18.616-117.603 25.03-161.25 26.99-26.988 62.38-40.468 97.75-40.468zm122.72 74.594c26.994 52.054 18.67 117.672-25.002 161.343-43.66 43.662-109.263 52.005-161.312 25.033l116.438-66.282 2.25-1.25 1.25-2.25 66.375-116.592z"/></svg>' },
+    { id: 'LIFE',  name: 'LIFE-SUPPORT', sub: 'O2 / SCRUBBER',
+      icon: '<svg viewBox="0 0 512 512" fill="currentColor"><path d="M255.875 29.406A9 9 0 0 0 247 38.53v118.314l-15.188 18.97C232.602 181.416 233 186.87 233 192v11.156l23-28.75 23 28.75V192c0-5.13.398-10.583 1.188-16.188L265 156.845V38.53a9 9 0 0 0-9.125-9.124zM176 121c-4.204 0-14.86 3.97-26.688 12.063-11.828 8.094-25.28 19.814-38.125 33.468-25.688 27.31-48.756 62.726-54.343 91.19-7.464 38.02-11.432 81.626-11.532 119.342-.1 37.717 4.43 70.268 10.75 82.907.458.913 2.002 2.488 6.47 3.717 4.466 1.23 11.21 1.775 19.187 1.313 15.95-.925 36.805-5.69 57.06-13.406 20.257-7.717 40-18.395 54.126-30.438C207.033 409.113 215 396.25 215 384V192c0-13.92-4.043-33.063-11.375-47.625C196.293 129.813 186.832 121 176 121zm160 0c-10.832 0-20.293 8.813-27.625 23.375C301.043 158.937 297 178.08 297 192v192c0 12.25 7.967 25.113 22.094 37.156 14.127 12.043 33.87 22.72 54.125 30.438 20.255 7.716 41.11 12.48 57.06 13.406 7.977.462 14.722-.084 19.19-1.313 4.466-1.228 6.01-2.804 6.467-3.718 6.32-12.64 10.85-45.19 10.75-82.908-.1-37.716-4.067-81.32-11.53-119.343-5.588-28.464-28.656-63.88-54.344-91.19-12.845-13.653-26.297-25.374-38.125-33.468C350.858 124.97 340.204 121 336 121z"/></svg>' },
+    { id: 'COMMS', name: 'COMMS',        sub: 'SUBSPACE LINK',
+      icon: '<svg viewBox="0 0 512 512" fill="currentColor"><path d="M60.307 17.998A201.117 201.117 0 0 0 55.002 64c0 78.375 45.002 146.35 110.539 179.486-8.783-10.556-16.478-22.658-23.1-35.912-42.318-33.5-69.443-85.327-69.443-143.574 0-15.895 2.035-31.305 5.832-46.002H60.307zm66.644 0c-5.142 14.384-7.949 29.87-7.949 46.002 0 51.245 28.27 95.989 70.031 119.482-6.264-10.227-11.17-21.604-15.023-33.158C151.2 128.657 136.998 98.02 136.998 64c0-16.319 3.275-31.856 9.193-46.002h-19.24zm72.445 0C189.156 30.565 183.002 46.585 183.002 64c0 26.543 14.293 49.845 35.572 62.623-3.806-9.484-6.58-20.417-8.332-32.014-5.84-8.738-9.244-19.259-9.244-30.609 0-11.35 3.403-21.87 9.244-30.61a168.14 168.14 0 0 1 3.053-15.392h-13.899zm99.31 0a168.14 168.14 0 0 1 3.052 15.393c5.84 8.738 9.244 19.259 9.244 30.609 0 11.35-3.403 21.87-9.244 30.61-1.751 11.596-4.526 22.529-8.332 32.013 21.279-12.778 35.572-36.08 35.572-62.623 0-17.415-6.153-33.435-16.394-46.002h-13.899zm67.103 0c5.918 14.146 9.193 29.683 9.193 46.002 0 34.02-14.202 64.657-37.012 86.324-3.852 11.554-8.76 22.93-15.023 33.158C364.728 159.99 392.998 115.245 392.998 64c0-16.132-2.807-31.618-7.95-46.002h-19.24zm67.36 0A183.653 183.653 0 0 1 439.003 64c0 58.247-27.125 110.074-69.443 143.574-6.622 13.254-14.317 25.356-23.1 35.912C411.996 210.35 456.998 142.375 456.998 64c0-15.825-1.837-31.226-5.305-46.002H433.17zM256 40.998c-12.81 0-23.002 10.192-23.002 23.002 0 12.81 10.192 23.002 23.002 23.002 12.81 0 23.002-10.192 23.002-23.002 0-12.81-10.192-23.002-23.002-23.002zm-20.35 58.537L119.398 477.354l17.204 5.292 13.15-42.74L256 415.39l106.248 24.517 13.15 42.74 17.204-5.292L276.35 99.535a40.612 40.612 0 0 1-17.192 5.328l49.654 161.381L256 283.848l-52.813-17.604 49.655-161.38a40.612 40.612 0 0 1-17.192-5.329zM197.893 283.45l29.65 9.885-36.428 12.143 6.778-22.028zm116.214 0l6.778 22.028-36.428-12.143 29.65-9.885zM256 302.82l52.652 17.55L256 339.516l-52.65-19.147L256 302.82zm-73.074 29.275l46.74 16.998-58.518 21.28 11.778-38.278zm146.148 0l11.778 38.277-58.52-21.28 46.742-16.997zM256 358.666l64.354 23.402L256 396.92l-64.355-14.852L256 358.666zm-92.16 35.455l52.144 12.033-60.115 13.873 7.97-25.906zm184.318 0l7.973 25.904-60.113-13.87 52.14-12.034z"/></svg>' },
+    { id: 'DRIVE', name: 'DRIVE',        sub: 'FUSION GIMBAL',
+      icon: '<svg viewBox="0 0 512 512" fill="currentColor"><path d="M179.625 22.313L163.22 58.937c-3.258-.384-6.498-.604-9.72-.624-10.577-.066-20.857 1.808-30.47 5.28L99.78 31.032 55.75 63.188l24.063 33.657c-7.21 10.412-12.3 22.5-14.5 35.75l-42.72 4.687 5.345 54.25 45.468-5c5.082 10.2 12.078 19.372 20.594 26.97l-19.406 43.375 49.375 22.094 19.5-43.564c11.656 1.242 23.08.128 33.75-3l28.124 38.53 31.72-23.186 11.655 20.156C234.014 279.138 220.873 292.3 209.624 307l-49.22-28.344-25.718 46.72 48.125 27.937c-7.068 16.934-11.967 34.975-14.343 53.812H112.5v53.72h56.22c1.66 12.053 4.372 23.753 8.03 35.06h169.312c-23.915-10.758-40.562-34.788-40.562-62.717 0-37.964 30.754-68.75 68.72-68.75 37.963 0 68.75 30.786 68.75 68.75 0 27.93-16.67 51.96-40.595 62.718h91.5V200.375l-11.688-6.406L454.594 242c-16.842-7.204-34.808-12.234-53.594-14.72v-55.53h-53.72v55.47c-18.303 2.377-35.83 7.183-52.31 14.03l-27.126-47.28-36 20.25-9.25-12.97c7.08-9.223 12.43-19.93 15.5-31.72l44.437-4.843-5.342-54.25-42.25 4.157c-4.92-12.618-12.648-23.953-22.563-33.094L229 44.406l-49.375-22.093zm-27.344 84.25c23.3-.24 42.94 17.827 44.376 41.343 1.48 24.275-17.004 45.144-41.28 46.625-24.278 1.483-45.145-16.974-46.626-41.25-1.48-24.274 16.973-45.142 41.25-46.624.76-.046 1.53-.086 2.28-.094z"/></svg>' },
+    { id: 'CRYO',  name: 'CRYO',         sub: 'HYPERSLEEP BAY',
+      icon: '<svg viewBox="0 0 512 512" fill="currentColor"><path d="M316.28 19.063L211.19 47.25l36.625 67.78-61.25 16.44L184 54.53 80.437 82.313 52.47 186.72l77 2.186L113 250.344l-67.875-36.22L17.22 318.19l75.843 75.843 40.593-65.56 45.25 45.25-65.562 40.624 76.53 76.53 103.782-27.812-36.5-68.03 61.53-16.47 2.377 77.157 104.687-28.064 27.97-104.437-77.158-2.376L393 259.47l68.03 36.5 27.908-104.22-77-77.03-40.47 65.718-44.624-44.657 65.406-40.75-75.97-75.968zM253.19 125l11.53 21.344-22.874 69.72-54.094-49.095-.813-24.19 66.25-17.78zm64.062 16.75l48.28 48.313-13 21.125-71.81 15.062 15.467-71.375 21.063-13.125zm-176.438 47.47l23.75.686 48.938 54.656-69.563 22.282L123 255.656l17.813-66.437zm221.094 53.56l21.125 11.345-17.78 66.375-23.97-.75-48.5-53.938 69.126-23.03zm-139.25 41.5l-14.625 71.376-19.53 12.094-48.875-48.906 12.094-19.5 70.936-15.063zm40.438 11.064l54.5 48.344.72 23.53-66.533 17.844-11.124-20.75 22.438-68.968z"/></svg>' }
   ],
   // the one true ignition order
   solution: ['LIFE', 'DRIVE', 'SEC', 'CRYO', 'NAV', 'COMMS'],

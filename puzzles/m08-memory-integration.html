@@ -6,14 +6,167 @@
 <title>RLS HERMES-7 — MEMORY CORE INTEGRATION</title>
 <link rel="stylesheet" href="../assets/css/puzzle-grid.css?v=20260613d">
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ══ MODERN THEME — scoped to Memory Integration (overrides shared retro chrome) ══ */
 :root {
-  --bg:#0a0e0a; --bg2:#111411; --bg3:#1a1d1a; --bg4:#221f18;
-  --accent:#ffb000; --accent-hi:#ffd06a; --accent-dim:#8a6a2a; --accent-dark:#5a4418;
-  --live:#6ec0c4; --live-dim:#1f4446;
-  --text:#e0b870; --text-dim:#8a6a2a; --border:#3a2a0a; --red:#ff3a3a;
-  --glow-accent:0 0 12px rgba(255,176,0,.40);
-  --glow-live:0 0 12px rgba(110,192,196,.55);
+  --bg:#0b0d11; --bg2:#13161c; --bg3:#1b1f27; --bg4:#242a35;
+  --accent:#ffb000; --accent-hi:#ffcf73; --accent-dim:#6d5a30; --accent-dark:#3a2f18;
+  --live:#5fc6d0; --live-dim:#1c4248;
+  --text:#dde2ea; --text-dim:#828b99; --border:#272d37; --red:#ff5d5d;
+  --glow-accent:none;
+  --glow-live:0 0 22px rgba(95,198,208,.28);
+  --ui:'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --mono:'JetBrains Mono','Consolas',monospace;
+  --r:14px; --r-s:9px; --ease:cubic-bezier(.4,0,.2,1);
 }
+
+/* kill the CRT scanline + vignette layers */
+body::before, body::after { display:none !important; }
+html, body { font-family:var(--ui); letter-spacing:.2px; }
+
+/* ── full-bleed station backdrop ────────────────────────── */
+body {
+  background:
+    linear-gradient(rgba(7,9,12,.74), rgba(7,9,12,.86)),
+    url('../assets/images/m08-fp-bg.png') center/cover no-repeat fixed,
+    var(--bg);
+}
+
+/* main UI floats as a frosted-glass terminal panel over the scene */
+#pg-main {
+  margin-top:34px;
+  padding:24px 22px 30px;
+  background:rgba(11,13,18,.55);
+  border:1px solid rgba(255,176,0,.22);
+  border-radius:var(--r);
+  box-shadow:0 24px 70px rgba(0,0,0,.6), 0 0 60px rgba(255,176,0,.06), inset 0 0 0 1px rgba(255,255,255,.02);
+  backdrop-filter:blur(14px) saturate(1.05);
+  -webkit-backdrop-filter:blur(14px) saturate(1.05);
+}
+
+/* ── header ─────────────────────────────────────────────── */
+.term-head {
+  border:1px solid var(--border); border-radius:var(--r);
+  background:rgba(19,22,28,.5);
+  padding:18px 20px;
+}
+.term-head .ascii { display:none; }
+.pg-brand { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.pg-brand .pg-chip {
+  font-family:var(--mono); font-size:10px; font-weight:500; letter-spacing:1.5px;
+  color:var(--accent); background:rgba(255,176,0,.08);
+  border:1px solid var(--accent-dim); border-radius:999px; padding:5px 12px; white-space:nowrap;
+}
+.pg-brand .pg-titles h1 {
+  margin:0; font-size:21px; font-weight:700; letter-spacing:1px; color:var(--text);
+}
+.pg-brand .pg-titles p {
+  margin:2px 0 0; font-family:var(--mono); font-size:10.5px; letter-spacing:.5px; color:var(--text-dim);
+}
+.term-head .meta {
+  font-family:var(--mono); font-size:10px; letter-spacing:1px; color:var(--text-dim);
+  border-top:1px solid var(--border); margin-top:14px; padding-top:12px; gap:18px;
+}
+.term-head .meta strong { color:var(--accent); }
+
+/* ── status bar ─────────────────────────────────────────── */
+.status-cell {
+  border:1px solid var(--border); border-radius:var(--r-s);
+  background:rgba(19,22,28,.5); padding:12px 14px;
+}
+.status-cell .label { color:var(--text-dim); font-size:9px; letter-spacing:1.5px; }
+.status-cell .value {
+  font-family:var(--mono); font-size:22px; font-weight:600; letter-spacing:1px;
+  color:var(--live); text-shadow:none;
+}
+.status-cell.warn .value { color:var(--accent); text-shadow:none; }
+
+/* ── memory banks ───────────────────────────────────────── */
+#mi-banks { gap:14px; }
+.mi-bank {
+  border:1px solid var(--border); border-radius:var(--r); overflow:hidden;
+  background:rgba(19,22,28,.52);
+  transition:transform .18s var(--ease), border-color .18s var(--ease), box-shadow .25s var(--ease);
+}
+.mi-bank:hover { transform:translateY(-2px); border-color:var(--accent-dim); box-shadow:0 8px 24px rgba(0,0,0,.4); }
+.mi-bank .mb-head {
+  font-family:var(--mono); font-size:9px; font-weight:600; letter-spacing:2px;
+  color:var(--accent); background:rgba(255,176,0,.06);
+  border-bottom:1px solid var(--border); padding:8px 4px;
+}
+.mi-bank.bad { border-color:var(--red); box-shadow:0 0 22px rgba(255,93,93,.35); }
+.mi-cyc { padding:13px 6px; border-bottom:1px solid var(--border); transition:background .15s var(--ease); }
+.mi-cyc:hover { background:rgba(255,255,255,.035); }
+.mi-cyc .cyc-label { font-family:var(--mono); font-size:8px; letter-spacing:1.5px; color:var(--text-dim); }
+.mi-cyc.frag .cyc-val { font-size:26px; color:var(--accent); text-shadow:none; line-height:1.1; }
+.mi-cyc.frag .cyc-name { font-family:var(--ui); font-weight:600; font-size:8.5px; letter-spacing:.6px; color:var(--text); }
+.mi-cyc.sector .cyc-val { font-family:var(--mono); font-size:14px; font-weight:600; letter-spacing:1.5px; color:var(--live); text-shadow:none; }
+.mi-cyc.empty .cyc-val { color:var(--text-dim); text-shadow:none; }
+.mi-cyc.frag:not(.empty) { background:rgba(255,176,0,.05); }
+.mi-cyc.sector:not(.empty) { background:rgba(95,198,208,.06); }
+
+/* ── submit / actions ───────────────────────────────────── */
+.mi-btn {
+  border:1px solid var(--border); border-radius:var(--r-s); background:var(--bg3);
+  color:var(--text); font-family:var(--ui); font-weight:600; font-size:12px;
+  letter-spacing:1px; padding:11px 26px; transition:background .15s var(--ease), border-color .15s var(--ease), transform .15s var(--ease);
+}
+.mi-btn:hover:not([disabled]) { background:var(--bg4); border-color:var(--accent-dim); transform:translateY(-1px); }
+.mi-btn.go { border-color:var(--live-dim); color:var(--live); }
+.mi-btn.go:hover:not([disabled]) { background:rgba(95,198,208,.1); }
+
+/* ── fragment legend ────────────────────────────────────── */
+#mi-fragments { gap:10px; }
+#mi-fragments .frag-ref {
+  font-family:var(--mono); font-size:9px; letter-spacing:.8px; color:var(--text-dim);
+  background:rgba(19,22,28,.5); border:1px solid var(--border); border-radius:999px; padding:5px 12px;
+}
+#mi-fragments .frag-ref .fr-glyph { font-size:16px; color:var(--accent); }
+
+/* ── console ────────────────────────────────────────────── */
+.pg-console {
+  border:1px solid var(--border); border-radius:var(--r);
+  background:rgba(11,13,18,.55); font-family:var(--mono); font-size:11px; line-height:1.7;
+}
+.pg-console .line.err .msg { text-shadow:none; }
+
+/* ── info row ───────────────────────────────────────────── */
+.info-row { font-family:var(--mono); color:var(--text-dim); }
+.info-row .key {
+  background:var(--bg3); border:1px solid var(--border); border-radius:6px;
+  color:var(--accent); padding:2px 8px;
+}
+
+/* ── observer badge ─────────────────────────────────────── */
+.observer-badge {
+  font-family:var(--mono); border-radius:999px; border:1px solid var(--accent-dim);
+  background:rgba(11,13,17,.85); backdrop-filter:blur(4px); padding:5px 12px;
+}
+
+/* ── GM panel + buttons ─────────────────────────────────── */
+#pg-gm-panel {
+  border:1px solid var(--border); border-radius:var(--r);
+  background:rgba(13,16,22,.96); backdrop-filter:blur(6px); padding:14px 16px;
+}
+#pg-gm-panel h3 { font-family:var(--ui); font-weight:700; }
+#pg-gm-panel .gm-btn {
+  border:1px solid var(--border); border-radius:var(--r-s); background:var(--bg3);
+  color:var(--text); font-family:var(--ui); font-weight:500; font-size:11px;
+  letter-spacing:.5px; padding:8px 10px; transition:background .15s var(--ease), border-color .15s var(--ease);
+}
+#pg-gm-panel .gm-btn:hover { background:var(--bg4); border-color:var(--accent-dim); }
+#pg-gm-panel .gm-btn.go { border-color:var(--live-dim); color:var(--live); }
+#pg-gm-panel .gm-btn.go:hover { background:rgba(95,198,208,.1); }
+
+/* ── success ────────────────────────────────────────────── */
+#pg-success .head { text-shadow:none; }
+#pg-success .big {
+  font-family:var(--ui); font-weight:700; border:1px solid var(--live-dim);
+  border-radius:var(--r); background:var(--bg2); text-shadow:none;
+  box-shadow:var(--glow-live);
+}
+#pg-success .sub { font-family:var(--mono); }
 </style>
 </head>
 <body>
@@ -24,6 +177,13 @@
 
 <div class="pg-wrap" id="pg-main">
   <div class="term-head">
+    <div class="pg-brand">
+      <span class="pg-chip">W-Y · HYPERDYNE 9000</span>
+      <div class="pg-titles">
+        <h1>MEMORY CORE INTEGRATION</h1>
+        <p>Profile Reconstruction v4.1.0 · RLS HERMES-7</p>
+      </div>
+    </div>
     <div class="ascii" id="pg-ascii"></div>
     <div class="meta">
       <span>NODE: <strong id="pg-node">—</strong></span>

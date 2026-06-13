@@ -4,907 +4,134 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RLS HERMES-7 — FRAGMENTED POWER NETWORK</title>
+<link rel="stylesheet" href="../assets/css/puzzle-grid.css?v=20260613d">
 <style>
 :root {
-  /* MU/TH/UR Sodium-Amber — abgestimmt mit Provisions / Character Sheet */
-  --bg: #0a0e0a;
-  --bg2: #111411;
-  --bg3: #1a1d1a;
-  --bg4: #221f18;
-  --amber: #ffb000;
-  --amber-hi: #ffd06a;
-  --amber-dim: #8a6a2a;
-  --amber-dark: #5a4418;
-  --green: #7fb069;
-  --green-dim: #4a7040;
-  --green-dark: #2a4a2a;
-  --red: #ff3a3a;
-  --red-dim: #8a1a1a;
-  --text: #e0b870;
-  --text-dim: #8a6a2a;
-  --border: #3a2a0a;
-  --glow-amber: 0 0 12px rgba(255,176,0,.35);
-  --glow-green: 0 0 12px rgba(127,176,105,.45);
-  --glow-red:   0 0 14px rgba(255,58,58,.45);
-}
-* { box-sizing: border-box; }
-html, body {
-  margin: 0; padding: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Share Tech Mono', 'Consolas', monospace;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background:
-    repeating-linear-gradient(0deg,
-      rgba(0,0,0,0) 0,
-      rgba(0,0,0,0) 2px,
-      rgba(0,0,0,.18) 3px,
-      rgba(0,0,0,0) 4px);
-  pointer-events: none;
-  z-index: 100;
-}
-body::after {
-  content: '';
-  position: fixed; inset: 0;
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.45) 100%);
-  pointer-events: none;
-  z-index: 99;
-}
-.wrap { max-width: 900px; margin: 0 auto; padding: 30px 24px 60px; }
-
-#boot {
-  min-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  font-size: 13px;
-  line-height: 1.8;
-  color: var(--text);
-}
-#boot .boot-line { opacity: 0; }
-#boot .boot-line.show { opacity: 1; }
-#boot .boot-line.warn { color: var(--amber); text-shadow: var(--glow-amber); }
-#boot .boot-line.err { color: var(--red); }
-#boot .blink::after {
-  content: '_';
-  animation: blink 1s infinite;
-  color: var(--amber);
-}
-@keyframes blink { 50% { opacity: 0; } }
-
-#main { display: none; }
-.term-head {
-  border: 1px solid var(--amber-dim);
-  background: var(--bg2);
-  padding: 14px 18px;
-  margin-bottom: 18px;
-  position: relative;
-}
-.term-head .ascii {
-  color: var(--amber);
-  font-size: 11px;
-  line-height: 1.4;
-  white-space: pre;
-  text-shadow: var(--glow-amber);
-}
-.term-head .meta {
-  display: flex; gap: 16px; flex-wrap: wrap;
-  font-size: 10px; color: var(--text-dim);
-  letter-spacing: 1.5px;
-  margin-top: 8px;
-  border-top: 1px dashed var(--border);
-  padding-top: 8px;
-}
-.term-head .meta strong { color: var(--amber); font-weight: normal; }
-
-.status-bar {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-.status-cell {
-  border: 1px solid var(--border);
-  background: var(--bg2);
-  padding: 12px 14px;
-}
-.status-cell .label {
-  font-size: 9px;
-  color: var(--text-dim);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-.status-cell .value {
-  font-size: 22px;
-  color: var(--green);
-  text-shadow: var(--glow-green);
-  letter-spacing: 2px;
-}
-.status-cell.warn .value { color: var(--amber); text-shadow: var(--glow-amber); }
-.status-cell.danger .value { color: var(--red); text-shadow: var(--glow-red); animation: pulseRed 1.4s infinite; }
-@keyframes pulseRed {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.65; }
-}
-
-.kerne {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-.kern {
-  border: 1px solid var(--border);
-  background: var(--bg2);
-  padding: 16px 14px;
-  position: relative;
-  transition: all 0.25s ease;
-  text-align: center;
-}
-.kern .sym {
-  font-size: 26px;
-  margin-bottom: 6px;
-  letter-spacing: 4px;
-}
-.kern .id {
-  font-size: 13px;
-  color: var(--text);
-  letter-spacing: 2px;
-  margin-bottom: 2px;
-}
-.kern .role {
-  font-size: 9px;
-  color: var(--text-dim);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-.kern .state {
-  font-size: 11px;
-  letter-spacing: 2px;
-  padding: 4px 0;
-  border-top: 1px dashed var(--border);
-}
-.kern.state-dormant { border-color: var(--border); }
-.kern.state-dormant .state { color: var(--text-dim); }
-.kern.state-dormant .sym { color: var(--text-dim); }
-.kern.state-activating { border-color: var(--amber-dim); box-shadow: var(--glow-amber); }
-.kern.state-activating .state { color: var(--amber); animation: blink 0.6s infinite; }
-.kern.state-activating .sym { color: var(--amber); }
-.kern.state-online { border-color: var(--green-dim); box-shadow: var(--glow-green); }
-.kern.state-online .state { color: var(--green); }
-.kern.state-online .sym { color: var(--green); text-shadow: var(--glow-green); }
-.kern.state-locked { border-color: var(--red-dim); box-shadow: var(--glow-red); }
-.kern.state-locked .state { color: var(--red); }
-.kern.state-locked .sym { color: var(--red); text-shadow: var(--glow-red); }
-.kern .btn {
-  display: block;
-  width: 100%;
-  margin-top: 10px;
-  padding: 8px 10px;
-  background: var(--bg3);
-  border: 1px solid var(--amber-dim);
-  color: var(--amber);
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: 2px;
-  cursor: pointer;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-}
-.kern .btn:hover:not(:disabled) {
-  background: var(--amber-dark);
-  box-shadow: var(--glow-amber);
-  color: var(--amber-hi);
-}
-.kern .btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  border-color: var(--border);
-  color: var(--text-dim);
-}
-
-.console {
-  border: 1px solid var(--amber-dim);
-  background: var(--bg2);
-  padding: 14px 18px;
-  min-height: 220px;
-  max-height: 320px;
-  overflow-y: auto;
-  font-size: 12px;
-  line-height: 1.7;
-}
-.console .line { margin-bottom: 4px; }
-.console .line .ts {
-  color: var(--text-dim);
-  margin-right: 8px;
-  font-size: 10px;
-}
-.console .line .who {
-  color: var(--amber);
-  margin-right: 8px;
-  letter-spacing: 1px;
-}
-.console .line.ok .msg { color: var(--green); }
-.console .line.warn .msg { color: var(--amber); }
-.console .line.err .msg { color: var(--red); text-shadow: 0 0 4px rgba(255,58,58,.4); }
-.console .line.system .msg { color: var(--text); }
-
-#gm-panel {
-  position: fixed;
-  top: 10px; right: 10px;
-  background: rgba(15,30,15,.95);
-  border: 1px solid var(--amber-dim);
-  padding: 10px 14px;
-  font-size: 10px;
-  letter-spacing: 1px;
-  z-index: 200;
-  max-width: 220px;
-  display: none;
-}
-#gm-panel.show { display: block; }
-#gm-panel h3 {
-  margin: 0 0 6px 0;
-  color: var(--amber);
-  font-size: 11px;
-  letter-spacing: 2px;
-}
-#gm-panel .gm-btn {
-  display: block;
-  width: 100%;
-  margin: 4px 0;
-  padding: 5px 8px;
-  background: var(--bg3);
-  border: 1px solid var(--amber-dim);
-  color: var(--amber);
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: 1px;
-  cursor: pointer;
-}
-#gm-panel .gm-btn:hover { background: var(--bg4); }
-#gm-panel .hint {
-  color: var(--text-dim);
-  font-size: 9px;
-  margin-top: 8px;
-  line-height: 1.4;
-}
-
-#success {
-  display: none;
-  min-height: 80vh;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  gap: 20px;
-}
-#success.show { display: flex; }
-#success .head {
-  font-size: 14px;
-  color: var(--green);
-  letter-spacing: 4px;
-  text-shadow: var(--glow-green);
-  animation: pulseGreen 2s infinite;
-}
-@keyframes pulseGreen { 50% { opacity: 0.6; } }
-#success .big {
-  font-size: 28px;
-  color: var(--green);
-  letter-spacing: 6px;
-  text-shadow: var(--glow-green);
-  border: 1px solid var(--green-dim);
-  padding: 18px 32px;
-  background: var(--bg2);
-}
-#success .sub {
-  color: var(--text-dim);
-  font-size: 12px;
-  letter-spacing: 2px;
-  max-width: 500px;
-  line-height: 1.7;
-}
-
-/* Player-Mode: GM-Panel weg, Voter-Badge sichtbar — Buttons bleiben (Vote-Cast) */
-body.role-player #gm-panel { display: none !important; }
-.observer-badge {
-  position: fixed; top: 10px; left: 10px;
-  background: rgba(0,0,0,.7);
-  border: 1px solid var(--amber-dim);
-  color: var(--amber);
-  font-size: 9px;
-  letter-spacing: 2px;
-  padding: 4px 10px;
-  z-index: 200;
-  display: none;
-}
-body.role-player .observer-badge { display: block; }
-
-/* ── Vote-Chips unter jedem Knoten ───────────────────────────────────────── */
-.kern .votes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  justify-content: center;
-  margin-top: 8px;
-  min-height: 18px;
-}
-.kern .vote-chip {
-  font-size: 9px;
-  letter-spacing: 1px;
-  padding: 2px 6px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  text-transform: uppercase;
-}
-.kern .vote-chip.mine {
-  border-color: var(--amber-dim);
-  color: var(--amber);
-  text-shadow: var(--glow-amber);
-}
-.kern.my-pick {
-  outline: 1px dashed var(--amber-dim);
-  outline-offset: -3px;
-}
-.kern.my-pick .btn {
-  background: var(--amber-dark);
-  box-shadow: var(--glow-amber);
-  color: var(--amber-hi);
-}
-
-.info-row {
-  font-size: 10px;
-  color: var(--text-dim);
-  text-align: center;
-  margin-top: 14px;
-  letter-spacing: 1.5px;
-}
-.info-row .key {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  padding: 1px 6px;
-  color: var(--amber);
-  margin: 0 2px;
-}
-body.role-player .info-row { display: none; }
-
-@media (max-width: 720px) {
-  .status-bar, .kerne { grid-template-columns: 1fr; }
-  .term-head .ascii { font-size: 9px; }
+  --bg:#0a0e0a; --bg2:#111411; --bg3:#1a1d1a; --bg4:#221f18;
+  --accent:#ffb000; --accent-hi:#ffd06a; --accent-dim:#8a6a2a; --accent-dark:#5a4418;
+  --live:#7fb069; --live-dim:#2a4a2a;
+  --text:#e0b870; --text-dim:#8a6a2a; --border:#3a2a0a; --red:#ff3a3a;
+  --glow-accent:0 0 12px rgba(255,176,0,.40);
+  --glow-live:0 0 12px rgba(127,176,105,.50);
 }
 </style>
 </head>
 <body>
 
-<div class="observer-badge">⟁ BEOBACHTER · NUR GM KANN AKTIVIEREN</div>
+<div class="observer-badge">⟁ FELD-OPERATIVE · TIPPEN = KERN ZÜNDEN</div>
 
-<!-- ═══ BOOT SCREEN ═══ -->
-<div class="wrap" id="boot">
-  <div class="boot-line" data-delay="100">&gt; INITIATING REMOTE TERMINAL HANDSHAKE…</div>
-  <div class="boot-line" data-delay="500">&gt; W-Y HYPERDYNE 9000 — POWER GRID INTERFACE v3.7.2</div>
-  <div class="boot-line" data-delay="900">&gt; CONNECTING TO RLS HERMES-7 / EMERGENCY BUS…</div>
-  <div class="boot-line warn" data-delay="1500">&gt; PRIMARY NETWORK: <strong>OFFLINE</strong></div>
-  <div class="boot-line warn" data-delay="1800">&gt; EMERGENCY NETWORK: <strong>FRAGMENTED</strong></div>
-  <div class="boot-line err" data-delay="2200">&gt; LIFE SUPPORT: <strong>MINIMAL</strong></div>
-  <div class="boot-line" data-delay="2800">&gt; SCANNING DECENTRAL ENERGY NODES…</div>
-  <div class="boot-line" data-delay="3300">&gt; NODE A · STABILIZER · STATUS <span style="color:var(--text-dim)">DORMANT</span></div>
-  <div class="boot-line" data-delay="3500">&gt; NODE B · BIO-SHIELD · STATUS <span style="color:var(--text-dim)">DORMANT</span></div>
-  <div class="boot-line" data-delay="3700">&gt; NODE C · POWER-ROUTING · STATUS <span style="color:var(--text-dim)">DORMANT</span></div>
-  <div class="boot-line warn" data-delay="4200">&gt; RECONSTRUCTION REQUIRED.</div>
-  <div class="boot-line warn" data-delay="4500">&gt; <em>SEQUENCE IS CRITICAL.</em></div>
-  <div class="boot-line blink" data-delay="5200">&gt; LOADING INTERFACE</div>
-</div>
+<div class="pg-wrap" id="pg-boot"></div>
 
-<!-- ═══ MAIN INTERFACE ═══ -->
-<div class="wrap" id="main">
+<div class="pg-wrap" id="pg-main">
   <div class="term-head">
-    <div class="ascii">╔══════════════════════════════════════════════════════════════╗
-║  RLS HERMES-7 — FRAGMENTED POWER NETWORK / EMERGENCY BUS    ║
-║  W-Y HYPERDYNE 9000 / POWER GRID INTERFACE v3.7.2           ║
-╚══════════════════════════════════════════════════════════════╝</div>
+    <div class="ascii" id="pg-ascii"></div>
     <div class="meta">
-      <span>NODE: <strong>HERMES-7-CORE</strong></span>
-      <span>OPERATOR: <strong id="op-label">UNAUTHORIZED</strong></span>
-      <span>SYSTEM TIME: <strong id="sys-clock">--:--:--</strong></span>
+      <span>NODE: <strong id="pg-node">—</strong></span>
+      <span>OPERATOR: <strong id="pg-op">—</strong></span>
+      <span>SYSTEM TIME: <strong id="pg-clock">--:--:--</strong></span>
     </div>
   </div>
 
   <div class="status-bar">
     <div class="status-cell">
-      <div class="label">Strom-Stabilität</div>
-      <div class="value"><span id="stab">0</span> / 3</div>
+      <div class="label">Kerne online</div>
+      <div class="value" id="pg-online">0 / 6</div>
     </div>
-    <div class="status-cell warn" id="atmos-cell">
-      <div class="label">Atmosphäre</div>
-      <div class="value" id="atmos">STABIL</div>
+    <div class="status-cell" id="pg-fault-cell">
+      <div class="label">Sequenzfehler</div>
+      <div class="value" id="pg-faults">0</div>
     </div>
-    <div class="status-cell" id="sec-cell">
-      <div class="label">Sicherheitslevel</div>
-      <div class="value" id="seclevel">GELB</div>
-    </div>
-  </div>
-
-  <div class="kerne">
-    <div class="kern state-dormant" id="kern-a">
-      <div class="sym">🔺</div>
-      <div class="id">E-KERN A</div>
-      <div class="role">Stabilizer · Engine</div>
-      <div class="state">DORMANT</div>
-      <button class="btn" onclick="onNodeClick('A')">▶ REKONSTRUIEREN</button>
-      <div class="votes" id="votes-a"></div>
-    </div>
-    <div class="kern state-dormant" id="kern-b">
-      <div class="sym">⚪</div>
-      <div class="id">E-KERN B</div>
-      <div class="role">Bio-Shield · Filter</div>
-      <div class="state">DORMANT</div>
-      <button class="btn" onclick="onNodeClick('B')">▶ REKONSTRUIEREN</button>
-      <div class="votes" id="votes-b"></div>
-    </div>
-    <div class="kern state-dormant" id="kern-c">
-      <div class="sym">➖</div>
-      <div class="id">E-KERN C</div>
-      <div class="role">Routing · Habitation</div>
-      <div class="state">DORMANT</div>
-      <button class="btn" onclick="onNodeClick('C')">▶ REKONSTRUIEREN</button>
-      <div class="votes" id="votes-c"></div>
+    <div class="status-cell">
+      <div class="label">Eingabe</div>
+      <div class="value" style="font-size:13px;">ZÜND-FOLGE</div>
     </div>
   </div>
 
-  <div class="console" id="console"></div>
+  <div id="fp-cores"></div>
+
+  <div class="pg-console" id="pg-console"></div>
 
   <div class="info-row">
     <span class="key">G</span> Spielleiter-Panel · <span class="key">R</span> Reset · <span class="key">ESC</span> Schließen
   </div>
 </div>
 
-<!-- ═══ SUCCESS SCREEN ═══ -->
-<div class="wrap" id="success">
-  <div class="head">▼ NETZ TEILWIEDERHERGESTELLT ▼</div>
+<div class="pg-wrap" id="pg-success">
+  <div class="head">▼ REAKTOR SYNCHRONISIERT ▼</div>
   <div class="big">COMMAND BOOTING…</div>
   <div class="sub">
-    Lichter springen sektionsweise an. Türen klicken. Irgendwo weit hinten startet ein schweres System — als würde ein Herz wieder schlagen.<br><br>
-    <strong style="color:var(--amber)">CORE CORRIDOR FREIGESCHALTET.</strong><br>
-    <strong style="color:var(--amber)">COMMAND ROOM: ACCESS AUTHORIZED.</strong>
+    Sechs Kerne zünden in der richtigen Folge. Der Bus stabilisiert sich, Lichter springen sektionsweise an, irgendwo weit hinten startet ein schweres System — als würde ein Herz wieder schlagen.<br><br>
+    <strong>CORE CORRIDOR FREIGESCHALTET.</strong><br>
+    <strong>COMMAND ROOM: ACCESS AUTHORIZED.</strong>
   </div>
 </div>
 
-<!-- ═══ GM PANEL ═══ -->
-<div id="gm-panel">
-  <h3>⚠ GM-PANEL</h3>
-  <button class="gm-btn" onclick="gmReset()">↻ Full Reset</button>
-  <button class="gm-btn" onclick="gmForceSolve()">✓ Force Solve</button>
-  <button class="gm-btn" onclick="gmEscalate()">⚡ +1 Eskalation</button>
-  <button class="gm-btn" onclick="toggleGM()">✕ Hide Panel</button>
+<div id="pg-gm-panel">
+  <h3>⚠ GM-PANEL · ZÜND-FOLGE</h3>
+  <button class="gm-btn go" onclick="pgForceSolve()">✓ Force Solve</button>
+  <button class="gm-btn" onclick="pgReset()">↻ Sequenz zurücksetzen</button>
+  <button class="gm-btn" onclick="pgTogglePanel()">✕ Hide Panel</button>
   <div class="hint">
-    Sequenz: <strong>A → B → C</strong><br>
-    (Engine → Bio → Hab)<br><br>
-    Fehler eskalieren Atmosphäre & Sicherheit.<br>
-    Bei 6 Fehlern: Kollaps.
+    <div class="gm-sub">LÖSUNG (Reihenfolge):</div>
+    <ol class="gm-solution" id="gm-solution"></ol>
+    <div class="gm-sub">HINWEIS-KIT (am Tisch verteilen):</div>
+    <ul class="gm-clues" id="gm-clues"></ul>
+    Falsche Reihenfolge trippt die ganze Kette zurück + Sequenzfehler (SL-Stress, blockiert nicht dauerhaft).
   </div>
 </div>
 
 <script>
-// ─── ROLE (gm | player | standalone) ──────────────────────────────────────
-const params = new URLSearchParams(location.search);
-const ROLE = params.get('role') || 'standalone';
-const MY_NAME = params.get('name') || '';
-const IS_EMBEDDED = ROLE === 'gm' || ROLE === 'player';
-const CAN_EMIT = ROLE === 'gm' || ROLE === 'standalone';
-const CAN_ACT  = ROLE === 'gm' || ROLE === 'standalone';
-const CAN_VOTE = ROLE === 'player' && !!MY_NAME;
-document.body.classList.add('role-' + ROLE);
-document.getElementById('op-label').textContent =
-  ROLE === 'gm' ? 'GAME MASTER' : (ROLE === 'player' ? (MY_NAME ? MY_NAME.toUpperCase() : 'OBSERVER') : 'UNAUTHORIZED');
+window.PUZZLE_CONFIG = {
+  prefix: 'm08fp',
+  node: 'HERMES-7-CORE',
+  stardate: '2184.290',
+  ascii:
+'╔══════════════════════════════════════════════════════════╗\n' +
+'║  RLS HERMES-7 — FRAGMENTED POWER / EMERGENCY BUS         ║\n' +
+'║  W-Y HYPERDYNE 9000 / CORE IGNITION SEQUENCER v3.7.2     ║\n' +
+'╚══════════════════════════════════════════════════════════╝',
+  bootLines: [
+    { text: 'INITIATING REMOTE TERMINAL HANDSHAKE…', delay: 150 },
+    { text: 'W-Y HYPERDYNE 9000 — CORE IGNITION SEQUENCER v3.7.2', delay: 600 },
+    { text: 'CONNECTING TO RLS HERMES-7 / EMERGENCY BUS…', delay: 1000 },
+    { text: 'PRIMARY NETWORK: <strong>OFFLINE</strong>', cls: 'warn', delay: 1500 },
+    { text: '6 CORES DETECTED — ALL <strong>DORMANT</strong>', cls: 'warn', delay: 1850 },
+    { text: 'IGNITION ORDER: <strong>PURGED FROM MEMORY</strong>', cls: 'err', delay: 2300 },
+    { text: 'MANUELLE ZÜND-SEQUENZ ERFORDERLICH — REIHENFOLGE UNBEKANNT.', cls: 'warn', delay: 2900 }
+  ],
+  bootDuration: 3700,
+  introLog: 'Zünd-Reihenfolge aus dem Speicher gelöscht. Kerne in korrekter Folge antippen. Falsche Folge → Bus-Trip.',
+  solveLog: 'Alle sechs Kerne synchron gezündet. Stromfluss stabil. Kommandozentrale bootet…',
 
-// ─── STATE (single source of truth) ───────────────────────────────────────
-const SEQUENCE = ['A', 'B', 'C'];
-const state = {
-  view: 'boot',
-  kernStates: {A:'dormant', B:'dormant', C:'dormant'},
-  progress: [],
-  stab: 0,
-  errors: 0,
-  atmos: {text:'STABIL', cls:'warn'},
-  sec:   {text:'GELB',   cls:''},
-  log: [],
-  busy: false,
-  collapsing: false,
-  votes: {}, // { playerName: 'A'|'B'|'C' } — injected by parent, NOT serialized by GM iframe
+  // display order is intentionally scrambled — the solution order is the puzzle
+  cores: [
+    { id: 'SEC',   name: 'SECURITY',     sub: 'LOCKS / ARMORY',   icon: '▲' },
+    { id: 'NAV',   name: 'NAVIGATION',   sub: 'STAR PLOT',        icon: '✦' },
+    { id: 'LIFE',  name: 'LIFE-SUPPORT', sub: 'O2 / SCRUBBER',    icon: '✚' },
+    { id: 'COMMS', name: 'COMMS',        sub: 'SUBSPACE LINK',    icon: '⌁' },
+    { id: 'DRIVE', name: 'DRIVE',        sub: 'FUSION GIMBAL',    icon: '⚙' },
+    { id: 'CRYO',  name: 'CRYO',         sub: 'HYPERSLEEP BAY',   icon: '❄' }
+  ],
+  // the one true ignition order
+  solution: ['LIFE', 'DRIVE', 'SEC', 'CRYO', 'NAV', 'COMMS'],
+  // physical clue kit (relational; together they pin the order uniquely)
+  // each clue carries a Fundort = where the crew physically finds it on board
+  clues: [
+    { clue: 'Ohne Atemluft kein Zugriff: <strong>LIFE-SUPPORT</strong> zündet als Erster.',
+      fundort: 'Engine Room — laminierte Notfall-Startkarte an der Innenseite der Reaktor-Schaltschranktür.' },
+    { clue: 'Der Funk geht zuletzt raus — <strong>COMMS</strong> ist der letzte Kern.',
+      fundort: 'Habitation Area (Mess Hall) — handschriftliche Notiz am persönlichen Funk-Terminal: „Erst wenn alles steht, sende ich."' },
+    { clue: '<strong>DRIVE</strong> zündet unmittelbar nach LIFE-SUPPORT.',
+      fundort: 'Engine Room (Antriebssektion) — Wartungslog auf einem Datapad neben dem Fusion-Gimbal.' },
+    { clue: 'Zwischen <strong>DRIVE</strong> und <strong>NAVIGATION</strong> liegen genau zwei Kerne.',
+      fundort: 'Core Hub — in die Stationskarte/Sternenkarten-Anzeige geritzt: vier Striche, die mittleren zwei durchgestrichen.' },
+    { clue: '<strong>SECURITY</strong> wird vor <strong>CRYO</strong> hochgefahren.',
+      fundort: 'Security Locker — letzter Eintrag auf dem Datapad bei Reyes.' }
+  ]
 };
-
-let applyingRemote = false;
-let serial = 0;
-
-// ─── HELPERS ─────────────────────────────────────────────────────────────
-function nowTs() {
-  const d = new Date();
-  return String(d.getHours()).padStart(2,'0') + ':' +
-         String(d.getMinutes()).padStart(2,'0') + ':' +
-         String(d.getSeconds()).padStart(2,'0');
-}
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-// ─── LOG / CONSOLE ──────────────────────────────────────────────────────
-function log(type, who, msg) {
-  state.log.push({type, who, msg, ts: nowTs()});
-  if (state.log.length > 80) state.log.shift();
-  renderConsole();
-  emitState();
-}
-function renderConsole() {
-  const con = document.getElementById('console');
-  if (!con) return;
-  con.innerHTML = state.log.map(l =>
-    '<div class="line ' + l.type + '">' +
-    '<span class="ts">[' + l.ts + ']</span>' +
-    '<span class="who">' + escapeHtml(l.who) + '</span>' +
-    '<span class="msg">' + escapeHtml(l.msg) + '</span>' +
-    '</div>'
-  ).join('');
-  con.scrollTop = con.scrollHeight;
-}
-
-// ─── VIEW SWITCHERS ─────────────────────────────────────────────────────
-function showMain() {
-  document.getElementById('boot').style.display = 'none';
-  document.getElementById('main').style.display = 'block';
-  document.getElementById('success').classList.remove('show');
-  document.body.style.animation = '';
-}
-function renderAll() {
-  if (state.view === 'boot') {
-    document.getElementById('boot').style.display = '';
-    document.getElementById('main').style.display = 'none';
-    document.getElementById('success').classList.remove('show');
-    document.body.style.animation = '';
-  } else if (state.view === 'main') {
-    showMain();
-  } else if (state.view === 'success') {
-    document.getElementById('boot').style.display = 'none';
-    document.getElementById('main').style.display = 'none';
-    document.getElementById('success').classList.add('show');
-    document.body.style.animation = '';
-  } else if (state.view === 'collapse') {
-    document.getElementById('boot').style.display = 'none';
-    document.getElementById('main').style.display = 'block';
-    document.getElementById('success').classList.remove('show');
-    document.body.style.animation = state.collapsing ? 'pulseRed 0.4s infinite' : '';
-  }
-
-  ['A','B','C'].forEach(id => {
-    const el = document.getElementById('kern-' + id.toLowerCase());
-    if (!el) return;
-    el.className = 'kern state-' + state.kernStates[id];
-    const stateEl = el.querySelector('.state');
-    const stateText = {dormant:'DORMANT', activating:'ACTIVATING…', online:'ONLINE', locked:'LOCKED'}[state.kernStates[id]];
-    if (stateEl) stateEl.textContent = stateText;
-
-    // Vote-Tally für diesen Knoten
-    const voters = Object.entries(state.votes || {})
-      .filter(([, v]) => v === id)
-      .map(([n]) => n);
-    const myVote = MY_NAME ? (state.votes && state.votes[MY_NAME]) : null;
-    if (myVote === id) el.classList.add('my-pick');
-
-    const votesEl = document.getElementById('votes-' + id.toLowerCase());
-    if (votesEl) {
-      votesEl.innerHTML = voters.map(n => {
-        const mine = (n === MY_NAME);
-        return '<span class="vote-chip' + (mine ? ' mine' : '') + '">' + escapeHtml(n.toUpperCase()) + '</span>';
-      }).join('');
-    }
-
-    const btn = el.querySelector('.btn');
-    if (btn) {
-      const isOnline = state.kernStates[id] === 'online';
-      const isLocked = state.kernStates[id] === 'locked';
-      if (isOnline) {
-        btn.disabled = true; btn.textContent = '◆ ONLINE';
-      } else if (isLocked) {
-        btn.disabled = true; btn.textContent = '✕ LOCKED';
-      } else if (state.busy) {
-        btn.disabled = true;
-        btn.textContent = CAN_VOTE ? '▶ STIMME ABGEBEN' : '▶ REKONSTRUIEREN';
-      } else {
-        btn.disabled = false;
-        if (CAN_VOTE) {
-          btn.textContent = (myVote === id) ? '◉ DEINE STIMME' : '▶ STIMME ABGEBEN';
-        } else {
-          btn.textContent = '▶ REKONSTRUIEREN';
-        }
-      }
-    }
-  });
-
-  document.getElementById('stab').textContent = state.stab;
-  const atmosCell = document.getElementById('atmos-cell');
-  atmosCell.classList.remove('warn','danger');
-  if (state.atmos.cls) atmosCell.classList.add(state.atmos.cls);
-  document.getElementById('atmos').textContent = state.atmos.text;
-  const secCell = document.getElementById('sec-cell');
-  secCell.classList.remove('warn','danger');
-  if (state.sec.cls) secCell.classList.add(state.sec.cls);
-  document.getElementById('seclevel').textContent = state.sec.text;
-
-  renderConsole();
-}
-
-// ─── EMIT (GM/standalone → parent) ──────────────────────────────────────
-function emitState() {
-  if (!CAN_EMIT || applyingRemote || !IS_EMBEDDED) return;
-  serial++;
-  try {
-    parent.postMessage({
-      type: 'm08fp-state',
-      role: ROLE,
-      serial,
-      snap: JSON.parse(JSON.stringify(state))
-    }, '*');
-  } catch (e) {}
-}
-
-// ─── APPLY (incoming from parent) ───────────────────────────────────────
-// Patchy: nur Felder übernehmen, die im Snap vorkommen. So können reine
-// Vote-Updates (nur snap.votes) die Spiel-State nicht überschreiben.
-function applyState(snap) {
-  applyingRemote = true;
-  try {
-    if (snap.view !== undefined)        state.view = snap.view || 'main';
-    if (snap.kernStates !== undefined)  state.kernStates = Object.assign({A:'dormant',B:'dormant',C:'dormant'}, snap.kernStates || {});
-    if (snap.progress !== undefined)    state.progress = Array.isArray(snap.progress) ? snap.progress.slice() : [];
-    if (snap.stab !== undefined)        state.stab = snap.stab|0;
-    if (snap.errors !== undefined)      state.errors = snap.errors|0;
-    if (snap.atmos !== undefined)       state.atmos = snap.atmos || {text:'STABIL', cls:'warn'};
-    if (snap.sec !== undefined)         state.sec   = snap.sec   || {text:'GELB',   cls:''};
-    if (snap.log !== undefined)         state.log = Array.isArray(snap.log) ? snap.log.slice(-80) : [];
-    if (snap.busy !== undefined)        state.busy = !!snap.busy;
-    if (snap.collapsing !== undefined)  state.collapsing = !!snap.collapsing;
-    if (snap.votes !== undefined)       state.votes = (snap.votes && typeof snap.votes === 'object') ? snap.votes : {};
-    renderAll();
-  } finally {
-    applyingRemote = false;
-  }
-}
-
-// ─── BOOT ANIMATION ─────────────────────────────────────────────────────
-function runBoot() {
-  if (state.view !== 'boot') { renderAll(); return; }
-  const lines = document.querySelectorAll('#boot .boot-line');
-  lines.forEach(line => {
-    const delay = parseInt(line.dataset.delay, 10);
-    setTimeout(() => line.classList.add('show'), delay);
-  });
-  setTimeout(() => {
-    if (state.view !== 'boot') return;
-    state.view = 'main';
-    renderAll();
-    if (state.log.length === 0) {
-      log('system', 'SYS', 'Notnetz fragmentiert. Drei dezentrale Knoten erkannt. Sequenz entscheidend.');
-      log('warn', 'HINT', 'Hinweise sind über die Station verteilt — Wartungszettel, Logs, Symbole, Farbcodes.');
-      log('system', 'SYS', 'Interface bereit. Erwarte Eingabe.');
-    } else {
-      emitState();
-    }
-  }, 6200);
-}
-
-// ─── CLOCK ──────────────────────────────────────────────────────────────
-function startClock() {
-  const el = document.getElementById('sys-clock');
-  function tick() {
-    el.textContent = '2184.290 / ' + nowTs();
-  }
-  tick(); setInterval(tick, 1000);
-}
-startClock();
-
-// ─── CLICK DISPATCH ─────────────────────────────────────────────────────
-// GM / standalone → direkt aktivieren. Player → Stimme abgeben.
-function onNodeClick(node) {
-  if (CAN_VOTE) { castVote(node); return; }
-  activate(node);
-}
-
-// Spieler-Vote: postet ans Parent (m08-fp-sync.js schreibt nach Firebase)
-function castVote(node) {
-  if (!CAN_VOTE) return;
-  if (state.view !== 'main') return;
-  // Bereits aktivierte/gesperrte Knoten kann man nicht wählen
-  const ks = state.kernStates[node];
-  if (ks === 'online' || ks === 'locked') return;
-  try {
-    parent.postMessage({type:'m08fp-vote', name: MY_NAME, node}, '*');
-  } catch(e) {}
-  // Optimistic: lokal sofort spiegeln, Firebase-Echo überschreibt gleich wieder
-  state.votes = Object.assign({}, state.votes, { [MY_NAME]: node });
-  renderAll();
-}
-
-// ─── ACTIVATE NODE ─────────────────────────────────────────────────────
-function clearVotesUpstream() {
-  try { parent.postMessage({type:'m08fp-clear-votes'}, '*'); } catch(e) {}
-}
-
-function activate(node) {
-  if (!CAN_ACT) return;
-  if (state.view !== 'main') return;
-  if (state.busy) return;
-  if (state.progress.includes(node)) {
-    log('warn', node, 'Knoten bereits ONLINE. Erneute Aktivierung verweigert.');
-    return;
-  }
-  state.busy = true;
-  state.kernStates[node] = 'activating';
-  renderAll();
-  log('system', node, 'Vor-Ort-Eingriff registriert. Starte Aktivierungs-Sequenz…');
-
-  setTimeout(() => {
-    const expected = SEQUENCE[state.progress.length];
-    if (node === expected) {
-      state.progress.push(node);
-      state.stab++;
-      state.kernStates[node] = 'online';
-      state.busy = false;
-      renderAll();
-      onSuccessNode(node);
-      if (state.stab === 3) {
-        setTimeout(() => {
-          state.view = 'success';
-          renderAll();
-          emitState();
-        }, 1500);
-      }
-      emitState();
-      clearVotesUpstream();
-    } else {
-      state.errors++;
-      state.kernStates[node] = 'locked';
-      renderAll();
-      onSequenceError(node, expected);
-      emitState();
-      setTimeout(() => resetAfterError(), 2400);
-      clearVotesUpstream();
-    }
-  }, 1800);
-}
-
-// ─── SUCCESS PER NODE ──────────────────────────────────────────────────
-function onSuccessNode(node) {
-  const msgs = {
-    'A': [['ok','E-KERN A','STABILIZER ONLINE. Kühlfluss nominal.'], ['system','SYS','Stromfluss stabilisiert. Spannung im Normbereich.']],
-    'B': [['ok','E-KERN B','BIO-SHIELD ONLINE. Filter springen an.'], ['system','SYS','Atmosphäre klart auf. Luftqualität: akzeptabel.']],
-    'C': [['ok','E-KERN C','POWER-ROUTING ONLINE. Verteilung aktiv.'], ['system','SYS','Netz teilweise wiederhergestellt. Kommandozentrale bootet…']]
-  };
-  msgs[node].forEach(([t,w,m]) => log(t,w,m));
-}
-
-// ─── ERROR HANDLING ─────────────────────────────────────────────────────
-function onSequenceError(triedNode, expectedNode) {
-  log('err', 'SYS', 'SEQUENZFEHLER — KNOTEN ' + triedNode + ' AKTIVIERT OHNE VORLAUF.');
-  const escalations = [
-    () => {
-      log('err', 'SYS', 'Stromstoß registriert. Sicherheitsverriegelung 10s.');
-      log('warn', 'SYS', '[SL-Hinweis] Spieler im Knoten-Raum: 1 leichter Schaden ODER +1 Stress.');
-      log('system', 'SYS', 'LAST STABLE STATE RESTORED.');
-    },
-    () => {
-      log('err', 'SYS', 'SICHERHEITSLEVEL: ROT. Schotts in Korridor C-3 schließen.');
-      log('warn', 'SYS', '[SL-Hinweis] Gruppe wird ggf. getrennt. Atmosphäre sinkt in einem Modul.');
-      state.atmos = {text:'SINKEND', cls:'danger'};
-      state.sec   = {text:'ROT',     cls:'danger'};
-      renderAll();
-      emitState();
-    },
-    () => {
-      log('err', 'SYS', 'AUTOMATISCHE FEUERLÖSCHUNG / DROHNEN-PING aktiv.');
-      log('err', 'SYS', 'HAB-KERN gesperrt. Engine + Bio müssen stabil sein.');
-      log('warn', 'SYS', '[SL-Hinweis] Drohne als Stresselement (kein Bossfight). Sicht eingeschränkt.');
-    }
-  ];
-  const idx = Math.min(state.errors - 1, escalations.length - 1);
-  setTimeout(() => escalations[idx](), 500);
-  if (state.errors >= 6) {
-    setTimeout(showCollapse, 2000);
-  }
-}
-
-function resetAfterError() {
-  state.progress = [];
-  state.stab = 0;
-  state.kernStates = {A:'dormant', B:'dormant', C:'dormant'};
-  state.busy = false;
-  renderAll();
-  log('warn', 'SYS', 'Knoten in Bereitschaft zurückgesetzt. Sequenz neu beginnen.');
-  emitState();
-}
-
-function showCollapse() {
-  log('err', 'SYS', '*** CORE FAILURE — EVACUATE IMMEDIATELY ***');
-  state.view = 'collapse';
-  state.collapsing = true;
-  state.kernStates = {A:'locked', B:'locked', C:'locked'};
-  renderAll();
-  emitState();
-}
-
-// ─── GM CONTROLS ───────────────────────────────────────────────────────
-function toggleGM() { document.getElementById('gm-panel').classList.toggle('show'); }
-
-function gmReset() {
-  if (!CAN_ACT) return;
-  state.progress = [];
-  state.stab = 0;
-  state.errors = 0;
-  state.kernStates = {A:'dormant', B:'dormant', C:'dormant'};
-  state.atmos = {text:'STABIL', cls:'warn'};
-  state.sec   = {text:'GELB',   cls:''};
-  state.view = 'main';
-  state.collapsing = false;
-  state.busy = false;
-  state.log = [];
-  renderAll();
-  log('warn', 'GM', 'Full reset.');
-  emitState();
-  clearVotesUpstream();
-}
-
-function gmForceSolve() {
-  if (!CAN_ACT) return;
-  state.progress = ['A','B','C'];
-  state.stab = 3;
-  state.kernStates = {A:'online', B:'online', C:'online'};
-  state.busy = false;
-  renderAll();
-  emitState();
-  clearVotesUpstream();
-  setTimeout(() => {
-    state.view = 'success';
-    renderAll();
-    emitState();
-  }, 800);
-}
-
-function gmEscalate() {
-  if (!CAN_ACT) return;
-  state.errors++;
-  onSequenceError('GM','-');
-  emitState();
-}
-
-// ─── KEYBOARD ──────────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (!CAN_ACT) return;
-  if (e.key === 'g' || e.key === 'G') toggleGM();
-  if (e.key === 'r' || e.key === 'R') gmReset();
-});
-
-// ─── POSTMESSAGE BRIDGE ────────────────────────────────────────────────
-window.addEventListener('message', e => {
-  const m = e.data;
-  if (!m || typeof m !== 'object') return;
-  if (m.type === 'm08fp-apply' && m.snap) {
-    applyState(m.snap);
-  } else if (m.type === 'm08fp-request-state') {
-    if (CAN_EMIT) emitState();
-  }
-});
-
-// ─── INIT ──────────────────────────────────────────────────────────────
-if (IS_EMBEDDED) {
-  try { parent.postMessage({type:'m08fp-ready', role: ROLE}, '*'); } catch(e) {}
-}
-runBoot();
 </script>
+<script src="../assets/js/puzzle-chrome.js?v=20260613d"></script>
+<script src="../assets/js/m08-fp.js?v=20260613d"></script>
 
 </body>
 </html>

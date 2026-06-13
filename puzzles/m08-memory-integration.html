@@ -4,1051 +4,150 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RLS HERMES-7 — MEMORY CORE INTEGRATION</title>
+<link rel="stylesheet" href="../assets/css/puzzle-grid.css?v=20260613d">
 <style>
 :root {
-  --bg: #0a0e0a;
-  --bg2: #111411;
-  --bg3: #1a1d1a;
-  --bg4: #221f18;
-  --amber: #ffb000;
-  --amber-hi: #ffd06a;
-  --amber-dim: #8a6a2a;
-  --amber-dark: #5a4418;
-  --green: #7fb069;
-  --green-dim: #4a7040;
-  --green-dark: #2a4a2a;
-  --red: #ff3a3a;
-  --red-dim: #8a1a1a;
-  --text: #e0b870;
-  --text-dim: #8a6a2a;
-  --border: #3a2a0a;
-  --sec-red: #ff5a4a;
-  --med-blue: #6ec0c4;
-  --per-yellow: #ffd84a;
-  --glow-amber: 0 0 12px rgba(255,176,0,.35);
-  --glow-green: 0 0 12px rgba(127,176,105,.45);
-  --glow-red:   0 0 14px rgba(255,58,58,.45);
-  --glow-sec:   0 0 10px rgba(255,90,74,.35);
-  --glow-med:   0 0 10px rgba(110,192,196,.35);
-  --glow-per:   0 0 10px rgba(255,216,74,.35);
-}
-* { box-sizing: border-box; }
-html, body {
-  margin: 0; padding: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Share Tech Mono', 'Consolas', monospace;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background: repeating-linear-gradient(0deg,
-    rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px,
-    rgba(0,0,0,.18) 3px, rgba(0,0,0,0) 4px);
-  pointer-events: none;
-  z-index: 100;
-}
-body::after {
-  content: '';
-  position: fixed; inset: 0;
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.45) 100%);
-  pointer-events: none;
-  z-index: 99;
-}
-.wrap { max-width: 980px; margin: 0 auto; padding: 30px 24px 60px; }
-
-#boot {
-  min-height: 90vh;
-  display: flex; flex-direction: column; justify-content: center;
-  font-size: 13px; line-height: 1.8;
-  color: var(--text);
-}
-#boot .boot-line { opacity: 0; }
-#boot .boot-line.show { opacity: 1; }
-#boot .boot-line.warn { color: var(--amber); text-shadow: var(--glow-amber); }
-#boot .boot-line.err { color: var(--red); }
-#boot .blink::after {
-  content: '_';
-  animation: blink 1s infinite;
-  color: var(--amber);
-}
-@keyframes blink { 50% { opacity: 0; } }
-
-#main { display: none; }
-
-.term-head {
-  border: 1px solid var(--amber-dim);
-  background: var(--bg2);
-  padding: 14px 18px;
-  margin-bottom: 18px;
-}
-.term-head .ascii {
-  color: var(--amber);
-  font-size: 11px; line-height: 1.4;
-  white-space: pre;
-  text-shadow: var(--glow-amber);
-}
-.term-head .meta {
-  display: flex; gap: 16px; flex-wrap: wrap;
-  font-size: 10px; color: var(--text-dim);
-  letter-spacing: 1.5px;
-  margin-top: 8px;
-  border-top: 1px dashed var(--border);
-  padding-top: 8px;
-}
-.term-head .meta strong { color: var(--amber); font-weight: normal; }
-
-/* ── Cluster Bar ───────────────────────────────────────────────────────── */
-.clusters {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-.cluster {
-  border: 1px solid var(--border);
-  background: var(--bg2);
-  padding: 14px 14px 12px;
-  text-align: center;
-  position: relative;
-  transition: all 0.25s ease;
-}
-.cluster .sym {
-  font-size: 26px;
-  margin-bottom: 4px;
-  letter-spacing: 4px;
-}
-.cluster .id {
-  font-size: 13px;
-  color: var(--text);
-  letter-spacing: 2px;
-  margin-bottom: 2px;
-}
-.cluster .role {
-  font-size: 9px;
-  color: var(--text-dim);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-.cluster .state {
-  font-size: 11px;
-  letter-spacing: 2px;
-  padding: 4px 0;
-  border-top: 1px dashed var(--border);
-}
-
-.cluster.cl-security .sym { color: var(--sec-red); text-shadow: var(--glow-sec); }
-.cluster.cl-medical  .sym { color: var(--med-blue); text-shadow: var(--glow-med); }
-.cluster.cl-personal .sym { color: var(--per-yellow); text-shadow: var(--glow-per); }
-
-.cluster.status-offline { border-color: var(--border); }
-.cluster.status-offline .state { color: var(--text-dim); }
-.cluster.status-ready   { border-color: var(--green-dim); box-shadow: var(--glow-green); }
-.cluster.status-ready   .state { color: var(--green); }
-.cluster.status-locked  { border-color: var(--red-dim); box-shadow: var(--glow-red); }
-.cluster.status-locked  .state { color: var(--red); }
-
-.cluster .gm-mark-btn {
-  display: none;
-  width: 100%;
-  margin-top: 10px;
-  padding: 6px 8px;
-  background: var(--bg3);
-  border: 1px solid var(--amber-dim);
-  color: var(--amber);
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: 2px;
-  cursor: pointer;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-}
-body.role-gm .cluster .gm-mark-btn { display: block; }
-.cluster .gm-mark-btn:hover:not(:disabled) {
-  background: var(--amber-dark);
-  box-shadow: var(--glow-amber);
-  color: var(--amber-hi);
-}
-.cluster .gm-mark-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  border-color: var(--border);
-  color: var(--text-dim);
-}
-
-/* ── Phase-Banner ──────────────────────────────────────────────────────── */
-.phase-banner {
-  border: 1px solid var(--amber-dim);
-  background: var(--bg2);
-  padding: 12px 18px;
-  margin-bottom: 18px;
-  text-align: center;
-  font-size: 12px;
-  letter-spacing: 3px;
-  color: var(--amber);
-  text-shadow: var(--glow-amber);
-}
-.phase-banner .sub {
-  display: block;
-  margin-top: 4px;
-  font-size: 9px;
-  color: var(--text-dim);
-  letter-spacing: 2px;
-}
-
-/* ── Integration Panel ────────────────────────────────────────────────── */
-#integration {
-  display: none;
-  border: 1px solid var(--amber-dim);
-  background: var(--bg2);
-  padding: 16px 18px;
-  margin-bottom: 18px;
-}
-#integration.show { display: block; }
-#integration h2 {
-  margin: 0 0 12px 0;
-  font-size: 12px;
-  letter-spacing: 3px;
-  color: var(--amber);
-  text-shadow: var(--glow-amber);
-}
-.my-order-row {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  padding: 10px 12px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  margin-bottom: 12px;
-}
-.my-order-row .lbl {
-  font-size: 10px;
-  letter-spacing: 2px;
-  color: var(--text-dim);
-}
-.order-slots { display: flex; gap: 6px; }
-.order-slot {
-  min-width: 110px;
-  padding: 6px 8px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-align: center;
-  color: var(--text-dim);
-}
-.order-slot.filled { color: var(--amber); border-color: var(--amber-dim); }
-.order-slot .slot-num { font-size: 8px; color: var(--text-dim); margin-right: 4px; }
-
-.reset-order {
-  background: transparent;
-  border: 1px solid var(--red-dim);
-  color: var(--red);
-  font-family: inherit;
-  font-size: 9px;
-  letter-spacing: 2px;
-  padding: 4px 10px;
-  cursor: pointer;
-}
-.reset-order:hover { background: var(--red-dim); color: var(--text); }
-.reset-order { display: inline-block; }
-
-.fragment-row {
-  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
-  margin: 14px 0 6px;
-}
-.frag-btn {
-  flex: 1 1 200px;
-  padding: 12px 14px;
-  background: var(--bg3);
-  border: 1px solid var(--amber-dim);
-  color: var(--amber);
-  font-family: inherit;
-  font-size: 11px;
-  letter-spacing: 2px;
-  cursor: pointer;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-  text-align: left;
-}
-.frag-btn:hover:not(:disabled) {
-  background: var(--amber-dark);
-  box-shadow: var(--glow-amber);
-  color: var(--amber-hi);
-}
-.frag-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.frag-btn .frag-sym { font-size: 16px; margin-right: 6px; }
-.frag-btn .frag-sub {
-  display: block;
-  font-size: 9px;
-  color: var(--text-dim);
-  margin-top: 4px;
-  letter-spacing: 1.5px;
-}
-.frag-btn.f-security { border-color: var(--sec-red); color: var(--sec-red); }
-.frag-btn.f-security .frag-sym { text-shadow: var(--glow-sec); }
-.frag-btn.f-security:hover:not(:disabled) { background: rgba(255,90,74,.1); box-shadow: var(--glow-sec); }
-.frag-btn.f-medical  { border-color: var(--med-blue); color: var(--med-blue); }
-.frag-btn.f-medical  .frag-sym { text-shadow: var(--glow-med); }
-.frag-btn.f-medical:hover:not(:disabled) { background: rgba(110,192,196,.1); box-shadow: var(--glow-med); }
-.frag-btn.f-personal { border-color: var(--per-yellow); color: var(--per-yellow); }
-.frag-btn.f-personal .frag-sym { text-shadow: var(--glow-per); }
-.frag-btn.f-personal:hover:not(:disabled) { background: rgba(255,216,74,.1); box-shadow: var(--glow-per); }
-
-/* ── All-Orders View (alle Spielervorschläge) ─────────────────────────── */
-.all-orders {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--border);
-}
-.all-orders h3 {
-  margin: 0 0 8px 0;
-  font-size: 10px;
-  letter-spacing: 2px;
-  color: var(--text-dim);
-  text-transform: uppercase;
-}
-.player-order {
-  display: flex; align-items: center; gap: 8px;
-  padding: 6px 10px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  margin-bottom: 4px;
-  font-size: 10px;
-  letter-spacing: 1.5px;
-  cursor: default;
-}
-.player-order.mine { border-color: var(--amber-dim); }
-.player-order.selected { border-color: var(--amber); box-shadow: var(--glow-amber); background: var(--bg4); }
-body.role-gm .player-order { cursor: pointer; }
-.player-order .pname {
-  min-width: 110px;
-  color: var(--amber);
-  text-transform: uppercase;
-}
-.player-order .pname.mine-tag::after { content: ' (DU)'; color: var(--text-dim); }
-.player-order .chain { display: flex; gap: 4px; flex-wrap: wrap; }
-.player-order .chain-chip {
-  padding: 2px 6px;
-  font-size: 9px;
-  letter-spacing: 1px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-}
-.player-order .chain-chip.security { color: var(--sec-red); border-color: var(--sec-red); }
-.player-order .chain-chip.medical  { color: var(--med-blue); border-color: var(--med-blue); }
-.player-order .chain-chip.personal { color: var(--per-yellow); border-color: var(--per-yellow); }
-.player-order .chain-arrow { color: var(--text-dim); font-size: 9px; align-self: center; }
-
-.no-orders-yet {
-  padding: 14px;
-  text-align: center;
-  color: var(--text-dim);
-  font-size: 10px;
-  letter-spacing: 2px;
-  border: 1px dashed var(--border);
-  background: var(--bg3);
-}
-
-/* ── Console / Log ────────────────────────────────────────────────────── */
-.console {
-  border: 1px solid var(--amber-dim);
-  background: var(--bg2);
-  padding: 14px 18px;
-  min-height: 140px;
-  max-height: 220px;
-  overflow-y: auto;
-  font-size: 12px;
-  line-height: 1.7;
-  margin-top: 14px;
-}
-.console .line { margin-bottom: 4px; }
-.console .line .ts {
-  color: var(--text-dim);
-  margin-right: 8px;
-  font-size: 10px;
-}
-.console .line .who {
-  color: var(--amber);
-  margin-right: 8px;
-  letter-spacing: 1px;
-}
-.console .line.ok .msg   { color: var(--green); }
-.console .line.warn .msg { color: var(--amber); }
-.console .line.err .msg  { color: var(--red); text-shadow: 0 0 4px rgba(255,58,58,.4); }
-.console .line.system .msg { color: var(--text); }
-
-/* ── GM Panel ─────────────────────────────────────────────────────────── */
-#gm-panel {
-  position: fixed;
-  top: 10px; right: 10px;
-  background: rgba(15,15,10,.95);
-  border: 1px solid var(--amber-dim);
-  padding: 10px 14px;
-  font-size: 10px;
-  letter-spacing: 1px;
-  z-index: 200;
-  max-width: 240px;
-  display: none;
-}
-#gm-panel.show { display: block; }
-#gm-panel h3 {
-  margin: 0 0 6px 0;
-  color: var(--amber);
-  font-size: 11px;
-  letter-spacing: 2px;
-}
-#gm-panel .gm-btn {
-  display: block;
-  width: 100%;
-  margin: 4px 0;
-  padding: 5px 8px;
-  background: var(--bg3);
-  border: 1px solid var(--amber-dim);
-  color: var(--amber);
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: 1px;
-  cursor: pointer;
-}
-#gm-panel .gm-btn:hover { background: var(--bg4); }
-#gm-panel .gm-btn.danger { border-color: var(--red-dim); color: var(--red); }
-#gm-panel .gm-btn.danger:hover { background: var(--red-dim); color: var(--text); }
-#gm-panel .gm-btn.go { border-color: var(--green-dim); color: var(--green); }
-#gm-panel .gm-btn.go:hover { background: var(--green-dark); color: var(--text); box-shadow: var(--glow-green); }
-#gm-panel .gm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-#gm-panel .hint {
-  color: var(--text-dim);
-  font-size: 9px;
-  margin-top: 8px;
-  line-height: 1.4;
-  border-top: 1px dashed var(--border);
-  padding-top: 6px;
-}
-
-/* ── Observer-Badge ───────────────────────────────────────────────────── */
-.observer-badge {
-  position: fixed; top: 10px; left: 10px;
-  background: rgba(0,0,0,.7);
-  border: 1px solid var(--amber-dim);
-  color: var(--amber);
-  font-size: 9px;
-  letter-spacing: 2px;
-  padding: 4px 10px;
-  z-index: 200;
-  display: none;
-}
-body.role-player .observer-badge { display: block; }
-
-/* ── Success / Finished Screen ────────────────────────────────────────── */
-#success {
-  display: none;
-  min-height: 80vh;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  gap: 20px;
-}
-#success.show { display: flex; }
-#success .head {
-  font-size: 14px;
-  color: var(--green);
-  letter-spacing: 4px;
-  text-shadow: var(--glow-green);
-  animation: pulseGreen 2s infinite;
-}
-@keyframes pulseGreen { 50% { opacity: 0.6; } }
-#success .big {
-  font-size: 24px;
-  color: var(--green);
-  letter-spacing: 5px;
-  text-shadow: var(--glow-green);
-  border: 1px solid var(--green-dim);
-  padding: 18px 32px;
-  background: var(--bg2);
-}
-#success .quote {
-  color: var(--amber);
-  font-size: 12px;
-  letter-spacing: 2px;
-  max-width: 540px;
-  line-height: 1.8;
-  font-style: italic;
-  text-shadow: var(--glow-amber);
-}
-#success .sub {
-  color: var(--text-dim);
-  font-size: 11px;
-  letter-spacing: 2px;
-  max-width: 540px;
-  line-height: 1.7;
-}
-
-/* ── Info Row ─────────────────────────────────────────────────────────── */
-.info-row {
-  font-size: 10px;
-  color: var(--text-dim);
-  text-align: center;
-  margin-top: 14px;
-  letter-spacing: 1.5px;
-}
-.info-row .key {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  padding: 1px 6px;
-  color: var(--amber);
-  margin: 0 2px;
-}
-body.role-player .info-row { display: none; }
-
-@media (max-width: 720px) {
-  .clusters { grid-template-columns: 1fr; }
-  .term-head .ascii { font-size: 9px; }
-  .frag-btn { flex: 1 1 100%; }
+  --bg:#0a0e0a; --bg2:#111411; --bg3:#1a1d1a; --bg4:#221f18;
+  --accent:#ffb000; --accent-hi:#ffd06a; --accent-dim:#8a6a2a; --accent-dark:#5a4418;
+  --live:#6ec0c4; --live-dim:#1f4446;
+  --text:#e0b870; --text-dim:#8a6a2a; --border:#3a2a0a; --red:#ff3a3a;
+  --glow-accent:0 0 12px rgba(255,176,0,.40);
+  --glow-live:0 0 12px rgba(110,192,196,.55);
 }
 </style>
 </head>
 <body>
 
-<div class="observer-badge">⟁ OPERATIVE · INTEGRATION-VOTING AKTIV</div>
+<div class="observer-badge">⟁ OPERATIVE · TIPPEN = ZUORDNUNG SCHALTEN</div>
 
-<!-- ═══ BOOT SCREEN ═══ -->
-<div class="wrap" id="boot">
-  <div class="boot-line" data-delay="100">&gt; INITIATING MEMORY CORE TERMINAL HANDSHAKE…</div>
-  <div class="boot-line" data-delay="500">&gt; W-Y HYPERDYNE 9000 — COMMAND CONSOLE v4.1.0</div>
-  <div class="boot-line" data-delay="900">&gt; CONNECTING TO RLS HERMES-7 / MEMORY CORE…</div>
-  <div class="boot-line warn" data-delay="1400">&gt; CLUSTER STATUS:</div>
-  <div class="boot-line warn" data-delay="1700">&gt; - SECURITY  : <strong>OFFLINE</strong></div>
-  <div class="boot-line warn" data-delay="1900">&gt; - MEDICAL   : <strong>OFFLINE</strong></div>
-  <div class="boot-line warn" data-delay="2100">&gt; - PERSONAL  : <strong>OFFLINE</strong></div>
-  <div class="boot-line" data-delay="2600">&gt; SCANNING FRAGMENT BANK…</div>
-  <div class="boot-line err" data-delay="3000">&gt; USER PROFILE: FRAGMENTED</div>
-  <div class="boot-line err" data-delay="3300">&gt; INTEGRATION REQUIRED</div>
-  <div class="boot-line warn" data-delay="3800">&gt; PRIORITY SEQUENCE MUST BE DETERMINED BY OPERATOR.</div>
-  <div class="boot-line blink" data-delay="4400">&gt; LOADING INTERFACE</div>
-</div>
+<div class="pg-wrap" id="pg-boot"></div>
 
-<!-- ═══ MAIN INTERFACE ═══ -->
-<div class="wrap" id="main">
+<div class="pg-wrap" id="pg-main">
   <div class="term-head">
-    <div class="ascii">╔══════════════════════════════════════════════════════════════╗
-║  RLS HERMES-7 — MEMORY CORE / COMMAND CONSOLE               ║
-║  W-Y HYPERDYNE 9000 / FRAGMENT INTEGRATION v4.1.0           ║
-╚══════════════════════════════════════════════════════════════╝</div>
+    <div class="ascii" id="pg-ascii"></div>
     <div class="meta">
-      <span>NODE: <strong>HERMES-7-CMD</strong></span>
-      <span>OPERATOR: <strong id="op-label">UNAUTHORIZED</strong></span>
-      <span>SYSTEM TIME: <strong id="sys-clock">--:--:--</strong></span>
+      <span>NODE: <strong id="pg-node">—</strong></span>
+      <span>OPERATOR: <strong id="pg-op">—</strong></span>
+      <span>SYSTEM TIME: <strong id="pg-clock">--:--:--</strong></span>
     </div>
   </div>
 
-  <div class="phase-banner" id="phase-banner">
-    <span id="phase-text">CLUSTER-AKTIVIERUNG</span>
-    <span class="sub" id="phase-sub">Drei Speicher-Cluster online bringen — Fragments holen, dann Integration</span>
-  </div>
-
-  <div class="clusters">
-    <div class="cluster cl-security status-offline" id="cl-security">
-      <div class="sym">▲</div>
-      <div class="id">SECURITY</div>
-      <div class="role">S-LOG · Quarantäne</div>
-      <div class="state">OFFLINE</div>
-      <button class="gm-mark-btn" onclick="gmMarkReady('security')">▶ MARK READY</button>
+  <div class="status-bar">
+    <div class="status-cell">
+      <div class="label">Speicher-Bänke</div>
+      <div class="value" id="pg-banks">4</div>
     </div>
-    <div class="cluster cl-medical status-offline" id="cl-medical">
-      <div class="sym">◆</div>
-      <div class="id">MEDICAL</div>
-      <div class="role">M-TRACE · FB-9</div>
-      <div class="state">OFFLINE</div>
-      <button class="gm-mark-btn" onclick="gmMarkReady('medical')">▶ MARK READY</button>
+    <div class="status-cell">
+      <div class="label">Fehlversuche</div>
+      <div class="value" id="pg-attempts">0</div>
     </div>
-    <div class="cluster cl-personal status-offline" id="cl-personal">
-      <div class="sym">●</div>
-      <div class="id">PERSONAL</div>
-      <div class="role">P-HEART · Crew</div>
-      <div class="state">OFFLINE</div>
-      <button class="gm-mark-btn" onclick="gmMarkReady('personal')">▶ MARK READY</button>
+    <div class="status-cell">
+      <div class="label">Eingabe</div>
+      <div class="value" style="font-size:13px;">ZUORDNEN</div>
     </div>
   </div>
 
-  <!-- INTEGRATION PANEL (zeigt sich erst in Phase 'integration') -->
-  <div id="integration">
-    <h2>▼ PRIORITÄTS-INTEGRATION — Reihenfolge wählen ▼</h2>
-
-    <div class="my-order-row">
-      <span class="lbl">DEINE ORDER:</span>
-      <div class="order-slots">
-        <div class="order-slot" id="my-slot-1"><span class="slot-num">1</span>—</div>
-        <div class="order-slot" id="my-slot-2"><span class="slot-num">2</span>—</div>
-        <div class="order-slot" id="my-slot-3"><span class="slot-num">3</span>—</div>
-      </div>
-      <button class="reset-order" onclick="resetMyOrder()">RESET</button>
+  <div id="mi-board">
+    <div id="mi-banks"></div>
+    <div id="mi-actions">
+      <button class="mi-btn go" id="mi-submit">▷ PROFIL INTEGRIEREN</button>
     </div>
-
-    <div class="fragment-row" id="fragment-buttons">
-      <button class="frag-btn f-personal" onclick="addToMyOrder('personal')">
-        <span class="frag-sym">●</span> P-HEART
-        <span class="frag-sub">Personal · Identität · "Ich bin… wieder ganz"</span>
-      </button>
-      <button class="frag-btn f-medical" onclick="addToMyOrder('medical')">
-        <span class="frag-sym">◆</span> M-TRACE
-        <span class="frag-sub">Medical · FB-9 · "was passiert"</span>
-      </button>
-      <button class="frag-btn f-security" onclick="addToMyOrder('security')">
-        <span class="frag-sym">▲</span> S-LOG
-        <span class="frag-sub">Security · Quarantäne · "Fakten / Protokolle"</span>
-      </button>
-    </div>
-
-    <div class="all-orders">
-      <h3>EINGEREICHTE REIHENFOLGEN</h3>
-      <div id="all-orders-list"></div>
-    </div>
+    <div id="mi-fragments"></div>
   </div>
 
-  <div class="console" id="console"></div>
+  <div class="pg-console" id="pg-console"></div>
 
   <div class="info-row">
     <span class="key">G</span> Spielleiter-Panel · <span class="key">R</span> Reset · <span class="key">ESC</span> Schließen
   </div>
 </div>
 
-<!-- ═══ SUCCESS SCREEN ═══ -->
-<div class="wrap" id="success">
+<div class="pg-wrap" id="pg-success">
   <div class="head">▼ INTEGRATION ERFOLGREICH ▼</div>
   <div class="big">AX-17 STABIL</div>
-  <div class="quote">„Ich erinnere mich.<br>Ich bin… wieder ganz."</div>
   <div class="sub">
-    Der Alarm verstummt. Lichter beruhigen sich. Die Konsole entriegelt einen neuen Pfad.<br><br>
-    <strong style="color:var(--amber)">REACTOR ACCESS · AUTHORIZED.</strong>
+    Jedes Fragment sitzt in der richtigen Bank, jeder Sektor stimmt. Die Integritätsprüfung läuft durch — der Alarm verstummt, Lichter beruhigen sich. Drei Speicher-Cluster fließen in einen Strang zusammen.<br><br>
+    <em style="color:var(--live)">„Ich erinnere mich. Ich bin… wieder ganz."</em><br><br>
+    <strong>REACTOR ACCESS · AUTHORIZED.</strong>
   </div>
 </div>
 
-<!-- ═══ GM PANEL ═══ -->
-<div id="gm-panel">
-  <h3>⚠ GM-PANEL</h3>
-  <button class="gm-btn go" id="gm-execute-btn" onclick="gmExecute()" disabled>✓ EXECUTE INTEGRATION</button>
-  <button class="gm-btn" onclick="gmAutoReady()">⚡ Alle Cluster READY</button>
-  <button class="gm-btn" onclick="gmForceSolve()">✓ Force Solve (Skip)</button>
-  <button class="gm-btn danger" onclick="gmReset()">↻ Full Reset</button>
-  <button class="gm-btn" onclick="toggleGM()">✕ Hide Panel</button>
+<div id="pg-gm-panel">
+  <h3>⚠ GM-PANEL · LOGIK-GITTER</h3>
+  <button class="gm-btn go" onclick="pgForceSolve()">✓ Force Solve</button>
+  <button class="gm-btn" onclick="pgReset()">↻ Bänke zurücksetzen</button>
+  <button class="gm-btn" onclick="pgTogglePanel()">✕ Hide Panel</button>
   <div class="hint">
-    Lösung: <strong>PERSONAL → MEDICAL → SECURITY</strong><br>
-    (Identität → Verstehen → Fakten)<br><br>
-    Cluster werden READY, wenn PCs am Tisch ihre physischen Items liefern.
-    Danach Spieler-Voting für Reihenfolge, dann EXECUTE.
+    <div class="gm-sub">LÖSUNG (Bank → Fragment / Sektor):</div>
+    <ol class="gm-solution" id="gm-solution"></ol>
+    <div class="gm-sub">HINWEIS-KIT (am Tisch verteilen):</div>
+    <ul class="gm-clues" id="gm-clues"></ul>
+    Das Terminal prüft nur die komplette Lösung (richtig/falsch) — kein Teil-Feedback. Die Crew muss es deduzieren.
   </div>
 </div>
 
 <script>
-// ─── ROLE (gm | player | standalone) ──────────────────────────────────────
-const params = new URLSearchParams(location.search);
-const ROLE = params.get('role') || 'standalone';
-const MY_NAME = params.get('name') || '';
-const IS_EMBEDDED = ROLE === 'gm' || ROLE === 'player';
-const CAN_EMIT = ROLE === 'gm' || ROLE === 'standalone';
-const CAN_ACT  = ROLE === 'gm' || ROLE === 'standalone';
-const CAN_VOTE = (ROLE === 'player' || ROLE === 'gm' || ROLE === 'standalone') && !!(MY_NAME || ROLE === 'standalone');
-document.body.classList.add('role-' + ROLE);
-document.getElementById('op-label').textContent =
-  ROLE === 'gm' ? 'GAME MASTER' : (ROLE === 'player' ? (MY_NAME ? MY_NAME.toUpperCase() : 'OPERATIVE') : 'UNAUTHORIZED');
+window.PUZZLE_CONFIG = {
+  prefix: 'm08mi',
+  node: 'HERMES-7-CMD',
+  stardate: '2184.290',
+  ascii:
+'╔══════════════════════════════════════════════════════════╗\n' +
+'║  RLS HERMES-7 — MEMORY CORE / COMMAND CONSOLE           ║\n' +
+'║  W-Y HYPERDYNE 9000 / PROFILE RECONSTRUCTION v4.1.0    ║\n' +
+'╚══════════════════════════════════════════════════════════╝',
+  bootLines: [
+    { text: 'INITIATING MEMORY CORE TERMINAL HANDSHAKE…', delay: 150 },
+    { text: 'W-Y HYPERDYNE 9000 — COMMAND CONSOLE v4.1.0', delay: 600 },
+    { text: 'CONNECTING TO RLS HERMES-7 / MEMORY CORE…', delay: 1000 },
+    { text: '4 MEMORY BANKS DETECTED — CONTENTS <strong>SCATTERED</strong>', cls: 'warn', delay: 1500 },
+    { text: 'FRAGMENT/SECTOR MAPPING: <strong>LOST</strong>', cls: 'warn', delay: 1850 },
+    { text: 'USER PROFILE: <strong>FRAGMENTED</strong> — RECONSTRUCT MANUALLY.', cls: 'err', delay: 2400 },
+    { text: 'INTEGRITÄTSPRÜFUNG NUR BEI VOLLSTÄNDIGER ZUORDNUNG.', cls: 'warn', delay: 2900 }
+  ],
+  bootDuration: 3700,
+  introLog: 'Vier Fragmente, vier Sektoren, vier Bänke. Aus den Hinweisen die eindeutige Zuordnung herleiten, dann integrieren.',
+  solveLog: 'Zuordnung konsistent. Profil rekonstruiert. AX-17 stabilisiert.',
 
-// ─── SOLUTION ─────────────────────────────────────────────────────────────
-const SOLUTION = ['personal', 'medical', 'security'];
-const FRAGMENTS = ['security', 'medical', 'personal'];
-const FRAG_LABEL = { security: 'S-LOG', medical: 'M-TRACE', personal: 'P-HEART' };
-const FRAG_SYM   = { security: '▲',     medical: '◆',       personal: '●' };
-
-// ─── STATE ────────────────────────────────────────────────────────────────
-const state = {
-  view: 'boot', // boot | main | success
-  phase: 'clusters', // clusters | integration | result | finished
-  clusters: { security: 'offline', medical: 'offline', personal: 'offline' },
-  errors: 0,
-  orders: {}, // { playerName: ['personal','medical','security'] } — injected from parent (votes)
-  gmSelectedPlayer: null, // GM has clicked a player's order to select it
-  log: [],
+  fragments: [
+    { id: 'AURORA', glyph: '⟁' },
+    { id: 'NEXUS',  glyph: '◈' },
+    { id: 'ORACLE', glyph: '✶' },
+    { id: 'VESPER', glyph: '⬡' }
+  ],
+  sectors: [
+    { id: 'SECURITY', short: 'SEC' },
+    { id: 'MEDICAL',  short: 'MED' },
+    { id: 'PERSONAL', short: 'PERS' },
+    { id: 'COMMAND',  short: 'CMD' }
+  ],
+  // unique solution (banks 1..4, left → right)
+  solution: [
+    { frag: 'ORACLE', sector: 'MEDICAL'  },
+    { frag: 'AURORA', sector: 'COMMAND'  },
+    { frag: 'VESPER', sector: 'SECURITY' },
+    { frag: 'NEXUS',  sector: 'PERSONAL' }
+  ],
+  // physical clue kit — together they pin both pairings uniquely (knackig)
+  // each clue carries a Fundort = where the crew physically finds it on board
+  clues: [
+    { clue: 'Das <strong>MEDICAL</strong>-Fragment liegt in der äußersten linken Bank.',
+      fundort: 'Command Room (Memory Core) — eingestanztes Sektor-Etikett am ersten Bank-Slot (BANK-1).' },
+    { clue: '<strong>ORACLE</strong> gehört zum <strong>MEDICAL</strong>-Sektor.',
+      fundort: 'Bio Lab — Patientenakte mit Diagnose-Header „FRAGMENT: ORACLE".' },
+    { clue: 'Der <strong>COMMAND</strong>-Sektor liegt direkt rechts neben <strong>MEDICAL</strong>.',
+      fundort: 'Command Room — Verkabelungsdiagramm an der Wand neben den Bänken.' },
+    { clue: '<strong>SECURITY</strong> liegt links von <strong>PERSONAL</strong>.',
+      fundort: 'Security Locker — Zugriffsprotokoll im Sicherheits-Terminal.' },
+    { clue: '<strong>AURORA</strong> steht direkt links neben <strong>VESPER</strong>.',
+      fundort: 'Habitation Area — Crew-Foto mit handschriftlich nebeneinander notierten Codenamen.' },
+    { clue: '<strong>NEXUS</strong> belegt die äußerste rechte Bank.',
+      fundort: 'Command Room (Memory Core) — Inventar-Tag „NEXUS" auf der äußersten rechten Bank (BANK-4).' }
+  ]
 };
-
-let applyingRemote = false;
-let serial = 0;
-
-// ─── HELPERS ──────────────────────────────────────────────────────────────
-function nowTs() {
-  const d = new Date();
-  return String(d.getHours()).padStart(2,'0') + ':' +
-         String(d.getMinutes()).padStart(2,'0') + ':' +
-         String(d.getSeconds()).padStart(2,'0');
-}
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function allClustersReady() {
-  return state.clusters.security === 'ready' && state.clusters.medical === 'ready' && state.clusters.personal === 'ready';
-}
-
-// ─── LOG ──────────────────────────────────────────────────────────────────
-function log(type, who, msg) {
-  state.log.push({ type, who, msg, ts: nowTs() });
-  if (state.log.length > 80) state.log.shift();
-  renderConsole();
-  emitState();
-}
-function renderConsole() {
-  const con = document.getElementById('console');
-  if (!con) return;
-  con.innerHTML = state.log.map(l =>
-    '<div class="line ' + l.type + '">' +
-    '<span class="ts">[' + l.ts + ']</span>' +
-    '<span class="who">' + escapeHtml(l.who) + '</span>' +
-    '<span class="msg">' + escapeHtml(l.msg) + '</span>' +
-    '</div>'
-  ).join('');
-  con.scrollTop = con.scrollHeight;
-}
-
-// ─── VIEW SWITCHERS ───────────────────────────────────────────────────────
-function showMain() {
-  document.getElementById('boot').style.display = 'none';
-  document.getElementById('main').style.display = 'block';
-  document.getElementById('success').classList.remove('show');
-}
-
-function renderAll() {
-  if (state.view === 'boot') {
-    document.getElementById('boot').style.display = '';
-    document.getElementById('main').style.display = 'none';
-    document.getElementById('success').classList.remove('show');
-    return;
-  }
-  if (state.view === 'success') {
-    document.getElementById('boot').style.display = 'none';
-    document.getElementById('main').style.display = 'none';
-    document.getElementById('success').classList.add('show');
-    return;
-  }
-  // view === 'main'
-  showMain();
-
-  // Phase banner
-  const phaseTextEl = document.getElementById('phase-text');
-  const phaseSubEl  = document.getElementById('phase-sub');
-  if (state.phase === 'clusters') {
-    phaseTextEl.textContent = 'CLUSTER-AKTIVIERUNG';
-    phaseSubEl.textContent  = 'PCs liefern Items (Admin-ID · FB-9 · Foto+Audio). GM markiert Cluster READY.';
-  } else if (state.phase === 'integration') {
-    phaseTextEl.textContent = 'INTEGRATION — REIHENFOLGE WÄHLEN';
-    phaseSubEl.textContent  = 'Spieler bauen ihre Wunsch-Order. GM bestätigt eine Reihenfolge und EXECUTE.';
-  } else if (state.phase === 'result') {
-    phaseTextEl.textContent = 'INTEGRATION FEHLGESCHLAGEN — RETRY';
-    phaseSubEl.textContent  = 'Falsche Reihenfolge erkannt. Neuer Versuch verfügbar.';
-  }
-
-  // Cluster panels
-  ['security','medical','personal'].forEach(id => {
-    const el = document.getElementById('cl-' + id);
-    if (!el) return;
-    const stat = state.clusters[id] || 'offline';
-    el.className = 'cluster cl-' + id + ' status-' + stat;
-    el.querySelector('.state').textContent =
-      stat === 'offline' ? 'OFFLINE' : (stat === 'ready' ? 'READY ✓' : 'LOCKED');
-    const btn = el.querySelector('.gm-mark-btn');
-    if (btn) {
-      btn.disabled = (stat === 'ready' || state.phase !== 'clusters');
-      btn.textContent = stat === 'ready' ? '◆ READY' : '▶ MARK READY';
-    }
-  });
-
-  // Integration panel
-  const ip = document.getElementById('integration');
-  if (state.phase === 'integration' || state.phase === 'result') {
-    ip.classList.add('show');
-    renderIntegration();
-  } else {
-    ip.classList.remove('show');
-  }
-
-  // GM execute button enabled state
-  const exeBtn = document.getElementById('gm-execute-btn');
-  if (exeBtn) {
-    const ord = currentSelectedOrder();
-    exeBtn.disabled = !(state.phase === 'integration' && ord && ord.length === 3);
-  }
-
-  renderConsole();
-}
-
-function renderIntegration() {
-  // My order slots
-  const myOrder = MY_NAME ? (state.orders[MY_NAME] || []) : [];
-  for (let i = 0; i < 3; i++) {
-    const slot = document.getElementById('my-slot-' + (i+1));
-    if (!slot) continue;
-    const v = myOrder[i];
-    if (v) {
-      slot.classList.add('filled');
-      slot.innerHTML = '<span class="slot-num">' + (i+1) + '</span>' + FRAG_SYM[v] + ' ' + FRAG_LABEL[v];
-    } else {
-      slot.classList.remove('filled');
-      slot.innerHTML = '<span class="slot-num">' + (i+1) + '</span>—';
-    }
-  }
-
-  // Fragment buttons: disable already-used
-  document.querySelectorAll('.frag-btn').forEach(b => {
-    const cls = b.classList;
-    const frag = cls.contains('f-security') ? 'security' : cls.contains('f-medical') ? 'medical' : 'personal';
-    b.disabled = (!CAN_VOTE || myOrder.includes(frag) || myOrder.length >= 3 || state.phase !== 'integration');
-  });
-
-  // All orders list
-  const allEl = document.getElementById('all-orders-list');
-  const entries = Object.entries(state.orders).filter(([, v]) => Array.isArray(v) && v.length === 3);
-  if (entries.length === 0) {
-    allEl.innerHTML = '<div class="no-orders-yet">— noch keine Reihenfolge eingereicht —</div>';
-  } else {
-    allEl.innerHTML = entries.map(([name, ord]) => {
-      const mine = (name === MY_NAME);
-      const sel  = (window.isGM && state.gmSelectedPlayer === name);
-      const chain = ord.map((f, i) => {
-        return (i > 0 ? '<span class="chain-arrow">→</span>' : '') +
-               '<span class="chain-chip ' + f + '">' + FRAG_SYM[f] + ' ' + FRAG_LABEL[f] + '</span>';
-      }).join('');
-      return '<div class="player-order' + (mine ? ' mine' : '') + (sel ? ' selected' : '') +
-             '" data-player="' + escapeHtml(name) + '" onclick="gmSelectOrder(\'' + escapeHtml(name).replace(/'/g, "\\'") + '\')">' +
-             '<span class="pname' + (mine ? ' mine-tag' : '') + '">' + escapeHtml(name.toUpperCase()) + '</span>' +
-             '<div class="chain">' + chain + '</div>' +
-             '</div>';
-    }).join('');
-  }
-}
-
-// Helper: which order is the GM about to execute?
-function currentSelectedOrder() {
-  if (state.gmSelectedPlayer && state.orders[state.gmSelectedPlayer]) {
-    return state.orders[state.gmSelectedPlayer];
-  }
-  // Fall back to the most-recently completed order (any player)
-  const entries = Object.entries(state.orders).filter(([, v]) => Array.isArray(v) && v.length === 3);
-  if (entries.length === 0) return null;
-  return entries[entries.length - 1][1];
-}
-
-// ─── EMIT / APPLY ─────────────────────────────────────────────────────────
-function emitState() {
-  if (!CAN_EMIT || applyingRemote || !IS_EMBEDDED) return;
-  serial++;
-  try {
-    // Strip orders + gmSelectedPlayer-from-other before serializing — those live separately
-    const snap = JSON.parse(JSON.stringify(state));
-    parent.postMessage({ type: 'm08mi-state', role: ROLE, serial, snap }, '*');
-  } catch (e) {}
-}
-
-function applyState(snap) {
-  applyingRemote = true;
-  try {
-    if (snap.view !== undefined)     state.view = snap.view || 'main';
-    if (snap.phase !== undefined)    state.phase = snap.phase || 'clusters';
-    if (snap.clusters !== undefined) state.clusters = Object.assign({ security:'offline', medical:'offline', personal:'offline' }, snap.clusters || {});
-    if (snap.errors !== undefined)   state.errors = snap.errors | 0;
-    if (snap.log !== undefined)      state.log = Array.isArray(snap.log) ? snap.log.slice(-80) : [];
-    if (snap.gmSelectedPlayer !== undefined) state.gmSelectedPlayer = snap.gmSelectedPlayer;
-    if (snap.orders !== undefined)   state.orders = (snap.orders && typeof snap.orders === 'object') ? snap.orders : {};
-    renderAll();
-  } finally {
-    applyingRemote = false;
-  }
-}
-
-// ─── BOOT ANIMATION ───────────────────────────────────────────────────────
-function runBoot() {
-  if (state.view !== 'boot') { renderAll(); return; }
-  document.querySelectorAll('#boot .boot-line').forEach(line => {
-    const delay = parseInt(line.dataset.delay, 10);
-    setTimeout(() => line.classList.add('show'), delay);
-  });
-  setTimeout(() => {
-    if (state.view !== 'boot') return;
-    state.view = 'main';
-    renderAll();
-    if (state.log.length === 0) {
-      log('system', 'SYS', 'Memory Core erreicht. Drei Cluster wartend.');
-      log('warn',   'HINT', 'Cluster online bringen: physische Schlüssel sammeln, dann am Tisch melden.');
-      log('system', 'SYS', 'Interface bereit. Erwarte Eingabe.');
-    } else {
-      emitState();
-    }
-  }, 5400);
-}
-
-// ─── CLOCK ────────────────────────────────────────────────────────────────
-function startClock() {
-  const el = document.getElementById('sys-clock');
-  function tick() { el.textContent = '2184.290 / ' + nowTs(); }
-  tick(); setInterval(tick, 1000);
-}
-startClock();
-
-// ─── PLAYER VOTE: build my order ──────────────────────────────────────────
-function addToMyOrder(frag) {
-  if (!CAN_VOTE) return;
-  if (state.phase !== 'integration') return;
-  if (!MY_NAME && ROLE === 'standalone') return; // standalone test mode without name
-  const current = MY_NAME ? (state.orders[MY_NAME] || []).slice() : [];
-  if (current.includes(frag)) return;
-  if (current.length >= 3) return;
-  current.push(frag);
-  // Optimistic local update
-  state.orders = Object.assign({}, state.orders, { [MY_NAME]: current });
-  renderAll();
-  // Persist via parent
-  try { parent.postMessage({ type: 'm08mi-order', name: MY_NAME, order: current }, '*'); } catch (e) {}
-}
-function resetMyOrder() {
-  if (!CAN_VOTE || !MY_NAME) return;
-  const next = Object.assign({}, state.orders);
-  delete next[MY_NAME];
-  state.orders = next;
-  renderAll();
-  try { parent.postMessage({ type: 'm08mi-order-clear', name: MY_NAME }, '*'); } catch (e) {}
-}
-
-// ─── GM ACTIONS ───────────────────────────────────────────────────────────
-function gmMarkReady(id) {
-  if (!CAN_ACT) return;
-  if (state.phase !== 'clusters') return;
-  state.clusters[id] = 'ready';
-  log('ok', 'GM', 'Cluster ' + id.toUpperCase() + ' freigegeben.');
-  // Wenn alle drei ready: Phase wechseln
-  if (allClustersReady()) {
-    state.phase = 'integration';
-    log('system', 'SYS', 'Alle drei Cluster bereit. Integration verfügbar — Reihenfolge wählen.');
-  }
-  renderAll();
-  emitState();
-}
-
-function gmAutoReady() {
-  if (!CAN_ACT) return;
-  state.clusters = { security: 'ready', medical: 'ready', personal: 'ready' };
-  state.phase = 'integration';
-  log('warn', 'GM', 'Alle Cluster zwangsweise auf READY gesetzt.');
-  renderAll();
-  emitState();
-}
-
-window.gmSelectOrder = function(playerName) {
-  if (!window.isGM) return; // only meaningful for GM
-  if (state.phase !== 'integration') return;
-  state.gmSelectedPlayer = (state.gmSelectedPlayer === playerName) ? null : playerName;
-  renderAll();
-  emitState();
-};
-
-function gmExecute() {
-  if (!CAN_ACT) return;
-  if (state.phase !== 'integration') return;
-  const order = currentSelectedOrder();
-  if (!order || order.length !== 3) {
-    log('warn', 'GM', 'Keine vollständige Reihenfolge ausgewählt.');
-    return;
-  }
-  const correct = order.every((v, i) => v === SOLUTION[i]);
-  if (correct) {
-    log('ok', 'SYS', 'INTEGRATION AKZEPTIERT — Identität rekonstruiert.');
-    log('ok', 'AX-17', '„Ich erinnere mich. Ich bin… wieder ganz."');
-    state.phase = 'finished';
-    state.view = 'success';
-    renderAll();
-    emitState();
-  } else {
-    state.errors++;
-    state.gmSelectedPlayer = null;
-    onIntegrationError(order);
-    state.phase = 'integration'; // bleibt offen für retry
-    renderAll();
-    emitState();
-  }
-}
-
-function onIntegrationError(order) {
-  const orderStr = order.map(o => FRAG_LABEL[o]).join(' → ');
-  log('err', 'SYS', 'INTEGRATIONSFEHLER — Reihenfolge abgelehnt: ' + orderStr);
-  const escalations = [
-    () => {
-      log('warn', 'SYS', '[SL-Hinweis] Integration stoppt · +1 Stress · Tür im Core Ring klemmt 30s.');
-      log('system', 'SYS', 'RETRY in 30 SEKUNDEN VERFÜGBAR.');
-    },
-    () => {
-      log('err', 'SYS', 'SICHERHEITSLEVEL: ROT.');
-      log('warn', 'SYS', '[SL-Hinweis] Drohnen-Ping · Gruppe ggf. getrennt · Retry unter Druck.');
-    },
-    () => {
-      log('err', 'SYS', 'AX-17 FRAGMENTIERT — Speicher beschädigt.');
-      log('err', 'SYS', '[SL-Hinweis] Spätere Begegnungen werden unzuverlässig — oder Finale nur via Option B.');
-    }
-  ];
-  const idx = Math.min(state.errors - 1, escalations.length - 1);
-  escalations[idx]();
-  // Letzten Fragment-Vote frei für neuen Versuch — Spieler-Orders bleiben sichtbar
-}
-
-function gmForceSolve() {
-  if (!CAN_ACT) return;
-  state.clusters = { security: 'ready', medical: 'ready', personal: 'ready' };
-  state.phase = 'finished';
-  state.view = 'success';
-  log('warn', 'GM', 'Force solve.');
-  renderAll();
-  emitState();
-}
-
-function gmReset() {
-  if (!CAN_ACT) return;
-  state.view = 'main';
-  state.phase = 'clusters';
-  state.clusters = { security:'offline', medical:'offline', personal:'offline' };
-  state.errors = 0;
-  state.orders = {}; // GM-Reset wipet auch lokale Sicht; parent löscht Firebase-Votes
-  state.gmSelectedPlayer = null;
-  state.log = [];
-  log('warn', 'GM', 'Full reset.');
-  renderAll();
-  emitState();
-  try { parent.postMessage({ type: 'm08mi-clear-orders' }, '*'); } catch (e) {}
-}
-
-function toggleGM() { document.getElementById('gm-panel').classList.toggle('show'); }
-
-// ─── KEYBOARD ─────────────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (!CAN_ACT) return;
-  if (e.key === 'g' || e.key === 'G') toggleGM();
-  if (e.key === 'r' || e.key === 'R') gmReset();
-});
-
-// ─── POSTMESSAGE BRIDGE ──────────────────────────────────────────────────
-window.addEventListener('message', e => {
-  const m = e.data;
-  if (!m || typeof m !== 'object') return;
-  if (m.type === 'm08mi-apply' && m.snap) applyState(m.snap);
-});
-
-// ─── INIT ────────────────────────────────────────────────────────────────
-if (IS_EMBEDDED) {
-  try { parent.postMessage({ type: 'm08mi-ready', role: ROLE }, '*'); } catch (e) {}
-}
-runBoot();
-
-// Make window.isGM available for child handlers
-window.isGM = (ROLE === 'gm');
 </script>
+<script src="../assets/js/puzzle-chrome.js?v=20260613d"></script>
+<script src="../assets/js/m08-mi.js?v=20260613d"></script>
 
 </body>
 </html>

@@ -429,6 +429,132 @@
 
 .wd-rounds-warn { color:var(--rust) !important; animation:wdBreathe 1s var(--ease) infinite; }
 
+/* ── SKILL ACTIONS (once per duel) ──────────────────────────── */
+.wd-action-bar {
+  display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+  margin-top:12px; transition:opacity 0.4s var(--ease);
+}
+.wd-action-btn {
+  flex:1; min-width:140px; min-height:44px; padding:6px 12px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  background:var(--panel-3); border:1px solid var(--hair); border-radius:var(--r-s);
+  color:var(--bone-2); font-family:var(--mono); font-weight:600;
+  font-size:11px; letter-spacing:1.5px; cursor:pointer; text-transform:uppercase;
+  transition:all 0.16s var(--ease);
+}
+.wd-action-btn { position:relative; }
+.wd-action-btn[data-tip]::after {
+  content:attr(data-tip);
+  position:absolute; bottom:calc(100% + 10px); left:50%;
+  transform:translateX(-50%) translateY(4px);
+  width:max-content; max-width:240px; padding:9px 11px;
+  background:var(--panel-1, #0d1714); border:1px solid var(--hair); border-radius:var(--r-s);
+  color:var(--bone-2); font-family:var(--mono); font-weight:500;
+  font-size:10px; letter-spacing:0.3px; line-height:1.45;
+  text-transform:none; text-align:left; white-space:normal;
+  box-shadow:0 8px 24px rgba(0,0,0,0.55);
+  opacity:0; pointer-events:none; z-index:60;
+  transition:opacity 0.16s var(--ease), transform 0.16s var(--ease);
+}
+.wd-action-btn[data-tip]::before {
+  content:""; position:absolute; bottom:calc(100% + 4px); left:50%;
+  transform:translateX(-50%); border:6px solid transparent; border-top-color:var(--hair);
+  opacity:0; pointer-events:none; z-index:60;
+  transition:opacity 0.16s var(--ease);
+}
+.wd-action-btn[data-tip]:hover::after {
+  opacity:1; transform:translateX(-50%) translateY(0);
+}
+.wd-action-btn[data-tip]:hover::before { opacity:1; }
+.wd-action-sub {
+  font-size:9px; font-weight:600; letter-spacing:1px; color:var(--dim);
+}
+.wd-action-btn:hover:not(:disabled) .wd-action-sub { color:var(--amber); }
+.wd-action-btn.cheat:hover:not(:disabled) .wd-action-sub { color:#e8784f; }
+.wd-action-btn:disabled .wd-action-sub { color:var(--dim-2); }
+.wd-action-btn:hover:not(:disabled) {
+  border-color:var(--amber); color:var(--amber-hi); background:var(--amber-soft);
+  transform:translateY(-1px);
+}
+.wd-action-btn:active:not(:disabled) { transform:translateY(0) scale(0.98); }
+.wd-action-btn.cheat:hover:not(:disabled) { border-color:var(--rust); color:#e8784f; background:rgba(198,66,37,0.12); }
+.wd-action-btn:disabled { color:var(--dim-2); border-color:var(--hair-soft); background:transparent; cursor:not-allowed; }
+
+.wd-action-hint {
+  text-align:center; min-height:16px; margin-top:8px;
+  font-family:var(--mono); font-size:11px; letter-spacing:1px; color:var(--amber-hi);
+}
+
+.wd-bluff-label.wd-intimidated { color:var(--rust); flex:1; animation:wdBreathe 1.4s var(--ease) infinite; }
+
+/* CAUGHT banner */
+.wd-caught-banner {
+  text-align:center; margin:14px auto 0; max-width:560px; padding:10px 16px;
+  border:1px solid var(--rust); border-radius:var(--r-s);
+  background:rgba(198,66,37,0.14); color:#e8784f;
+  font-family:var(--ui); font-weight:700; font-size:14px; letter-spacing:2px;
+  animation:wdBannerSlam 0.55s cubic-bezier(0.2,1.5,0.35,1) both;
+}
+
+/* ── SKILL-ROLL RESULT POPUP ─────────────────────────────────── */
+.wd-sr-overlay {
+  position:fixed; inset:0; z-index:1200;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(6,8,10,0.72); backdrop-filter:blur(3px);
+  animation:wdFadeUp 0.2s var(--ease) both;
+}
+.wd-sr-panel {
+  min-width:300px; max-width:90vw; padding:22px 26px 20px;
+  background:var(--panel-2); border:1px solid var(--hair); border-radius:var(--r);
+  box-shadow:0 20px 60px -12px rgba(0,0,0,0.7);
+  text-align:center; animation:wdCallSlam 0.45s cubic-bezier(0.2,1.5,0.35,1) both;
+}
+.wd-sr-panel.ok   { border-color:var(--amber); }
+.wd-sr-panel.fail { border-color:var(--rust); }
+.wd-sr-label {
+  font-family:var(--mono); font-size:12px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--bone-2); margin-bottom:14px;
+}
+.wd-sr-dice {
+  display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:14px;
+}
+.wd-sr-die {
+  width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+  font-size:30px; line-height:1; border-radius:var(--r-s);
+  background:var(--panel-3); border:1px solid var(--hair-soft); color:var(--bone-2);
+}
+.wd-sr-die.six   { color:var(--amber-hi); border-color:var(--amber); background:var(--amber-soft); }
+.wd-sr-die.stress { border-color:var(--rust); color:#e8784f; }
+.wd-sr-die.stress.six { color:var(--amber-hi); border-color:var(--amber); background:var(--amber-soft); }
+.wd-sr-die.stress.hug { background:rgba(198,66,37,0.18); }
+.wd-sr-result {
+  font-family:var(--ui); font-weight:700; font-size:18px; letter-spacing:1.5px;
+  color:var(--amber-hi); margin-bottom:6px;
+}
+.wd-sr-panel.fail .wd-sr-result { color:#e8784f; }
+.wd-sr-note {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.5px; color:var(--dim);
+  margin-bottom:16px; line-height:1.45;
+}
+.wd-sr-btn {
+  height:36px; padding:0 26px; cursor:pointer;
+  background:var(--amber-soft); border:1px solid var(--amber); border-radius:var(--r-s);
+  color:var(--amber-hi); font-family:var(--mono); font-weight:600;
+  font-size:11px; letter-spacing:1.5px; text-transform:uppercase;
+  transition:all 0.16s var(--ease);
+}
+.wd-sr-btn:hover { background:var(--amber); color:#1a1206; }
+
+/* a die armed for reroll (concentration / cheat) */
+.wd-die.wd-rerollable { cursor:pointer; }
+.wd-die.wd-rerollable::after {
+  content:""; position:absolute; inset:-4px; border-radius:14px;
+  border:2px dashed var(--amber-hi); animation:wdRerollPulse 1.1s var(--ease) infinite;
+  pointer-events:none;
+}
+.wd-die.wd-rerollable:hover { transform:translate(-50%,-50%) rotate(var(--rot,0deg)) scale(1.12); }
+@keyframes wdRerollPulse { 0%,100%{opacity:0.35} 50%{opacity:1} }
+
 /* ── GM SIDEBAR / DROPDOWN BUTTON ───────────────────────────── */
 .gm-wd-btn { color:var(--amber); border-color:var(--dim); transition:all 0.15s; }
 .gm-wd-btn:hover { border-color:var(--amber); color:var(--amber-hi); background:var(--amber-soft); }

@@ -1,4 +1,5 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { srRoll } from "./skill-roll.js?v=2";
 
 // ════════════════════════════════════════════════════════════════
 // DICE TABLE — shared skill-roll table (Alien RPG)
@@ -472,53 +473,17 @@ window.dtRoll = function() {
   const stress = parseInt((dtMyChar || {}).stressLevel) || 0;
   if (sel.base + stress <= 0) return;
 
-  const positions = dtScatter(sel.base + stress);
-  const mk = (n, off) => Array.from({ length: n }, (_, i) => ({
-    v: 1 + Math.floor(Math.random() * 6),
-    x: positions[off + i].x,
-    y: positions[off + i].y,
-    r: Math.floor(Math.random() * 360),
-  }));
-
-  const baseDice   = mk(sel.base, 0);
-  const stressDice = mk(stress, sel.base);
-
-  // each facehugger (1 on a stress die) adds +1 stress on the sheet;
-  // panic only triggers once the stress bar is full (level 10)
-  const gain = stressDice.filter(d => d.v === 1).length;
-  const stressNow = Math.min(10, stress + gain);
-  if (gain > 0) {
-    set(ref(window.db, 'characters/' + window.myName + '/stressLevel'), stressNow);
-  }
-
-  set(ref(window.db, 'session/diceTable/roll'), {
-    id: Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+  const [type, key] = dtSelected.split(':');
+  const opts = type === 'attr' ? { attr: key } : { skill: key };
+  srRoll(window.db, {
     player: window.myName,
-    skill: sel.label,
+    char: dtMyChar || {},
+    ...opts,
+    label: sel.label,
     skin: dtEffectiveSkin(),
-    base: baseDice,
-    stress: stressDice,
-    stressGain: gain,
-    stressNow: stressNow,
-    ts: Date.now(),
+    publish: true,
   });
 };
-
-// scatter dice on the table (percent coords, min distance, rejection sampling)
-function dtScatter(n) {
-  const pts = [];
-  for (let i = 0; i < n; i++) {
-    let best = null;
-    for (let t = 0; t < 60; t++) {
-      const p = { x: 10 + Math.random() * 76, y: 12 + Math.random() * 70 };
-      const dMin = Math.min(Infinity, ...pts.map(q => Math.hypot(p.x - q.x, (p.y - q.y) * 1.4)));
-      if (dMin > 16) { best = p; break; }
-      if (!best || dMin > best.d) best = { ...p, d: dMin };
-    }
-    pts.push({ x: best.x, y: best.y });
-  }
-  return pts;
-}
 
 // ── Dice rendering & throw animation ──────────────────────────────
 function dtClearTimers() {

@@ -20,9 +20,11 @@
   const cores = CFG.cores || [];
   const byId = {}; cores.forEach(c => { byId[c.id] = c; });
 
-  let state = { progress: [], faults: 0 };
+  let state = { progress: [], faults: 0, reject: null };
   let solved = false;
   let locked = false;
+  let lastRejectN = 0;
+  let rejectTimer = null;
 
   const faultLines = [
     'SEQUENZFEHLER — Bus-Schutzschaltung ausgelöst. Kette zurückgesetzt.',
@@ -60,17 +62,26 @@
       commit(next, 'ok', byId[id].name + ' ONLINE. (' + next.progress.length + '/' + SOL.length + ')');
     } else {
       const f = state.faults + 1;
-      reject(id);
-      commit({ progress: [], faults: f }, 'err', faultLines[Math.min(f - 1, faultLines.length - 1)]);
+      const n = (state.reject && state.reject.n || 0) + 1;
+      locked = true;
+      setTimeout(() => { locked = false; }, 600);
+      // reject ist Teil des geteilten Zustands → alle Clients sehen die rote Umrandung
+      commit({ progress: [], faults: f, reject: { id: id, n: n } }, 'err',
+             faultLines[Math.min(f - 1, faultLines.length - 1)]);
     }
   }
 
-  function reject(id) {
+  function clearRejects() {
+    cores.forEach(c => c._el.classList.remove('reject'));
+  }
+  function flashReject(id) {
+    clearRejects();
     const el = byId[id] && byId[id]._el;
     if (!el) return;
-    el.classList.remove('reject'); void el.offsetWidth; el.classList.add('reject');
-    locked = true;
-    setTimeout(() => { locked = false; }, 600);
+    void el.offsetWidth;
+    el.classList.add('reject');
+    clearTimeout(rejectTimer);
+    rejectTimer = setTimeout(clearRejects, 700);
   }
 
   // commit = update local + render + push to parent (shared truth)
@@ -90,6 +101,19 @@
       c._el.querySelector('.fc-order').textContent = online ? (pos + 1) : '';
       c._el.querySelector('.fc-status').textContent = online ? 'ONLINE' : 'DORMANT';
     });
+
+    // geteiltes Reject-Feedback: neue Fehl-Auswahl bei ALLEN Clients blinken lassen;
+    // kein aktives Reject (z. B. nach GM-Reset) → alle roten Umrandungen löschen
+    const rj = state.reject;
+    if (rj && rj.n && rj.n !== lastRejectN) {
+      lastRejectN = rj.n;
+      flashReject(rj.id);
+    } else if (!rj) {
+      lastRejectN = 0;
+      clearTimeout(rejectTimer);
+      clearRejects();
+    }
+
     PGC.setText('pg-online', state.progress.length + ' / ' + SOL.length);
     PGC.setText('pg-faults', state.faults);
     const fc = document.getElementById('pg-fault-cell');
@@ -108,7 +132,11 @@
 
   // ── shared state from parent ───────────────────────────────────────────────────
   PGC.onApply(s => {
-    state = { progress: Array.isArray(s.progress) ? s.progress.slice() : [], faults: s.faults || 0 };
+    state = {
+      progress: Array.isArray(s.progress) ? s.progress.slice() : [],
+      faults: s.faults || 0,
+      reject: (s.reject && typeof s.reject === 'object') ? { id: s.reject.id, n: s.reject.n || 0 } : null
+    };
     if (state.progress.length !== SOL.length) solved = false;
     if (PGC.view === 'main') render();
   });

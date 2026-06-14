@@ -24,8 +24,10 @@
   const secOpts = [null].concat(SECTORS.map(s => s.id));
 
   function emptyBanks() { return Array.from({ length: N }, () => ({ frag: null, sector: null })); }
-  let state = { banks: emptyBanks(), attempts: 0, solved: false };
+  let state = { banks: emptyBanks(), attempts: 0, solved: false, flash: null };
   let successShown = false;
+  let lastFlashN = 0;
+  let flashTimer = null;
 
   function normalize(s) {
     const banks = emptyBanks();
@@ -37,7 +39,12 @@
         sector: secOpts.includes(b.sector) ? b.sector : null
       };
     }
-    return { banks, attempts: (s && s.attempts) || 0, solved: !!(s && s.solved) };
+    return {
+      banks,
+      attempts: (s && s.attempts) || 0,
+      solved: !!(s && s.solved),
+      flash: (s && s.flash && typeof s.flash === 'object') ? { n: s.flash.n || 0 } : null
+    };
   }
 
   // ── DOM build ───────────────────────────────────────────────────────────────
@@ -89,15 +96,20 @@
     } else {
       const a = state.attempts + 1;
       PGC.log('err', 'SYS', 'INTEGRITÄTSPRÜFUNG FEHLGESCHLAGEN (' + a + '). Konfiguration inkonsistent.');
-      flashAll();
-      commit({ banks: banks.map(b => ({ frag: b.frag, sector: b.sector })), attempts: a, solved: false });
+      // flash ist Teil des geteilten Zustands → alle Clients sehen die rote Umrandung
+      const n = (state.flash && state.flash.n || 0) + 1;
+      commit({ banks: banks.map(b => ({ frag: b.frag, sector: b.sector })), attempts: a, solved: false, flash: { n: n } });
     }
   }
 
+  function clearFlash() {
+    document.querySelectorAll('.mi-bank').forEach(c => c.classList.remove('bad'));
+  }
   function flashAll() {
-    document.querySelectorAll('.mi-bank').forEach(c => {
-      c.classList.remove('bad'); void c.offsetWidth; c.classList.add('bad');
-    });
+    clearFlash();
+    document.querySelectorAll('.mi-bank').forEach(c => { void c.offsetWidth; c.classList.add('bad'); });
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(clearFlash, 700);
   }
 
   function commit(next, logType, logMsg) {
@@ -120,6 +132,19 @@
       sc.classList.toggle('empty', !b.sector);
       sc.querySelector('.cyc-val').textContent = s ? (s.short || s.id) : '—';
     });
+
+    // geteiltes Fehlversuch-Feedback: neuer Nonce → bei ALLEN Clients blinken;
+    // kein aktives Flash (z. B. nach GM-Reset / Änderung) → rote Umrandungen löschen
+    const fl = state.flash;
+    if (fl && fl.n && fl.n !== lastFlashN) {
+      lastFlashN = fl.n;
+      flashAll();
+    } else if (!fl) {
+      lastFlashN = 0;
+      clearTimeout(flashTimer);
+      clearFlash();
+    }
+
     PGC.setText('pg-attempts', state.attempts);
     maybeSolve();
   }

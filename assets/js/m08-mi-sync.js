@@ -87,6 +87,11 @@ window.addEventListener('message', e => {
       attempts: typeof m.state.attempts === 'number' ? m.state.attempts : 0,
       solved: !!m.state.solved
     };
+    // flash ({n}) mitschreiben, damit alle Clients die rote Umrandung sehen;
+    // bei Reset/Änderung fehlt es → Firebase entfernt den Knoten → Umrandung verschwindet überall
+    if (m.state.flash && typeof m.state.flash === 'object') {
+      clean.flash = { n: typeof m.state.flash.n === 'number' ? m.state.flash.n : 0 };
+    }
     set(miStateRef(), clean).catch(err => console.warn('[M08MI] state write failed:', err));
     return;
   }

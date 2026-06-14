@@ -77,6 +77,14 @@ window.addEventListener('message', e => {
       progress: Array.isArray(m.state.progress) ? m.state.progress : [],
       faults: typeof m.state.faults === 'number' ? m.state.faults : 0
     };
+    // reject ({id,n}) mitschreiben, damit alle Clients die rote Umrandung sehen;
+    // bei Reset fehlt es → Firebase entfernt den Knoten → Umrandung verschwindet überall
+    if (m.state.reject && typeof m.state.reject === 'object') {
+      clean.reject = {
+        id: String(m.state.reject.id || ''),
+        n: typeof m.state.reject.n === 'number' ? m.state.reject.n : 0
+      };
+    }
     set(fpStateRef(), clean).catch(err => console.warn('[M08FP] state write failed:', err));
     return;
   }

@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="assets/css/core.css?v=6">
 <link rel="stylesheet" href="assets/css/initiative.css">
 <link rel="stylesheet" href="assets/css/character-sheet.css">
-<link rel="stylesheet" href="assets/css/provisions.css">
+<link rel="stylesheet" href="assets/css/provisions.css?v=2">
 <link rel="stylesheet" href="assets/css/wuerfel-duerfel.css?v=8">
 <link rel="stylesheet" href="assets/css/xp.css">
 <link rel="stylesheet" href="assets/css/handout.css">
@@ -752,7 +752,7 @@
         <div class="intercept-coords" id="interceptCoords">INTERCEPT COORDS: —</div>
         <button class="intercept-close" onclick="closeInterceptAlert()">Acknowledge // Dismiss</button>
         <div id="interceptShopBtn" style="display:none;margin-top:12px;text-align:center;">
-          <button onclick="shopGMOpen()" style="background:#11140f;border:2px solid #d8b26b;color:#ffcf7a;font-family:'Courier New',monospace;font-size:13px;letter-spacing:3px;padding:12px 24px;cursor:pointer;width:100%;text-shadow:0 0 8px rgba(216,178,107,0.6);">🛒 OPEN TRADE TERMINAL</button>
+          <button onclick="shopGMOpen()" style="background:rgba(255,154,60,0.12);border:1px solid var(--amber);color:var(--amber-hi);font-family:var(--ui);font-weight:600;font-size:13px;letter-spacing:1px;padding:12px 24px;cursor:pointer;width:100%;border-radius:var(--r-s);">🛒 OPEN TRADE TERMINAL</button>
         </div>
       </div>
     </div>
@@ -866,7 +866,7 @@
           <button class="shop-nav-btn" onclick="shopSetCategory('tech', this)">📡  TECH</button>
           <button class="shop-nav-btn" onclick="shopSetCategory('contraband', this)">☣  CONTRABAND</button>
           <button class="shop-nav-btn" onclick="shopSetCategory('specials', this)">✦  GUSTAV'S SPECIALS</button>
-          <button class="shop-nav-btn" onclick="shopSetCategory('sell', this)">💰  SELL INTEL <span id="shopSellBadge" style="display:none;background:#d66a5a;color:#0a0c0a;border-radius:8px;padding:0 5px;font-size:8px;margin-left:4px;font-weight:bold">0</span></button>
+          <button class="shop-nav-btn" onclick="shopSetCategory('sell', this)">💰  SELL INTEL <span id="shopSellBadge" style="display:none;background:#e06a52;color:#0b0e0c;border-radius:99px;padding:1px 6px;font-size:9px;margin-left:auto;font-weight:600;font-family:var(--mono)">0</span></button>
           <button class="shop-nav-btn" onclick="shopSetCategory('cart', this)" id="shopCartNavBtn">🛒  CART<span class="shop-nav-badge" id="shopCartBadge" style="display:none">0</span></button>
           <button class="shop-nav-btn" onclick="shopSetCategory('inventory', this)">🎒  INVENTORY</button>
         </nav>
@@ -886,8 +886,8 @@
         </div>
 
         <!-- GM: pending sell approvals -->
-        <div class="shop-gm-balances" id="shopGmSellPanel" style="display:none;border-color:#d66a5a;margin-top:10px">
-          <div class="shop-gm-balances-title" style="color:#d66a5a">⚠ SELL REQUESTS</div>
+        <div class="shop-gm-balances" id="shopGmSellPanel" style="display:none;border-color:rgba(224,106,82,0.4);margin-top:10px">
+          <div class="shop-gm-balances-title" style="color:#e06a52">⚠ SELL REQUESTS</div>
           <div id="shopGmSellList"></div>
         </div>
       </div>
@@ -900,8 +900,8 @@
     </div>
 
     <!-- Balance Editor (inline, toggled by GM above GM bar) -->
-    <div id="shopBalanceEditor" style="display:none;background:#11140f;border-top:2px solid #4a3a20;padding:18px 24px;flex-shrink:0;">
-      <div style="font-size:13px;letter-spacing:3px;color:#ffcf7a;margin-bottom:16px;">⚙ SET PLAYER BALANCES ($)</div>
+    <div id="shopBalanceEditor" style="display:none;background:#0b0e0c;border-top:1px solid rgba(255,154,60,0.22);padding:18px 24px;flex-shrink:0;">
+      <div style="font-family:var(--ui);font-weight:600;font-size:13px;letter-spacing:0.8px;color:var(--amber-hi);margin-bottom:16px;">⚙ SET PLAYER BALANCES ($)</div>
       <div class="shop-bal-grid" id="shopBalInputs"></div>
       <div style="display:flex;gap:12px;margin-top:4px;">
         <button onclick="shopGMApplyBalances()" class="shop-gm-btn">✓ APPLY</button>
@@ -1473,7 +1473,7 @@
 </div>
 
 <script type="module" src="assets/js/handout.js"></script>
-<script type="module" src="assets/js/initiative.js"></script>
+<script type="module" src="assets/js/initiative.js?v=2"></script>
 <script type="module" src="assets/js/provisions.js"></script>
 <script type="module" src="assets/js/character-sheet.js"></script>
 <script type="module" src="assets/js/wuerfel-duerfel.js?v=9"></script>

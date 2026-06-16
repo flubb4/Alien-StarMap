@@ -2087,9 +2087,9 @@ function renderShop() {
           <span class="shop-gm-bal-amount">+${p.amount} $</span>
           <div style="display:flex;gap:4px;width:100%;justify-content:flex-end;margin-top:2px">
             <button onclick="shopGMApproveSell('${p.player}','${p.itemId}')"
-              style="background:rgba(127,178,122,0.08);border:1px solid #7fb27a;color:#7fb27a;font-family:inherit;font-size:8px;padding:3px 10px;cursor:pointer;letter-spacing:1px">✓ APPROVE</button>
+              style="background:rgba(127,176,105,0.12);border:1px solid #7fb069;color:#7fb069;font-family:inherit;font-weight:500;font-size:9px;padding:4px 11px;cursor:pointer;letter-spacing:0.5px;border-radius:6px">✓ APPROVE</button>
             <button onclick="shopGMRejectSell('${p.player}','${p.itemId}')"
-              style="background:#1a0a06;border:1px solid #d66a5a;color:#d66a5a;font-family:inherit;font-size:8px;padding:3px 10px;cursor:pointer;letter-spacing:1px">✗ REJECT</button>
+              style="background:rgba(224,106,82,0.12);border:1px solid #e06a52;color:#e06a52;font-family:inherit;font-weight:500;font-size:9px;padding:4px 11px;cursor:pointer;letter-spacing:0.5px;border-radius:6px">✗ REJECT</button>
           </div>
         </div>`).join('');
     }
@@ -2470,7 +2470,7 @@ function shopFlash() {
 
 function shopShowToast(msg) {
   const t = document.createElement('div');
-  t.style.cssText = 'position:fixed;top:90px;left:50%;transform:translateX(-50%);background:#0a0c0a;border:2px solid #d8b26b;color:#ffcf7a;font-family:Courier New,monospace;font-size:14px;letter-spacing:3px;padding:12px 28px;z-index:12000;text-align:center;pointer-events:none;box-shadow:0 0 20px rgba(216,178,107,0.4)';
+  t.style.cssText = 'position:fixed;top:90px;left:50%;transform:translateX(-50%);background:rgba(11,14,12,0.95);border:1px solid rgba(255,154,60,0.4);color:var(--amber-hi);font-family:var(--ui);font-weight:600;font-size:13px;letter-spacing:0.5px;padding:12px 24px;z-index:12000;text-align:center;pointer-events:none;border-radius:10px;backdrop-filter:blur(8px);box-shadow:0 12px 40px rgba(0,0,0,0.5)';
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2500);

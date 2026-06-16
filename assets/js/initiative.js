@@ -1007,6 +1007,10 @@ onValue(interceptRef, snap => {
 
     showInterceptAlert(data);
   }
+
+  // Reflect the GM's "freischalten" on every client — once unlocked the
+  // OPEN TRADE TERMINAL button becomes visible to everyone, not just the GM.
+  applyInterceptShopUnlock(!!data.shopUnlocked);
 });
 
 function rollInterception(fromX, fromY, toX, toY, parsecs) {
@@ -1040,8 +1044,9 @@ function showInterceptAlert(data) {
     'INTERCEPT COORDS: ' + Math.round(data.x) + ', ' + Math.round(data.y) +
     '  //  ' + parseFloat(data.parsecs).toFixed(2) + ' PC FROM ORIGIN';
   el.classList.add('open');
-  const shopBtn = document.getElementById('interceptShopBtn');
-  if (shopBtn) shopBtn.style.display = window.isGM ? 'block' : 'none';
+  // Default locked state; the onValue handler immediately re-applies the
+  // synced shopUnlocked flag, so players stay in sync with the GM.
+  applyInterceptShopUnlock(false);
 
   // Place a hazard marker at intercept point (visible on map)
   if (data.x && data.y) {
@@ -1060,6 +1065,41 @@ function showInterceptAlert(data) {
     }
   }
 }
+
+// Show/hide the intercept trade-terminal controls based on the synced unlock flag.
+// Once unlocked the OPEN TRADE TERMINAL button is visible to EVERYONE; while locked
+// only the GM sees the "freischalten" control.
+function applyInterceptShopUnlock(unlocked) {
+  const revealRow = document.getElementById('interceptRevealRow');
+  const shopBtn   = document.getElementById('interceptShopBtn');
+  if (unlocked) {
+    if (revealRow) revealRow.style.display = 'none';
+    if (shopBtn)   shopBtn.style.display = 'block';
+  } else {
+    if (revealRow) revealRow.style.display = window.isGM ? 'block' : 'none';
+    if (shopBtn)   shopBtn.style.display = 'none';
+  }
+}
+
+window.revealInterceptShop = function() {
+  if (!window.isGM) return;
+  // Broadcast the unlock so every client's alert shows the button.
+  update(interceptRef, { shopUnlocked: true });
+};
+
+// Trade-terminal entry from the intercept alert. GM opens/initialises the shared
+// shop (which broadcasts to all); players (re)open their local overlay.
+window.openTradeTerminal = function() {
+  if (window.isGM) {
+    window.shopGMOpen();
+  } else if (_shopState) {
+    _shopDismissed = false;
+    renderShop();
+    document.getElementById('shopOverlay').classList.add('open');
+  } else {
+    shopShowToast('Trade Terminal wird vom GM geöffnet…');
+  }
+};
 
 window.closeInterceptAlert = function() {
   document.getElementById('interceptAlert').classList.remove('open');

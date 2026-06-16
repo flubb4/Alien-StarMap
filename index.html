@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stars of the Middle Heavens — Alien RPG</title>
-<link rel="stylesheet" href="assets/css/core.css?v=6">
+<link rel="stylesheet" href="assets/css/core.css?v=7">
 <link rel="stylesheet" href="assets/css/initiative.css">
 <link rel="stylesheet" href="assets/css/character-sheet.css">
 <link rel="stylesheet" href="assets/css/provisions.css?v=2">
@@ -751,8 +751,11 @@
         </div>
         <div class="intercept-coords" id="interceptCoords">INTERCEPT COORDS: —</div>
         <button class="intercept-close" onclick="closeInterceptAlert()">Acknowledge // Dismiss</button>
+        <div id="interceptRevealRow" style="display:none;margin-top:12px;text-align:center;">
+          <button class="intercept-reveal-btn" onclick="revealInterceptShop()">⊕ Trade Terminal freischalten</button>
+        </div>
         <div id="interceptShopBtn" style="display:none;margin-top:12px;text-align:center;">
-          <button onclick="shopGMOpen()" style="background:rgba(255,154,60,0.12);border:1px solid var(--amber);color:var(--amber-hi);font-family:var(--ui);font-weight:600;font-size:13px;letter-spacing:1px;padding:12px 24px;cursor:pointer;width:100%;border-radius:var(--r-s);">🛒 OPEN TRADE TERMINAL</button>
+          <button onclick="openTradeTerminal()" style="background:rgba(255,154,60,0.12);border:1px solid var(--amber);color:var(--amber-hi);font-family:var(--ui);font-weight:600;font-size:13px;letter-spacing:1px;padding:12px 24px;cursor:pointer;width:100%;border-radius:var(--r-s);">🛒 OPEN TRADE TERMINAL</button>
         </div>
       </div>
     </div>
@@ -1473,7 +1476,7 @@
 </div>
 
 <script type="module" src="assets/js/handout.js"></script>
-<script type="module" src="assets/js/initiative.js?v=2"></script>
+<script type="module" src="assets/js/initiative.js?v=4"></script>
 <script type="module" src="assets/js/provisions.js"></script>
 <script type="module" src="assets/js/character-sheet.js"></script>
 <script type="module" src="assets/js/wuerfel-duerfel.js?v=9"></script>

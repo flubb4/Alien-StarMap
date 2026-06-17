@@ -457,7 +457,7 @@
 
 /* capsule shell — two clipped halves so it can split open */
 .dt-capsule {
-  position:absolute; left:50%; top:50%; width:150px; height:240px;
+  position:absolute; left:50%; top:50%; width:170px; height:255px;
   transform:translate(-50%,-50%); cursor:pointer; pointer-events:auto;
 }
 .dt-capsule::before { /* glow aura */
@@ -472,46 +472,13 @@
 .dt-cap-half.right { clip-path:inset(-60px -60px -60px 50%); }
 
 .dt-cap-art { position:absolute; inset:0; filter:drop-shadow(0 14px 22px rgba(0,0,0,0.7)); }
-.dt-cap-body {
-  position:absolute; left:0; right:0; top:14px; bottom:14px;
-  border-radius:64px;
-  background:linear-gradient(100deg, #4a545e 0%, #2a323b 38%, #161c22 70%, #0c1014 100%);
-  border:1px solid #5a666f;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.6), inset 14px 0 26px rgba(255,255,255,0.07), inset -18px 0 30px rgba(0,0,0,0.65);
-}
-.dt-cap-fin {
-  position:absolute; left:50%; transform:translateX(-50%);
-  width:64px; height:18px; border-radius:5px;
-  background:linear-gradient(180deg, #565f68, #20262c);
-  border:1px solid #5a666f;
-}
-.dt-cap-fin.top { top:0; }
-.dt-cap-fin.bottom { bottom:0; }
-.dt-cap-window {
-  position:absolute; left:50%; top:42px; transform:translateX(-50%);
-  width:62px; height:62px; border-radius:50%;
-  background:radial-gradient(circle at 38% 32%, #11303a 0%, #07141c 60%, #03080c 100%);
-  border:3px solid #4a565f;
-  box-shadow:inset 0 0 14px rgba(110,192,196,0.35), 0 0 12px rgba(110,192,196,0.25);
-  display:flex; align-items:center; justify-content:center;
-}
-.dt-cap-q {
-  font-size:30px; font-weight:700; color:var(--teal);
-  text-shadow:0 0 14px rgba(110,192,196,0.9);
-  animation:dtMysteryFlicker 2.2s steps(1) infinite;
-}
-.dt-cap-label {
-  position:absolute; left:0; right:0; top:118px; text-align:center;
-  font-size:10px; letter-spacing:3px; color:#8d9aa3;
-}
-.dt-cap-stripes {
-  position:absolute; left:10px; right:10px; bottom:42px; height:16px;
-  background:repeating-linear-gradient(45deg, #b87f1f 0 10px, #241c10 10px 20px);
-  border:1px solid rgba(0,0,0,0.55); opacity:0.85;
+.dt-cap-img {
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:contain; -webkit-user-drag:none; user-select:none;
 }
 .dt-cap-seam {
   position:absolute; left:50%; top:8px; bottom:8px; width:2px; transform:translateX(-50%);
-  background:rgba(255,255,255,0.07);
+  background:transparent;
 }
 
 /* tag line under the capsule */

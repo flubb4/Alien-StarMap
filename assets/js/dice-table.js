@@ -267,14 +267,8 @@ window.dtRevealSkin = function(id) {
 function dtCapsuleHTML(id) {
   const shell = `
     <div class="dt-cap-art">
-      <div class="dt-cap-fin top"></div>
-      <div class="dt-cap-body">
-        <div class="dt-cap-window"><span class="dt-cap-q">?</span></div>
-        <div class="dt-cap-label">W-Y CARGO</div>
-        <div class="dt-cap-stripes"></div>
-        <div class="dt-cap-seam"></div>
-      </div>
-      <div class="dt-cap-fin bottom"></div>
+      <img class="dt-cap-img" src="assets/images/dt-supply-capsule.png?v=2" alt="" draggable="false">
+      <div class="dt-cap-seam"></div>
     </div>`;
   return `
     <div class="dt-cap-stage">

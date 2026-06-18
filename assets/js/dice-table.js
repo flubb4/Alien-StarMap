@@ -369,13 +369,8 @@ function dtBuildLayout() {
       <div class="dt-console" id="dtConsole"></div>
       <div class="dt-stage">
         <div class="dt-table">
-          <div class="dt-table-rim"></div>
-          <div class="dt-table-surface">
-            <div class="dt-table-grid"></div>
-            <div class="dt-table-marking">WEYLAND-YUTANI</div>
-            <div class="dt-table-marking dt-table-marking--sub">SURFACE 04 // KEEP CLEAR</div>
-            <div class="dt-bolt tl"></div><div class="dt-bolt tr"></div>
-            <div class="dt-bolt bl"></div><div class="dt-bolt br"></div>
+          <div class="dt-table-frame">
+            <img class="dt-table-img" src="assets/images/dt-table.png?v=1" alt="" draggable="false">
             <div class="dt-dice-layer" id="dtDiceLayer"></div>
           </div>
         </div>

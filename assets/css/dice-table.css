@@ -136,48 +136,22 @@
 /* ── TABLE (top-down) ───────────────────────────────────────── */
 .dt-stage { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:12px; }
 
-.dt-table { flex:1 1 auto; min-height:0; position:relative; padding:14px; }
-.dt-table-rim {
-  position:absolute; inset:0;
-  clip-path:polygon(7% 0, 93% 0, 100% 12%, 100% 88%, 93% 100%, 7% 100%, 0 88%, 0 12%);
-  background:linear-gradient(160deg, #2c3a33 0%, #16221c 45%, #0c1511 100%);
-  box-shadow:0 0 40px rgba(0,0,0,0.8);
+.dt-table {
+  flex:1 1 auto; min-height:0; padding:14px;
+  display:flex; align-items:center; justify-content:center;
 }
-.dt-table-surface {
-  position:absolute; inset:14px; overflow:hidden;
-  clip-path:polygon(7% 0, 93% 0, 100% 12%, 100% 88%, 93% 100%, 7% 100%, 0 88%, 0 12%);
-  background:
-    radial-gradient(ellipse at 50% 35%, rgba(255,154,60,0.07), transparent 60%),
-    radial-gradient(ellipse at center, #1a2620 0%, #121c17 55%, #0a120e 100%);
-  box-shadow:inset 0 0 80px rgba(0,0,0,0.75), inset 0 0 2px var(--amber-glow);
+.dt-table-frame {
+  position:relative; aspect-ratio:1672 / 941;
+  max-width:100%; max-height:100%;
+  filter:drop-shadow(0 0 40px rgba(0,0,0,0.8));
 }
-.dt-table-grid {
-  position:absolute; inset:0; opacity:0.5; pointer-events:none;
-  background:
-    linear-gradient(var(--hair-soft) 1px, transparent 1px),
-    linear-gradient(90deg, var(--hair-soft) 1px, transparent 1px);
-  background-size:46px 46px;
-  -webkit-mask-image:radial-gradient(ellipse at center, #000 30%, transparent 85%);
-  mask-image:radial-gradient(ellipse at center, #000 30%, transparent 85%);
+.dt-table-img {
+  display:block; width:100%; height:100%; object-fit:contain;
+  user-select:none; -webkit-user-drag:none;
 }
-.dt-table-marking {
-  position:absolute; left:50%; top:50%; transform:translate(-50%,-130%);
-  font-size:30px; letter-spacing:14px; color:rgba(240,230,210,0.05);
-  font-weight:700; pointer-events:none; white-space:nowrap;
-}
-.dt-table-marking--sub {
-  transform:translate(-50%,30%);
-  font-size:12px; letter-spacing:7px; color:rgba(255,154,60,0.10);
-}
-.dt-bolt {
-  position:absolute; width:11px; height:11px; border-radius:50%;
-  background:radial-gradient(circle at 35% 35%, #3d4f45, #0a120e 75%);
-  box-shadow:inset 0 0 3px #000, 0 0 2px rgba(255,154,60,0.25);
-}
-.dt-bolt.tl{ top:10px; left:9%; } .dt-bolt.tr{ top:10px; right:9%; }
-.dt-bolt.bl{ bottom:10px; left:9%; } .dt-bolt.br{ bottom:10px; right:9%; }
 
-.dt-dice-layer { position:absolute; inset:0; z-index:2; }
+/* dice land only inside the recessed play surface of the table image */
+.dt-dice-layer { position:absolute; left:13.5%; right:13%; top:22%; bottom:24%; z-index:2; }
 
 /* ── DICE ───────────────────────────────────────────────────── */
 .dt-die {

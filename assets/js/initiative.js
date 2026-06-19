@@ -280,7 +280,12 @@ function renderAlienHunt(area, data, now) {
     field.appendChild(s);
   }
 
-  const emojiTypes = ['👾','👾','👽','👾','👾','🛸','👾','👽','👾','🤖'];
+  const huntIcons = [
+    'assets/images/ah-xeno.png?v=2','assets/images/ah-facehugger.png?v=2','assets/images/ah-xeno.png?v=2',
+    'assets/images/ah-egg.png?v=2','assets/images/ah-dropship.png?v=2','assets/images/ah-xeno.png?v=2',
+    'assets/images/ah-facehugger.png?v=2','assets/images/ah-egg.png?v=2','assets/images/ah-xeno.png?v=2',
+    'assets/images/ah-dropship.png?v=2'
+  ];
 
   // ── Build movement states (reuse saved positions across re-renders) ────────
   alienHuntMoveStates = alienList.map((ad, i) => {
@@ -302,7 +307,7 @@ function renderAlienHunt(area, data, now) {
   // ── Create alien elements ─────────────────────────────────────────────────
   alienHuntMoveStates.forEach((state, i) => {
     const ad     = alienList[i];
-    const emoji  = emojiTypes[i % emojiTypes.length];
+    const iconSrc = huntIcons[i % huntIcons.length];
     const taken  = state.dead;
     const taker  = taken ? playerList.find(p => p.name===state.takenBy) : null;
     const tcolor = taker ? taker.color : '#ff9a3c';
@@ -314,7 +319,7 @@ function renderAlienHunt(area, data, now) {
 
     alien.innerHTML = `
       <div class="hunt-alien-inner">
-        <span class="hunt-alien-emoji">${taken?'💀':emoji}</span>
+        <span class="hunt-alien-emoji"><img src="${iconSrc}" alt="" class="hunt-alien-img" draggable="false"></span>
         <span class="hunt-alien-badge" style="background:#06100b;border-color:${taken?tcolor+'88':'#3f3a2c'};color:${taken?tcolor:'#6e6650'}">${taken?ad.value:'?'}</span>
       </div>
       <div class="hunt-alien-name" style="color:${taken?tcolor:'#6e6650'}">${taken?state.takenBy:'???'}</div>
@@ -463,8 +468,8 @@ function doAlienShot(el, entry, field) {
     }
 
     setTimeout(() => {
-      const emojiEl = el.querySelector('.hunt-alien-emoji');
-      if (emojiEl) { emojiEl.textContent='💀'; emojiEl.style.filter=`drop-shadow(0 0 8px ${entry.color})`; }
+      const imgEl = el.querySelector('.hunt-alien-img');
+      if (imgEl) imgEl.style.filter = `grayscale(1) brightness(.5) drop-shadow(0 0 8px ${entry.color})`;
     }, 450);
   }, 260);
 }

@@ -1,7 +1,8 @@
-import { ref, set, remove, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ════════════════════════════════════════════════════════
 // PROJECT BLACK VEIL — Fragment System (Firebase synced)
+// Per-player unlocks: characters/{player}/blackveil/unlocked/{id}
 // ════════════════════════════════════════════════════════
 const BV_FRAGMENTS = [
   { id:1,  android:'AX-31',         name:'"KESTREL"',   mission:"111 TAURI — SUTTER'S WORLD",    param:'SURFACE TEMPERATURE',       value:'[ +58°C / −08°C ]',           bar:88, context:'Extreme diurnal cycle confirmed. Surface peaks 58–62°C, drops to −8°C at night. Delta: 66–74K. Biological activity concentrated in subsurface layers.', status:[['CORRUPTION','OK','ok'],['GEOLOGY','ARID','ok'],['ATMO','BREATHABLE','ok'],['ORBIT','0.87 AU','ok']], ts:'2184.11.04 / 07:33:19' },
@@ -15,57 +16,89 @@ const BV_FRAGMENTS = [
   { id:9,  android:'AX-117',        name:'"MERIDIAN"',   mission:'████████ — [CLASSIFIED]',       param:'HYDROLOGICAL DEPTH STRUCTURE',value:'[ SUBSURFACE ONLY ]',        bar:92, context:'Water reserves exclusively below 200m depth. Surface appears dry and arid — no visible waterways. Subsurface caverns with thermal streams confirmed. Ideal concealed breeding conditions.', status:[['CORRUPTION','55.1%','crit'],['SURFACE','ARID','ok'],['DEPTH','>200m','ok'],['MISSION','CLASSIFIED','crit']], ts:'2185.05.██ / ██:██:██' },
   { id:10, android:'AX-133',        name:'"OMEGA"',      mission:'BLACKSITE THETA — [CRITICAL]',  param:'SEISMIC STABILITY',         value:'[ QUIET ZONE / <0.2 RICHTER ]',bar:12, context:'Planet geologically inert. Basalt cave systems stable for >10 million years. Structural integrity: maximum. Only known planetary class with optimal combination of ALL 10 parameters.', status:[['CORRUPTION','67.3%','crit'],['SEISMIC','0.18 RICHTER','ok'],['CAVES','STABLE >10Ma','ok'],['STATUS','FINAL FRAGMENT','crit']], ts:'████.██.██ / ██:██:██' },
 ];
+const BV_ALL_IDS = BV_FRAGMENTS.map(f => f.id);
 
-let bvGMAuthed = false;
-const BV_DB_PATH = 'session/blackveil/unlocked';
+let bvGMAuthed   = false;   // unlocked via the in-panel GM password
+let bvAllChars   = {};      // GM: live mirror of every character
+let bvPlayerList = [];      // GM: sorted roster of operative names
+let bvViewPlayer = null;    // GM: the operative currently being managed
+let bvMyUnlocked = [];      // this client's own unlocked fragment ids
+let bvCharSubbed = false;
 
-// ── Listen for changes in Firebase and update UI in real-time ──
+const bvUnlockedPath = name => 'characters/' + name + '/blackveil/unlocked';
+
+function bvOverlayActive() {
+  return document.getElementById('bvOverlay').classList.contains('active');
+}
+
+function bvUnlockedFor(name) {
+  const u = name && (bvAllChars[name] || {}).blackveil?.unlocked;
+  return u ? Object.keys(u).map(Number) : [];
+}
+
+// ── Every client watches its OWN drops (button glow / progress / cards) ──
 function bvInitFirebase() {
-  const bvRef = ref(window.db, BV_DB_PATH);
-  onValue(bvRef, snap => {
-    const unlocked = snap.val() ? Object.keys(snap.val()).map(Number) : [];
-    bvUpdateBtnState(unlocked);
-    if (document.getElementById('bvOverlay').classList.contains('active')) {
-      bvRenderCards(unlocked);
-      if (bvGMAuthed) bvRenderToggles(unlocked);
+  if (!window.myName) return;
+  onValue(ref(window.db, bvUnlockedPath(window.myName)), snap => {
+    bvMyUnlocked = snap.val() ? Object.keys(snap.val()).map(Number) : [];
+    bvUpdateBtn();
+    if (bvOverlayActive() && !bvGMAuthed) bvRenderCards(bvMyUnlocked);
+  });
+}
+
+// ── GM: watch the full roster so tabs/toggles stay live ──
+function bvEnsureCharSub() {
+  if (bvCharSubbed) return;
+  bvCharSubbed = true;
+  onValue(ref(window.db, 'characters'), snap => {
+    bvAllChars = snap.val() || {};
+    if (bvGMAuthed && bvOverlayActive()) {
+      bvRefreshPlayerList();
+      bvRenderToggles();
+      bvRenderCards(bvUnlockedFor(bvViewPlayer));
     }
   });
 }
 
-function bvGetUnlocked(cb) {
-  get(ref(window.db, BV_DB_PATH)).then(snap => {
-    cb(snap.val() ? Object.keys(snap.val()).map(Number) : []);
-  });
+function bvRefreshPlayerList() {
+  const names = new Set();
+  if (window._onlinePlayers) window._onlinePlayers.forEach(n => names.add(n));
+  Object.keys(bvAllChars).forEach(n => names.add(n));
+  bvPlayerList = [...names].filter(Boolean).sort();
+  if (!bvViewPlayer || !bvPlayerList.includes(bvViewPlayer)) {
+    bvViewPlayer = bvPlayerList[0] || null;
+  }
 }
 
-function bvSaveUnlocked(arr) {
-  const data = {};
-  arr.forEach(id => { data[id] = true; });
-  set(ref(window.db, BV_DB_PATH), arr.length ? data : null);
-}
-
-function bvUpdateBtnState(unlocked) {
+function bvUpdateBtn() {
   const btn = document.getElementById('bvBtn');
   if (!btn) return;
-  if (unlocked.length > 0 || bvGMAuthed) {
-    btn.classList.add('unlocked');
-    btn.title = `Project Black Veil — ${unlocked.length}/10 fragments unlocked`;
-  } else {
-    btn.classList.remove('unlocked');
-    btn.title = 'Project Black Veil — locked (no fragments unlocked yet)';
-  }
+  const has = bvMyUnlocked.length > 0 || bvGMAuthed;
+  btn.classList.toggle('unlocked', has);
+  btn.title = bvGMAuthed
+    ? 'Project Black Veil — GM access'
+    : (has
+        ? `Project Black Veil — ${bvMyUnlocked.length}/10 fragments unlocked`
+        : 'Project Black Veil — locked (no fragments unlocked yet)');
+}
+
+function bvSetProgress(n) {
   const count = document.getElementById('bvProgCount');
   const fill  = document.getElementById('bvProgFill');
-  if (count) count.textContent = `${unlocked.length}/10`;
-  if (fill)  fill.style.width = `${unlocked.length * 10}%`;
+  if (count) count.textContent = `${n}/10`;
+  if (fill)  fill.style.width = `${n * 10}%`;
 }
 
 window.openBVPanel = function() {
-  bvGetUnlocked(unlocked => {
-    document.getElementById('bvOverlay').classList.add('active');
-    bvRenderCards(unlocked);
-    if (bvGMAuthed) bvRenderToggles(unlocked);
-  });
+  document.getElementById('bvOverlay').classList.add('active');
+  if (bvGMAuthed) {
+    bvEnsureCharSub();
+    bvRefreshPlayerList();
+    bvRenderToggles();
+    bvRenderCards(bvUnlockedFor(bvViewPlayer));
+  } else {
+    bvRenderCards(bvMyUnlocked);
+  }
 };
 
 window.closeBVPanel = function() {
@@ -84,9 +117,11 @@ window.bvGMAuth = async function() {
     document.getElementById('bvGMLogin').style.display = 'none';
     document.getElementById('bvGMControls').style.display = 'block';
     err.textContent = '';
-    // GM can always open panel
-    document.getElementById('bvBtn').classList.add('unlocked');
-    bvGetUnlocked(u => bvRenderToggles(u));
+    bvUpdateBtn();
+    bvEnsureCharSub();
+    bvRefreshPlayerList();
+    bvRenderToggles();
+    bvRenderCards(bvUnlockedFor(bvViewPlayer));
   } else {
     err.textContent = '— ACCESS DENIED';
     document.getElementById('bvGMPw').value = '';
@@ -94,47 +129,82 @@ window.bvGMAuth = async function() {
   }
 };
 
-window.bvToggleFragment = function(id) {
-  bvGetUnlocked(unlocked => {
-    let next;
-    if (unlocked.includes(id)) {
-      next = unlocked.filter(x => x !== id);
-    } else {
-      next = [...unlocked, id].sort((a,b) => a-b);
-    }
-    bvSaveUnlocked(next);
+window.bvViewPlayerTab = function(name) {
+  bvViewPlayer = name;
+  bvRenderToggles();
+  bvRenderCards(bvUnlockedFor(name));
+};
+
+// GM toggles one fragment for one operative (additive — click any time to add more)
+window.bvToggleFragment = function(player, id) {
+  if (!bvGMAuthed || !player) return;
+  const cur = bvUnlockedFor(player).includes(id);
+  set(ref(window.db, bvUnlockedPath(player) + '/' + id), cur ? null : true);
+};
+
+// GM releases one fragment to EVERY operative at once (re-click locks it for all)
+window.bvToggleFragmentAll = function(id) {
+  if (!bvGMAuthed || !bvPlayerList.length) return;
+  const everyone = bvPlayerList.every(n => bvUnlockedFor(n).includes(id));
+  bvPlayerList.forEach(n => {
+    set(ref(window.db, bvUnlockedPath(n) + '/' + id), everyone ? null : true);
   });
 };
 
 window.bvUnlockAll = function() {
-  bvSaveUnlocked(BV_FRAGMENTS.map(f => f.id));
+  if (!bvGMAuthed || !bvViewPlayer) return;
+  const data = {};
+  BV_ALL_IDS.forEach(id => { data[id] = true; });
+  set(ref(window.db, bvUnlockedPath(bvViewPlayer)), data);
 };
 window.bvLockAll = function() {
-  bvSaveUnlocked([]);
+  if (!bvGMAuthed || !bvViewPlayer) return;
+  set(ref(window.db, bvUnlockedPath(bvViewPlayer)), null);
 };
 
-function bvRenderToggles(unlocked) {
-  const grid = document.getElementById('bvToggleGrid');
+function bvRenderToggles() {
+  const tabsEl = document.getElementById('bvPlayerTabs');
+  const grid   = document.getElementById('bvToggleGrid');
   if (!grid) return;
+
+  if (tabsEl) {
+    tabsEl.innerHTML = bvPlayerList.length
+      ? bvPlayerList.map(n =>
+          `<button class="bv-player-tab ${n === bvViewPlayer ? 'active' : ''}" onclick="bvViewPlayerTab('${n}')">
+            ${n}<span class="bv-player-tab-n">${bvUnlockedFor(n).length}/10</span>
+          </button>`
+        ).join('')
+      : '<span class="bv-player-empty">// No operatives online yet</span>';
+  }
+
+  if (!bvViewPlayer) { grid.innerHTML = ''; bvSetProgress(0); return; }
+
+  const unlocked = bvUnlockedFor(bvViewPlayer);
   grid.innerHTML = BV_FRAGMENTS.map(f => {
-    const on = unlocked.includes(f.id);
-    return `<div class="bv-toggle-row ${on?'on':''}">
+    const on    = unlocked.includes(f.id);
+    const allOn = bvPlayerList.length > 0 && bvPlayerList.every(n => bvUnlockedFor(n).includes(f.id));
+    return `<div class="bv-toggle-row ${on ? 'on' : ''}">
       <div><span class="bv-toggle-id">${String(f.id).padStart(2,'0')}/10</span>${f.android} ${f.name}</div>
-      <button class="bv-toggle-btn ${on?'on':''}" onclick="bvToggleFragment(${f.id})">
-        ${on ? 'ACTIVE' : 'LOCKED'}
-      </button>
+      <div class="bv-toggle-actions">
+        <button class="bv-toggle-btn ${on ? 'on' : ''}" onclick="bvToggleFragment('${bvViewPlayer}',${f.id})">
+          ${on ? 'ACTIVE' : 'LOCKED'}
+        </button>
+        <button class="bv-toggle-all ${allOn ? 'on' : ''}" onclick="bvToggleFragmentAll(${f.id})"
+          title="Dieses Fragment für ALLE Spieler freischalten / sperren">${allOn ? 'ALL ✓' : 'ALL'}</button>
+      </div>
     </div>`;
   }).join('');
 }
 
 function bvRenderCards(unlocked) {
+  bvSetProgress(unlocked.length);
   const c = document.getElementById('bvCardsContainer');
   if (!c) return;
   if (unlocked.length === 0) {
     c.innerHTML = `<div class="bv-empty">
       <div class="bv-empty-icon">🧬</div>
       <div>No fragments unlocked</div>
-      <div class="bv-empty-sub">Awaiting GM authorization</div>
+      <div class="bv-empty-sub">${bvGMAuthed ? 'Awaiting fragment release for this operative' : 'Awaiting GM authorization'}</div>
     </div>`;
     return;
   }
@@ -190,6 +260,8 @@ document.addEventListener('keydown', e => {
 // Init when Firebase is ready (call after auth)
 function bvInit() {
   bvInitFirebase();
-  bvGetUnlocked(bvUpdateBtnState);
 }
 window.bvInit = bvInit;
+
+// Expose for the targeting module (per-player unlock lookups)
+window.BV_ALL_IDS = BV_ALL_IDS;

@@ -7,7 +7,8 @@ import { ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10
 // Wenn alle 10 Filter korrekt und exakt 1 System übrig → Queen-Pin auf StarMap.
 // ════════════════════════════════════════════════════════════════
 
-const BVT_DB_PATH    = 'session/blackveil/targeting';      // { fragId: chosenOptionId }
+// Per-player: each operative fills only their own fragments' choices.
+const bvtStatePath   = () => 'characters/' + window.myName + '/blackveil/targeting'; // { fragId: chosenOptionId }
 const BVT_QUEEN_PATH = 'session/blackveil/queenLocation';  // { x, y, system, ts }
 
 // ── 10 Filter, einer pro Fragment ──
@@ -464,19 +465,24 @@ window.BVT_SYSTEMS = BVT_SYSTEMS;
 
 // ── Firebase ──
 function bvtInitFirebase() {
-  onValue(ref(window.db, BVT_DB_PATH), snap => {
+  // Player's own targeting choices
+  onValue(ref(window.db, bvtStatePath()), snap => {
     bvtState = snap.val() || {};
     if (document.getElementById('bvOverlay').classList.contains('active') && bvtView === 'targeting') {
       bvtRender();
     }
   });
-  // Also subscribe to unlock list so targeting view stays in sync
-  onValue(ref(window.db, 'session/blackveil/unlocked'), snap => {
-    bvtUnlocked = snap.val() ? Object.keys(snap.val()).map(Number) : [];
-    if (document.getElementById('bvOverlay').classList.contains('active') && bvtView === 'targeting') {
-      bvtRender();
-    }
-  });
+  // Which fragments this client may work: GM sees all, players only their own drops
+  if (window.isGM) {
+    bvtUnlocked = (window.BV_ALL_IDS || []).slice();
+  } else {
+    onValue(ref(window.db, 'characters/' + window.myName + '/blackveil/unlocked'), snap => {
+      bvtUnlocked = snap.val() ? Object.keys(snap.val()).map(Number) : [];
+      if (document.getElementById('bvOverlay').classList.contains('active') && bvtView === 'targeting') {
+        bvtRender();
+      }
+    });
+  }
 }
 window.bvtInit = bvtInitFirebase;
 
@@ -536,12 +542,12 @@ window.bvtSetChoice = function(fragId, optionId) {
   } else {
     update[fragId] = optionId;
   }
-  set(ref(window.db, BVT_DB_PATH), Object.keys(update).length ? update : null)
+  set(ref(window.db, bvtStatePath()), Object.keys(update).length ? update : null)
     .then(() => bvtCheckQueenLock());
 };
 
 window.bvtClearAll = function() {
-  remove(ref(window.db, BVT_DB_PATH));
+  remove(ref(window.db, bvtStatePath()));
   remove(ref(window.db, BVT_QUEEN_PATH));
 };
 

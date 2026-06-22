@@ -993,7 +993,10 @@ onValue(interceptRef, snap => {
     return;
   }
 
-  // Show the alert to EVERYONE — deduplicate by timestamp
+  const phase = data.phase || 1;
+
+  // First sighting — wake everyone and let the captain drop out of FTL.
+  // Deduplicate the travel-stop by timestamp so it only fires once per event.
   if (!_shownIntercepts.has(data.ts)) {
     _shownIntercepts.add(data.ts);
 
@@ -1009,13 +1012,18 @@ onValue(interceptRef, snap => {
         advanceDateByTravel(travelledParsecs);
       }, 800);
     }
-
-    showInterceptAlert(data);
   }
 
-  // Reflect the GM's "freischalten" on every client — once unlocked the
-  // OPEN TRADE TERMINAL button becomes visible to everyone, not just the GM.
-  applyInterceptShopUnlock(!!data.shopUnlocked);
+  if (phase >= 2) {
+    // Phase 2 — GM has sent the full Clunkkynoost hail.
+    showInterceptAlert(data);
+    // Reflect the GM's "freischalten" on every client — once unlocked the
+    // OPEN TRADE TERMINAL button becomes visible to everyone, not just the GM.
+    applyInterceptShopUnlock(!!data.shopUnlocked);
+  } else {
+    // Phase 1 — minimal "Achtung, Interception" warning to wake the players.
+    showInterceptWarning();
+  }
 });
 
 function rollInterception(fromX, fromY, toX, toY, parsecs) {
@@ -1033,18 +1041,32 @@ function rollInterception(fromX, fromY, toX, toY, parsecs) {
     active: true,
     x: ix, y: iy,
     parsecs: parsecs,
-    ts: Date.now()
+    ts: Date.now(),
+    phase: 1
   });
+}
 
-  // Auto-clear after 60 seconds
-  setTimeout(() => {
-    remove(interceptRef);
-  }, 60000);
+// Phase 1 — the simple "Achtung, Interception" warning. No Clunkkynoost reveal yet.
+function showInterceptWarning() {
+  const el = document.getElementById('interceptAlert');
+  if (!el) return;
+  document.getElementById('interceptWarningView').style.display = '';
+  document.getElementById('interceptClunkView').style.display = 'none';
+  const hdr = document.getElementById('interceptHeaderText');
+  if (hdr) hdr.textContent = 'Interception Detected';
+  // Only the GM gets the control to send the full Clunkkynoost hail.
+  const esc = document.getElementById('interceptEscalateRow');
+  if (esc) esc.style.display = window.isGM ? 'block' : 'none';
+  el.classList.add('open');
 }
 
 function showInterceptAlert(data) {
   const el = document.getElementById('interceptAlert');
   if (!el) return;
+  document.getElementById('interceptWarningView').style.display = 'none';
+  document.getElementById('interceptClunkView').style.display = '';
+  const hdr = document.getElementById('interceptHeaderText');
+  if (hdr) hdr.textContent = 'Emergency FTL Dropout — Interception';
   document.getElementById('interceptCoords').textContent =
     'INTERCEPT COORDS: ' + Math.round(data.x) + ', ' + Math.round(data.y) +
     '  //  ' + parseFloat(data.parsecs).toFixed(2) + ' PC FROM ORIGIN';
@@ -1085,6 +1107,12 @@ function applyInterceptShopUnlock(unlocked) {
     if (shopBtn)   shopBtn.style.display = 'none';
   }
 }
+
+// GM escalates the warning into the full Clunkkynoost hail for everyone.
+window.escalateIntercept = function() {
+  if (!window.isGM) return;
+  update(interceptRef, { phase: 2 });
+};
 
 window.revealInterceptShop = function() {
   if (!window.isGM) return;
@@ -1140,9 +1168,9 @@ window.triggerManualIntercept = function() {
     x: ix, y: iy,
     parsecs: '0.00',
     ts: Date.now(),
-    manual: true
+    manual: true,
+    phase: 1
   });
-  setTimeout(() => remove(interceptRef), 60000);
 };
 
 // ============================================================

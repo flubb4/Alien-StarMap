@@ -414,7 +414,7 @@ function dtRenderConsole() {
   const c = dtMyChar || {};
   const stress = parseInt(c.stressLevel) || 0;
 
-  let html = `<div class="dt-console-title">// ROLL CONSOLE — ${window.myName || 'OPERATIVE'}</div>`;
+  let html = '';
 
   for (const a of DT_ATTR_ORDER) {
     const av  = dtAttrVal(c, a);

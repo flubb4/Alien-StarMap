@@ -1,5 +1,5 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { srRoll } from "./skill-roll.js?v=2";
+import { srRoll, srPush } from "./skill-roll.js?v=3";
 
 // ════════════════════════════════════════════════════════════════
 // DICE TABLE — shared skill-roll table (Alien RPG)
@@ -21,6 +21,7 @@ const DT_SKILLS = [
   { key:'medicalAid',     label:'MEDICAL AID',     attr:'emp' },
 ];
 const DT_ATTR_LABEL = { str:'STRENGTH', agi:'AGILITY', wit:'WITS', emp:'EMPATHY' };
+const DT_MAX_HELPERS = 5;     // crewmates that can chip in a die each
 const DT_ATTR_ORDER = ['str','agi','wit','emp'];
 // stress response that debuffs each attribute by −2 (mirrors character sheet)
 const DT_DEBUFF = { str:'Frantic', agi:'Shakes', wit:'Tunnel_Vision', emp:'Aggravated' };
@@ -37,6 +38,7 @@ const DT_SKINS = {
 };
 
 let dtSelected    = null;     // selected roll: 'skill:stamina' | 'attr:str'
+let dtHelpers     = 0;        // crewmates helping the next throw (+1 base die each)
 let dtMyChar      = null;     // own character sheet data
 let dtCharSubbed  = false;
 let dtCurrentRoll = null;     // last roll seen
@@ -436,15 +438,25 @@ function dtRenderConsole() {
   }
 
   const sel = dtGetSelection();
-  const total = sel ? sel.base + stress : 0;
+  const help = dtHelpers;
+  const total = sel ? sel.base + stress + help : 0;
 
   html += `
     <div class="dt-summary">
       <div class="dt-summary-row"><span>BASE DICE</span><span>${sel ? sel.base : '—'}</span></div>
       <div class="dt-summary-row dt-summary-stress"><span>STRESS DICE</span><span>${sel ? stress : '—'}</span></div>
+      <div class="dt-summary-row dt-summary-help">
+        <span>HELFER</span>
+        <span class="dt-help-stepper">
+          <button class="dt-help-btn" onclick="dtSetHelpers(-1)" ${help <= 0 ? 'disabled' : ''}>−</button>
+          <b class="dt-help-val">+${help}</b>
+          <button class="dt-help-btn" onclick="dtSetHelpers(1)" ${help >= DT_MAX_HELPERS ? 'disabled' : ''}>+</button>
+        </span>
+      </div>
       <div class="dt-summary-row dt-summary-total"><span>POOL</span><span>${sel ? total + ' D6' : '—'}</span></div>
       <div class="dt-summary-row dt-summary-skin"><span>SKIN</span><span>${DT_SKINS[dtEffectiveSkin()].name}</span></div>
     </div>
+    <div class="dt-help-hint">// PRO MITSPIELER +1 WÜRFEL</div>
     <button class="dt-roll-btn" onclick="dtRoll()" ${(!sel || total <= 0) ? 'disabled' : ''}>⬢ THROW DICE</button>`;
 
   el.innerHTML = html;
@@ -455,12 +467,17 @@ window.dtSelect = function(key) {
   dtRenderConsole();
 };
 
+window.dtSetHelpers = function(delta) {
+  dtHelpers = Math.max(0, Math.min(DT_MAX_HELPERS, dtHelpers + delta));
+  dtRenderConsole();
+};
+
 // ── Roll action ───────────────────────────────────────────────────
 window.dtRoll = function() {
   const sel = dtGetSelection();
   if (!sel) return;
   const stress = parseInt((dtMyChar || {}).stressLevel) || 0;
-  if (sel.base + stress <= 0) return;
+  if (sel.base + stress + dtHelpers <= 0) return;
 
   const [type, key] = dtSelected.split(':');
   const opts = type === 'attr' ? { attr: key } : { skill: key };
@@ -470,8 +487,27 @@ window.dtRoll = function() {
     ...opts,
     label: sel.label,
     skin: dtEffectiveSkin(),
+    bonusBase: dtHelpers,
     publish: true,
   });
+  dtHelpers = 0;
+  dtRenderConsole();
+};
+
+// ── Push action (reroll non-6 dice for +1 stress, once per roll) ──
+function dtCanPush(roll) {
+  if (!roll || roll.player !== window.myName) return false;
+  if (roll.pushed) return false;
+  // cannot push when the previous throw showed a 1 on any stress die
+  if ((roll.stress || []).some(d => d.v === 1)) return false;
+  // need at least one non-6 die left to reroll
+  return (roll.base || []).concat(roll.stress || []).some(d => d.v !== 6);
+}
+
+window.dtPush = function() {
+  const roll = dtCurrentRoll;
+  if (!dtCanPush(roll)) return;
+  srPush(window.db, roll, { player: window.myName });
 };
 
 // ── Dice rendering & throw animation ──────────────────────────────
@@ -572,10 +608,13 @@ function dtRenderDice(roll, animate) {
 function dtResultStats(roll) {
   const dice = dtAllDice(roll);
   const gain = roll.stressGain ?? (roll.stress || []).filter(d => d.v === 1).length;
+  const pushCost = roll.pushCost || 0;
   return {
     successes: dice.filter(d => d.v === 6).length,
     gain,
-    panic: gain > 0 && (roll.stressNow ?? 0) >= 10,
+    pushCost,
+    pushed: !!roll.pushed,
+    panic: (gain + pushCost) > 0 && (roll.stressNow ?? 0) >= 10,
     count: dice.length,
   };
 }
@@ -583,13 +622,17 @@ function dtResultStats(roll) {
 function dtShowResult(roll) {
   const result = document.getElementById('dtResult');
   if (!result) return;
-  const { successes, gain, panic, count } = dtResultStats(roll);
+  const { successes, gain, pushCost, pushed, panic, count } = dtResultStats(roll);
+  const help = roll.helpers || 0;
   result.innerHTML = `
     <span class="dt-result-who">${roll.player} ⟶ ${roll.skill}</span>
     <span class="dt-result-pool">[${count} D6]</span>
+    ${help > 0 ? `<span class="dt-result-help">+${help} HELFER</span>` : ''}
     <span class="dt-result-succ ${successes > 0 ? 'good' : 'bad'}">${successes} ${successes === 1 ? 'ERFOLG' : 'ERFOLGE'}</span>
+    ${pushed ? `<span class="dt-result-pushed">↻ GEPUSHT +${pushCost} STRESS</span>` : ''}
     ${gain > 0 ? `<span class="dt-result-stress">⚠ +${gain} STRESS</span>` : ''}
-    ${panic ? '<span class="dt-result-panic">⚠ STRESS MAX — PANIC ROLL!</span>' : ''}`;
+    ${panic ? '<span class="dt-result-panic">⚠ STRESS MAX — PANIC ROLL!</span>' : ''}
+    ${dtCanPush(roll) ? `<button class="dt-push-btn" onclick="dtPush()">↻ PUSH ROLL <span class="dt-push-cost">+1 STRESS</span></button>` : ''}`;
   result.classList.add('show');
 }
 

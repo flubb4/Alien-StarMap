@@ -558,6 +558,37 @@
 }
 @keyframes dtCapHintIn { 0%{opacity:0} 100%{opacity:1} }
 
+/* ── HELPER STEPPER (console) ───────────────────────────────── */
+.dt-summary-help { align-items:center; }
+.dt-help-stepper { display:inline-flex; align-items:center; gap:8px; }
+.dt-help-btn {
+  width:20px; height:20px; padding:0; line-height:1;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:var(--panel-2); border:1px solid var(--hair); color:var(--bone-2);
+  font-family:var(--mono); font-size:14px; cursor:pointer;
+  transition:all 0.15s var(--ease);
+}
+.dt-help-btn:hover:not(:disabled) { border-color:var(--teal); color:var(--teal); }
+.dt-help-btn:disabled { opacity:0.35; cursor:not-allowed; }
+.dt-help-val { color:var(--teal); font-weight:700; min-width:24px; text-align:center; }
+.dt-help-hint { margin-top:8px; font-size:9px; letter-spacing:1px; color:var(--dim); text-align:center; }
+
+/* ── PUSH / HELPER RESULT CHIPS ─────────────────────────────── */
+.dt-result-help { color:var(--teal); font-size:11px; letter-spacing:1px; }
+.dt-result-pushed {
+  color:var(--amber-hi); font-weight:700; letter-spacing:1px;
+  text-shadow:0 0 10px var(--amber-glow);
+}
+.dt-push-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--amber-soft); border:1px solid var(--amber); color:var(--amber-hi);
+  font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:2px;
+  padding:6px 14px; cursor:pointer; transition:all 0.18s var(--ease);
+}
+.dt-push-btn:hover { background:var(--amber); color:var(--ink); box-shadow:0 0 16px var(--amber-glow); }
+.dt-push-cost { font-size:9px; letter-spacing:1px; color:var(--rust); }
+.dt-push-btn:hover .dt-push-cost { color:var(--ink); }
+
 /* ── RESPONSIVE ─────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .dt-main { flex-direction:column; overflow-y:auto; }

@@ -53,8 +53,9 @@ function srScatter(n) {
 // Returns { roll, successes, gain, stressNow, base, stress } — successes
 // is available synchronously to the caller even though the on-table
 // animation plays out asynchronously for every client.
-export async function srRoll(db, { player, char, attr, skill, label, skin = 'default', publish = true, applyStress = true, includeStress = true }) {
-  const { base: baseN, stress: stressRaw } = srPool(char, { attr, skill });
+export async function srRoll(db, { player, char, attr, skill, label, skin = 'default', publish = true, applyStress = true, includeStress = true, bonusBase = 0 }) {
+  const { base: baseN0, stress: stressRaw } = srPool(char, { attr, skill });
+  const baseN   = baseN0 + (parseInt(bonusBase) || 0);   // +1 base die per helping crewmate
   const stressN = includeStress ? stressRaw : 0;
   const positions = srScatter(baseN + stressN);
   const mk = (n, off) => Array.from({ length: n }, (_, i) => ({
@@ -81,6 +82,7 @@ export async function srRoll(db, { player, char, attr, skill, label, skin = 'def
     player, skill: label, skin,
     base: baseDice, stress: stressDice,
     stressGain: gain, stressNow,
+    helpers: parseInt(bonusBase) || 0,
     ts: Date.now(),
   };
 
@@ -89,4 +91,54 @@ export async function srRoll(db, { player, char, attr, skill, label, skin = 'def
   }
 
   return { roll, successes, gain, stressNow, base: baseN, stress: stressN };
+}
+
+// Push a previously-published roll (Alien RPG): pay +1 stress — which adds
+// one fresh stress die — keep every 6, and reroll everything else. Eligibility
+// (own roll, not already pushed, no 1s on the previous stress dice) is the
+// caller's responsibility. Returns the same shape as srRoll.
+export async function srPush(db, prevRoll, { player, applyStress = true, publish = true } = {}) {
+  const baseCount   = (prevRoll.base   || []).length;
+  const keptBaseN   = (prevRoll.base   || []).filter(d => d.v === 6).length;
+  const oldStressN  = (prevRoll.stress || []).length;
+  const keptStressN = (prevRoll.stress || []).filter(d => d.v === 6).length;
+  const newStressN  = Math.min(10, oldStressN + 1);   // +1 stress die from pushing
+
+  const positions = srScatter(baseCount + newStressN);
+  let p = 0;
+  const face  = () => 1 + Math.floor(Math.random() * 6);
+  const place = (v) => {
+    const pos = positions[p++];
+    return { v, x: pos.x, y: pos.y, r: Math.floor(Math.random() * 360) };
+  };
+
+  // 6s are kept (placed first), the rest are rerolled
+  const baseDice = [];
+  for (let i = 0; i < baseCount;  i++) baseDice.push(place(i < keptBaseN   ? 6 : face()));
+  const stressDice = [];
+  for (let i = 0; i < newStressN; i++) stressDice.push(place(i < keptStressN ? 6 : face()));
+
+  const gain      = stressDice.filter(d => d.v === 1).length;   // facehuggers from the reroll
+  const stressNow = Math.min(10, oldStressN + 1 + gain);        // +1 push cost + facehuggers
+  if (applyStress && player) {
+    set(ref(db, 'characters/' + player + '/stressLevel'), stressNow);
+  }
+
+  const successes = baseDice.concat(stressDice).filter(d => d.v === 6).length;
+
+  const roll = {
+    id: Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    player, skill: prevRoll.skill, skin: prevRoll.skin || 'default',
+    base: baseDice, stress: stressDice,
+    stressGain: gain, stressNow,
+    helpers: prevRoll.helpers || 0,
+    pushed: true, pushCost: 1,
+    ts: Date.now(),
+  };
+
+  if (publish) {
+    await set(ref(db, 'session/diceTable/roll'), roll);
+  }
+
+  return { roll, successes, gain, stressNow };
 }

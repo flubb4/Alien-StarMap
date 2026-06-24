@@ -39,6 +39,7 @@ const SESSION_PATH = 'android-bay/session';
 let _session       = null;     // last-seen session snapshot
 let _isDriver      = false;    // I opened this session
 let _isSpectator   = false;    // I joined someone else's session
+let _isViewer      = false;    // I opened while someone else drives — browsing freely, no lock yet
 let _sessionUnsub  = null;
 let _dismissedTs   = 0;        // last invite-ts I declined
 let _onDisconnectRef = null;   // driver-only: pending Firebase cleanup if tab dies
@@ -243,6 +244,12 @@ function bindGridDelegation(grid) {
     const state = pod.dataset.state;
     const bayId = pod.dataset.bay;
     if (state === 'empty') {
+      // Viewer tries to fill a bay → now offer the session-join request (or take
+      // over if the previous driver has since left).
+      if (_isViewer) {
+        if (foreignDriverActive()) { showInviteModal(_session); return; }
+        promoteToDriver();
+      }
       openAssignModal(bayId);
     } else if (state === 'occupied' || state === 'data-fragment') {
       if (window.isGM) openManageModal(bayId);
@@ -608,10 +615,10 @@ function handleSessionChange(prev, next) {
   // Own session — no action needed (we're driving, UI is already in sync)
   if (next.driverId === window.myId) return;
 
-  const isNew = !prev || prev.ts !== next.ts;
-
-  // New session, I'm not joined → offer invite (unless I dismissed this exact one)
-  if (isNew && !_isSpectator && next.ts > _dismissedTs) {
+  // No auto-invite on session start. The join request is pushed to everyone else
+  // only once the driver actually starts filling a bay (opens the assign modal).
+  const assignJustOpened = !!next.assignModal && !(prev && prev.assignModal);
+  if (assignJustOpened && !_isSpectator && next.ts > _dismissedTs) {
     showInviteModal(next);
   }
 
@@ -799,15 +806,42 @@ document.getElementById('abManageOverlay')?.addEventListener('click', e => {
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
+function foreignDriverActive() {
+  return !!(_session && _session.driverId && _session.driverId !== window.myId);
+}
+
+function startDriverSession() {
+  const newSession = {
+    driver:      window.myName || '—',
+    driverId:    window.myId   || '—',
+    ts:          Date.now(),
+    bayOpen:     true,
+    assignModal: null,
+    manageModal: null,
+    muthurOpen:  null,
+  };
+  _session = newSession;
+  writeFullSession(newSession);
+}
+
+// Viewer takes over an empty bay after the previous driver has left.
+function promoteToDriver() {
+  _isViewer = false;
+  _isDriver = true;
+  startDriverSession();
+}
+
 window.openAndroidBay = function (opts = {}) {
-  // Auto-spectator: if another driver is already running a session, join as spectator
-  // instead of overwriting it. Prevents two-driver races on the header-button path.
-  let asSpectator = !!opts.spectator;
-  if (!asSpectator && _session && _session.driverId && _session.driverId !== window.myId) {
-    asSpectator = true;
-  }
-  _isDriver    = !asSpectator;
+  // Only an explicit invite-accept opens straight into spectator mode. Opening
+  // via the header while another driver is active puts you in passive VIEWER
+  // mode: browse the bay freely, no banner. The "VIEWING …" notice is deferred
+  // until you actually try to fill an empty bay (see grid click handler).
+  const asSpectator = !!opts.spectator;
+  const foreignDriver = !asSpectator && foreignDriverActive();
+
   _isSpectator = asSpectator;
+  _isViewer    = !asSpectator && foreignDriver;
+  _isDriver    = !asSpectator && !foreignDriver;
   window._bayIsSpectator = _isSpectator;
   document.body.classList.toggle('bay-spectator', _isSpectator);
 
@@ -830,26 +864,18 @@ window.openAndroidBay = function (opts = {}) {
   attachBayListener();
 
   if (_isDriver) {
-    const newSession = {
-      driver:      window.myName || '—',
-      driverId:    window.myId   || '—',
-      ts:          Date.now(),
-      bayOpen:     true,
-      assignModal: null,
-      manageModal: null,
-      muthurOpen:  null,
-    };
-    _session = newSession;
-    writeFullSession(newSession);
-  } else if (_session) {
+    startDriverSession();
+  } else if (_isSpectator && _session) {
     applyRemoteSession(_session);
   }
+  // Viewer: no session write, no banner — just browse until a fill attempt.
 };
 
 window.closeAndroidBay = function () {
   const wasDriver = _isDriver;
   _isDriver    = false;
   _isSpectator = false;
+  _isViewer    = false;
   window._bayIsSpectator = false;
   document.body.classList.remove('bay-spectator');
 

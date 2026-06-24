@@ -92,7 +92,8 @@ try { loopEnabled = localStorage.getItem('alien-map-yt-loop') === '1'; } catch(e
 const PRESETS = [
   { kind: 'mp3', src: 'https://www.dropbox.com/scl/fi/yl84vqsufyanlkbqshg0m/Welcome-to-Sevastopol.mp3?rlkey=68ot9rrhf92qc4l2kzhjqdf2y&st=9jtrjd8d&raw=1', label: '🛰 STATION I',  title: 'Welcome to Sevastopol' },
   { kind: 'mp3', src: 'https://www.dropbox.com/scl/fi/cz3kf0u56jd8zlueka4r8/Solomons-Galleria.mp3?rlkey=su1onth50h46kz16phbu34u7y&st=4kag4352&raw=1',     label: '🛰 STATION II', title: "Solomon's Galleria" },
-  { kind: 'mp3', src: 'https://www.dropbox.com/scl/fi/t29te8pjf8az56mb7m3jt/Quarantine.mp3?rlkey=brfnrj9dkntndhonyymiyp6rt&st=26pu7j5j&raw=1',          label: '🚨 ACTION',     title: 'Quarantine' }
+  { kind: 'mp3', src: 'https://www.dropbox.com/scl/fi/t29te8pjf8az56mb7m3jt/Quarantine.mp3?rlkey=brfnrj9dkntndhonyymiyp6rt&st=26pu7j5j&raw=1',          label: '🚨 ACTION',     title: 'Quarantine' },
+  { kind: 'mp3', src: 'https://www.dropbox.com/scl/fi/081k7ge8cmg9825sxt80j/Alien-Film-Vibes-LV-426-planet-sound-with-ambient-score-for-8-hours.mp3?rlkey=zszsekbkeulagppmm0yzu8ms0&st=xlwnl1i6&raw=1', label: '🎬 FILM VIBE', title: 'Film Vibe' }
 ];
 
 // ── Inject all DOM (panel, widget, hidden player host, GM button) ────

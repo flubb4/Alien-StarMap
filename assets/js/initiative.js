@@ -1663,7 +1663,7 @@ let distFromId = null;
 let distToId   = null;
 
 function updateTravelDropdowns() {
-  const arr = Object.values(window.markers).sort((a,b)=>a.name.localeCompare(b.name));
+  const arr = Object.values(window.markers).filter(m => window.isGM || !m.gmOnly).sort((a,b)=>a.name.localeCompare(b.name));
   const opts = '<option value="">— Destination —</option>' +
     arr.map(m=>`<option value="${m.id}">${m.name.toUpperCase()}</option>`).join('');
   const t=document.getElementById('travelTo');
@@ -1684,7 +1684,7 @@ function updateTravelDropdowns() {
 }
 
 function updateDistanceDropdowns() {
-  const arr = Object.values(window.markers).sort((a,b) => a.name.localeCompare(b.name));
+  const arr = Object.values(window.markers).filter(m => window.isGM || !m.gmOnly).sort((a,b) => a.name.localeCompare(b.name));
   const fromSel = document.getElementById('distFrom');
   const toSel   = document.getElementById('distTo');
   const prevFrom = fromSel.value;

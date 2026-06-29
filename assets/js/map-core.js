@@ -121,7 +121,7 @@ function draw() {
   ctx.translate(viewX, viewY);
   ctx.scale(viewScale, viewScale);
   if (mapImg.complete) ctx.drawImage(mapImg, 0, 0, MAP_W, MAP_H);
-  Object.values(markers).forEach(drawMarker);
+  Object.values(markers).forEach(m => { if (window.isGM || !m.gmOnly) drawMarker(m); });
   if (window.drawRouteLine)    window.drawRouteLine();
   if (window.drawDistanceLine) window.drawDistanceLine();
   if (window.drawShipPosition) window.drawShipPosition();
@@ -135,13 +135,16 @@ function drawMarker(m) {
   const x = m.x, y = m.y;
   const color = m.color || '#00e5ff';
   const icon  = typeIcons[m.type] || '📍';
+  const gmOnly = !!m.gmOnly;
 
   ctx.globalAlpha = 0.22;
   ctx.strokeStyle = color;
   ctx.lineWidth = 1.5 / viewScale;
+  if (gmOnly) ctx.setLineDash([6/viewScale, 4/viewScale]);
   ctx.beginPath(); ctx.arc(x, y, 22/viewScale, 0, Math.PI*2); ctx.stroke();
   ctx.globalAlpha = 0.09;
   ctx.beginPath(); ctx.arc(x, y, 34/viewScale, 0, Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
   ctx.globalAlpha = 1;
 
   const stemH = 32/viewScale;
@@ -171,7 +174,7 @@ function drawMarker(m) {
 
   ctx.font = 'bold ' + (13/viewScale) + 'px "Share Tech Mono",monospace';
   ctx.textBaseline = 'top'; ctx.textAlign = 'center';
-  const labelText = m.name.toUpperCase();
+  const labelText = (gmOnly ? '🔒 ' : '') + m.name.toUpperCase();
   const labelY = y - stemH + 6/viewScale;
   const lw = ctx.measureText(labelText).width + 16/viewScale;
   const lh = 20/viewScale;
@@ -280,6 +283,7 @@ canvas.addEventListener('mousemove', e => {
 
   let hovered=null;
   Object.values(markers).forEach(m => {
+    if (!window.isGM && m.gmOnly) return;
     const sc=mapToScreen(m.x,m.y);
     if (Math.hypot(cx-(sc.x), cy-(sc.y-32-14)) < 20) hovered=m;
   });
@@ -325,6 +329,11 @@ function openModal(x,y) {
   pendingClick={x,y};
   document.getElementById('markerName').value='';
   document.getElementById('markerNote').value='';
+  const gmRow=document.getElementById('gmOnlyRow');
+  if (gmRow) {
+    gmRow.style.display = window.isGM ? 'flex' : 'none';
+    document.getElementById('markerGmOnly').checked = false;
+  }
   document.getElementById('modal').classList.add('open');
   setTimeout(()=>document.getElementById('markerName').focus(),50);
 }
@@ -342,6 +351,7 @@ function confirmMarker() {
     note:document.getElementById('markerNote').value.trim(),
     type:window.selectedType, color:window.selectedColor, author:window.myName, ts:Date.now()
   };
+  if (window.isGM && document.getElementById('markerGmOnly')?.checked) marker.gmOnly = true;
   set(ref(db,'markers/'+id), marker);
   document.getElementById('modal').classList.remove('open');
   pendingClick=null;
@@ -371,14 +381,14 @@ function updateSidebar() {
   if (window.updateTravelDropdowns)   window.updateTravelDropdowns();
   if (window.updateTravelBtn)         window.updateTravelBtn();
   const list=document.getElementById('markersList');
-  const arr=Object.values(markers);
+  const arr=Object.values(markers).filter(m => window.isGM || !m.gmOnly);
   document.getElementById('markerCount').textContent=arr.length;
   if (!arr.length) { list.innerHTML='<div class="no-markers">NO MARKERS PLACED<br>CLICK THE MAP TO ADD</div>'; return; }
   list.innerHTML=arr.slice().sort((a,b)=>b.ts-a.ts).map(m=>`
     <div class="marker-item" onclick="focusMarker('${m.id}')">
       <div style="font-size:12px;color:${m.color}">${typeIcons[m.type]}</div>
       <div class="marker-item-info">
-        <div class="marker-item-name" style="color:${m.color}">${m.name.toUpperCase()}</div>
+        <div class="marker-item-name" style="color:${m.color}">${m.gmOnly ? '🔒 ' : ''}${m.name.toUpperCase()}</div>
         <div class="marker-item-meta">${typeLabels[m.type]} • ${m.author}</div>
       </div>
       <button class="marker-item-del" onclick="deleteMarker('${m.id}',event)">✕</button>

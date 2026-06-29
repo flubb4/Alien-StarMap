@@ -306,6 +306,9 @@
     <h3>// Place Marker</h3>
     <input type="text" id="markerName" placeholder="Location name..." maxlength="50"/>
     <textarea id="markerNote" placeholder="Notes (optional)..." rows="3"></textarea>
+    <label id="gmOnlyRow" style="display:none;align-items:center;gap:8px;margin:4px 0 2px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--accent2,#ff9a3c)">
+      <input type="checkbox" id="markerGmOnly" style="cursor:pointer"/> 🔒 NUR GM SICHTBAR
+    </label>
     <div class="modal-btns">
       <button class="btn" onclick="cancelMarker()">Cancel</button>
       <button class="btn primary" onclick="confirmMarker()">Confirm</button>

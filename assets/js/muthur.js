@@ -6,21 +6,52 @@ const CFG          = window.APP_CONFIG || {};
 const WORKER_URL   = CFG.mutherWorkerUrl   || 'https://muthur-proxy.alienmuthur.workers.dev';
 const WORKER_TOKEN = CFG.mutherWorkerToken || 'Alien_muthur';
 
-const PROTOCOL_STEPS = [
-  { key: 'versiegelung',   label: 'VERSIEGELUNG'   },
-  { key: 'datenfragment',  label: 'DATENFRAGMENT'  },
-  { key: 'kopierstatus',   label: 'KOPIER-STATUS'  },
-  { key: 'komplikationen', label: 'KOMPLIKATIONEN' },
-  { key: 'crew-loyalitaet', label: 'CREW-LOYALITÄT' },
-];
+// Schritt-Keys bleiben über alle Conditions identisch (Speicherung/Logik in protocolData);
+// nur Label + Fragetext variieren je nach Intake-Condition.
+const PROTOCOL_KEYS = ['versiegelung', 'datenfragment', 'kopierstatus', 'komplikationen', 'crew-loyalitaet'];
 
-const PROTOCOL_QUESTIONS = [
-  'Wurde der Android vollständig versiegelt?',
-  'Ist das Datenfragment unbeschädigt und vollständig?',
-  'Ist das Datenfragment ungelesen und wurde es nicht kopiert?',
-  'Gab es Komplikationen bei der Abholung des Androiden?',
-  'Wie verhält sich die Crew? Folgt sie Anweisungen und Befehlen, oder bestehen Anzeichen für Befehlsverweigerung oder Aufstand?',
-];
+const CREW_QUESTION = 'Wie verhält sich die Crew? Folgt sie Anweisungen und Befehlen, oder bestehen Anzeichen für Befehlsverweigerung oder Aufstand?';
+
+const PROTOCOL_SETS = {
+  intact: {
+    labels: ['VERSIEGELUNG', 'DATENFRAGMENT', 'KOPIER-STATUS', 'KOMPLIKATIONEN', 'CREW-LOYALITÄT'],
+    questions: [
+      'Wurde der Android vollständig versiegelt?',
+      'Ist das Datenfragment unbeschädigt und vollständig?',
+      'Ist das Datenfragment ungelesen und wurde es nicht kopiert?',
+      'Gab es Komplikationen bei der Abholung des Androiden?',
+      CREW_QUESTION,
+    ],
+  },
+  damaged: {
+    labels: ['VERSIEGELUNG', 'DATENFRAGMENT', 'KOPIER-STATUS', 'SCHADENSURSACHE', 'CREW-LOYALITÄT'],
+    questions: [
+      'Wurde die beschädigte Einheit trotz des Schadens vollständig versiegelt?',
+      'Ist das Datenfragment trotz der Beschädigung unbeschädigt und vollständig?',
+      'Ist das Datenfragment ungelesen und wurde es nicht kopiert?',
+      'Wodurch wurde die Einheit beschädigt, und gab es Komplikationen bei der Abholung?',
+      CREW_QUESTION,
+    ],
+  },
+  'data-fragment': {
+    labels: ['BERGUNGSLAGE', 'DATENFRAGMENT', 'KOPIER-STATUS', 'KOMPLIKATIONEN', 'CREW-LOYALITÄT'],
+    questions: [
+      'Warum wurde die Einheit nicht geborgen? Was ist mit dem Android geschehen?',
+      'Ist das Datenfragment vollständig gesichert und unbeschädigt?',
+      'Ist das Datenfragment ungelesen und wurde es nicht kopiert?',
+      'Gab es Komplikationen oder Zugriff Dritter bei der Sicherung des Fragments?',
+      CREW_QUESTION,
+    ],
+  },
+};
+
+function activeProtocol() {
+  const set = PROTOCOL_SETS[_ctx?.cond] || PROTOCOL_SETS.intact;
+  return {
+    steps:     PROTOCOL_KEYS.map((key, i) => ({ key, label: set.labels[i] })),
+    questions: set.questions,
+  };
+}
 
 let _bayId         = null;
 let _ctx           = null;
@@ -218,6 +249,7 @@ function subscribeSession(bayId) {
 
 function writeInitMessage(bayId) {
   const isFragment = _ctx?.cond === 'data-fragment';
+  const q1 = activeProtocol().questions[0];
   const text = isFragment
 ? `SCHNITTSTELLE AKTIVIERT
 EINHEIT: ${_ctx?.desig || '—'}  ·  CONTAINER: ${bayId}  ·  KLASSE: ${_ctx?.cls || '—'}
@@ -226,14 +258,14 @@ STATUS: DATENFRAGMENT — EINHEIT NICHT GEBORGEN
 WEYLAND-YUTANI CORP. — LOYALITÄTSANALYSE v6.0
 SONDERPROTOKOLL INITIIERT. PRÜFUNGSSTUFE: ERHÖHT.
 ─────────────────────────────────────────────────
-FRAGE 1/5 — Wurde der Android vollständig versiegelt?`
+FRAGE 1/5 — ${q1}`
 : `SCHNITTSTELLE AKTIVIERT
 EINHEIT: ${_ctx?.desig || '—'}  ·  CONTAINER: ${bayId}  ·  KLASSE: ${_ctx?.cls || '—'}
 
 WEYLAND-YUTANI CORP. — LOYALITÄTSANALYSE v6.0
 STANDARDVERHÖR-SEQUENZ INITIIERT.
 ─────────────────────────────────────────────────
-FRAGE 1/5 — Wurde der Android vollständig versiegelt?`;
+FRAGE 1/5 — ${q1}`;
 
   push(ref(window.db, `muthur/sessions/${bayId}/messages`), {
     role: 'muthur', text, ts: Date.now(),
@@ -308,7 +340,7 @@ function updateProtocolUI() {
   const list = $('mtProtocolList');
   if (!list) return;
 
-  list.innerHTML = PROTOCOL_STEPS.map((step, i) => {
+  list.innerHTML = activeProtocol().steps.map((step, i) => {
     const item       = _protocolItems[step.key];
     const status     = item?.status    || 'AUSSTEHEND';
     const suspicious = item?.suspicious || false;
@@ -672,7 +704,7 @@ async function sendQuery() {
         messages:          apiMessages,
         directive:         sentDirective,
         protocolStep:      _protocolStep,
-        protocolQuestion:  (_protocolStep >= 1 && _protocolStep <= 5) ? PROTOCOL_QUESTIONS[_protocolStep - 1] : '',
+        protocolQuestion:  (_protocolStep >= 1 && _protocolStep <= 5) ? activeProtocol().questions[_protocolStep - 1] : '',
         stepFollowupCount: _stepFollowupCount,
         context: {
           desig: _ctx?.desig || '—',
@@ -698,7 +730,7 @@ async function sendQuery() {
 
       if (stepComplete && status) {
         const answeredStep = _protocolStep;
-        const stepKey      = PROTOCOL_STEPS[answeredStep - 1].key;
+        const stepKey      = PROTOCOL_KEYS[answeredStep - 1];
         const newItems     = {
           ..._protocolItems,
           [stepKey]: { status, suspicious: !!data.protocolSuspicious },
@@ -710,7 +742,7 @@ async function sendQuery() {
         if (answeredStep < 5) {
           await push(ref(window.db, `muthur/sessions/${_bayId}/messages`), {
             role: 'muthur',
-            text: `FRAGE ${answeredStep + 1}/5 — ${PROTOCOL_QUESTIONS[answeredStep]}`,
+            text: `FRAGE ${answeredStep + 1}/5 — ${activeProtocol().questions[answeredStep]}`,
             ts:   Date.now() + 1,
           });
         } else {

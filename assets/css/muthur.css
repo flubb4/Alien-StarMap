@@ -155,12 +155,25 @@
 .mt-proto-warn     { color: #f5a623; text-shadow: 0 0 6px rgba(245,166,35,.4); }
 .mt-proto-critical { color: #ff3b3b; text-shadow: 0 0 6px rgba(255,59,59,.5); animation: mt-blink .9s step-end infinite; }
 
+/* ══════════════════════════════════════════════════════════════════════
+   GM PANEL — Shell-Stil (modern, flach). Player-facing screens bleiben grün.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* GM-Modus: Panel breiter + Side-Panel luftiger */
+#mutherOverlay.mt-is-gm .mt-panel { width: min(1180px, 95vw); }
+#mutherOverlay.mt-is-gm .mt-side-panel {
+  width: clamp(340px, 32vw, 420px);
+  border-left: 1px solid var(--hair);
+  background: var(--ink);
+}
+
 /* ── GM Panel (nur GM sichtbar) ── */
 .mt-gm-panel {
   display: none;
-  flex-direction: column; gap: 16px;
-  padding: 16px 14px; overflow-y: auto;
-  background: linear-gradient(180deg, rgba(245,166,35,.03), transparent 40%);
+  flex-direction: column; gap: 22px;
+  padding: 22px 20px; overflow-y: auto;
+  font-family: var(--ui);
+  background: var(--panel);
 }
 #mutherOverlay.mt-is-gm .mt-gm-panel { display: flex; }
 /* Spectator: hide write input (driver/captain tippt). GM-Panel bleibt sichtbar wenn User GM ist. */
@@ -168,155 +181,147 @@
 #mutherOverlay.mt-is-spectator .mt-input-row { display: none !important; }
 
 .mt-gm-title {
-  font-size: 9px; letter-spacing: .3em; color: #f5a623;
-  text-shadow: 0 0 6px rgba(245,166,35,.4);
-  border-bottom: 1px dashed rgba(245,166,35,.25); padding-bottom: 10px;
+  font-family: var(--ui);
+  font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--amber);
+  border-bottom: 1px solid var(--hair); padding-bottom: 14px;
 }
 .mt-gm-label {
-  font-size: 10px; letter-spacing: .22em; color: rgba(245,166,35,.9); margin-bottom: 7px;
+  font-family: var(--ui);
+  font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--bone-2); margin-bottom: 9px;
+}
+
+/* GM-Karten: jeder Abschnitt eine flache Shell-Karte */
+.mt-gm-ask, .mt-captain, .mt-directive, .mt-crew-measures, .mt-gm-verdict {
+  border: 1px solid var(--hair); border-radius: var(--r);
+  background: var(--panel-2);
+  padding: 16px 16px;
+  display: flex; flex-direction: column; gap: 10px;
 }
 
 /* Trust score */
 .mt-score-val {
-  font-size: clamp(30px, 3.8vw, 44px); letter-spacing: .06em;
-  color: #f5a623; text-shadow: 0 0 12px rgba(245,166,35,.5);
-  transition: color .5s ease, text-shadow .5s ease;
+  font-family: var(--mono);
+  font-size: clamp(34px, 3.6vw, 46px); font-weight: 700; letter-spacing: .02em;
+  color: var(--amber);
+  transition: color .5s var(--ease);
 }
-.mt-score-val.mt-score-critical { color: #ff3b3b; text-shadow: 0 0 12px rgba(255,59,59,.6); }
-.mt-score-val.mt-score-warn     { color: #ff8c00; text-shadow: 0 0 12px rgba(255,140,0,.5); }
-.mt-score-val.mt-score-nominal  { color: #f5a623; text-shadow: 0 0 12px rgba(245,166,35,.5); }
-.mt-score-val.mt-score-clear    { color: #39ff14; text-shadow: 0 0 12px rgba(57,255,20,.6); }
+.mt-score-val.mt-score-critical { color: var(--rust); }
+.mt-score-val.mt-score-warn     { color: var(--amber); }
+.mt-score-val.mt-score-nominal  { color: var(--amber-hi); }
+.mt-score-val.mt-score-clear    { color: var(--green); }
 
 .mt-score-bar-wrap {
-  height: 4px; background: rgba(255,255,255,.09); margin-top: 8px; border-radius: 2px;
+  height: 6px; background: var(--panel-3); margin-top: 10px; border-radius: 999px; overflow: hidden;
 }
 .mt-score-bar {
-  height: 100%; width: 0; border-radius: 2px;
-  transition: width .6s ease, background .6s ease, box-shadow .6s ease;
+  height: 100%; width: 0; border-radius: 999px;
+  transition: width .6s var(--ease), background .6s var(--ease);
 }
-.mt-score-bar.mt-score-clear    { background: #39ff14; box-shadow: 0 0 8px rgba(57,255,20,.7); }
-.mt-score-bar.mt-score-nominal  { background: #f5a623; box-shadow: 0 0 8px rgba(245,166,35,.6); }
-.mt-score-bar.mt-score-warn     { background: #ff8c00; box-shadow: 0 0 8px rgba(255,140,0,.6); }
-.mt-score-bar.mt-score-critical { background: #ff3b3b; box-shadow: 0 0 8px rgba(255,59,59,.7); }
+.mt-score-bar.mt-score-clear    { background: var(--green); }
+.mt-score-bar.mt-score-nominal  { background: var(--amber-hi); }
+.mt-score-bar.mt-score-warn     { background: var(--amber); }
+.mt-score-bar.mt-score-critical { background: var(--rust); }
 
 /* Flags */
-.mt-flags { display: flex; flex-direction: column; gap: 5px; }
+.mt-flags { display: flex; flex-direction: column; gap: 7px; }
 .mt-flag {
-  font-size: 10px; letter-spacing: .12em; padding: 6px 9px; line-height: 1.5;
-  border: 1px solid rgba(255,59,59,.5); color: rgba(255,90,90,1);
-  background: rgba(255,59,59,.09);
+  font-family: var(--ui);
+  font-size: 12px; letter-spacing: .02em; padding: 9px 12px; line-height: 1.5;
+  border: 1px solid var(--rust-glow); border-left: 3px solid var(--rust); border-radius: var(--r-s);
+  color: var(--bone);
+  background: rgba(198,66,37,.10);
 }
-.mt-no-flags { font-size: 10px; letter-spacing: .2em; color: rgba(57,255,20,.65); }
+.mt-no-flags {
+  font-family: var(--ui); font-size: 12px; letter-spacing: .04em; color: var(--green);
+}
 
 /* Assessment note */
 #mtAssessment {
-  font-size: 11px; letter-spacing: .06em; line-height: 1.7;
-  color: rgba(245,166,35,.97);
-  border-top: 1px dashed rgba(245,166,35,.25); padding-top: 10px;
+  font-family: var(--ui);
+  font-size: 13px; letter-spacing: .01em; line-height: 1.65;
+  color: var(--bone);
+  border: 1px solid var(--hair); border-radius: var(--r);
+  background: var(--panel-2); padding: 14px 16px;
+}
+#mtAssessment:empty { display: none; }
+
+/* ── Gemeinsame Shell-Controls (Inputs / Textareas / Buttons) ── */
+#mtGmAskInput, #mtDirective, #mtCaptainInput, #mtCrewMeasureCustom, #mtVerdictSummaryInput {
+  font-family: var(--ui);
+  background: var(--ink); border: 1px solid var(--hair); border-radius: var(--r-s);
+  color: var(--bone); font-size: 13px; letter-spacing: .01em; line-height: 1.55;
+  padding: 11px 13px; outline: none;
+  transition: border-color .15s var(--ease), box-shadow .15s var(--ease);
+}
+#mtGmAskInput, #mtDirective, #mtVerdictSummaryInput { resize: vertical; }
+#mtGmAskInput { height: 84px; }
+#mtDirective  { height: 84px; }
+#mtVerdictSummaryInput { height: 70px; }
+#mtCaptainInput { flex: 1; }
+#mtCrewMeasureCustom { flex: 1; }
+#mtGmAskInput::placeholder, #mtDirective::placeholder, #mtCaptainInput::placeholder,
+#mtCrewMeasureCustom::placeholder, #mtVerdictSummaryInput::placeholder { color: var(--dim); }
+#mtGmAskInput:focus, #mtDirective:focus, #mtCaptainInput:focus,
+#mtCrewMeasureCustom:focus, #mtVerdictSummaryInput:focus {
+  border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
-/* ── GM Ask (als MU/TH/UR fragen) ── */
-.mt-gm-ask {
-  border-top: 1px dashed rgba(57,255,20,.18); padding-top: 14px;
-  display: flex; flex-direction: column; gap: 6px;
+#mtGmAskBtn, #mtDirectiveBtn, #mtCaptainBtn, #mtCrewMeasureCustomBtn, #mtVerdictApproveBtn {
+  font-family: var(--ui);
+  font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  padding: 10px 16px; border-radius: var(--r-s); cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--accent-line);
+  background: var(--amber); color: var(--ink);
+  transition: background .15s var(--ease), box-shadow .15s var(--ease), transform .05s var(--ease);
 }
-#mtGmAskInput {
-  background: rgba(57,255,20,.05); border: 1px solid rgba(57,255,20,.25);
-  color: rgba(57,255,20,.9); font-family: 'Share Tech Mono', monospace;
-  font-size: 10px; letter-spacing: .06em; line-height: 1.6;
-  padding: 8px 10px; resize: none; outline: none; height: 72px;
+#mtGmAskBtn, #mtDirectiveBtn, #mtVerdictApproveBtn { align-self: flex-end; }
+#mtGmAskBtn:hover, #mtDirectiveBtn:hover, #mtCaptainBtn:hover,
+#mtCrewMeasureCustomBtn:hover, #mtVerdictApproveBtn:hover {
+  background: var(--amber-hi); box-shadow: 0 4px 14px var(--amber-glow);
 }
-#mtGmAskInput::placeholder { color: rgba(57,255,20,.3); }
-#mtGmAskInput:focus { border-color: rgba(57,255,20,.6); }
-#mtGmAskBtn {
-  padding: 7px 12px; border: 1px solid rgba(57,255,20,.5);
-  background: rgba(57,255,20,.08); color: #39ff14;
-  font-family: 'Share Tech Mono', monospace; font-size: 10px;
-  letter-spacing: .22em; cursor: pointer; align-self: flex-end;
-  text-shadow: 0 0 6px rgba(57,255,20,.4);
-}
-#mtGmAskBtn:hover { background: rgba(57,255,20,.16); box-shadow: 0 0 10px rgba(57,255,20,.15); }
+#mtGmAskBtn:active, #mtDirectiveBtn:active, #mtCaptainBtn:active,
+#mtCrewMeasureCustomBtn:active, #mtVerdictApproveBtn:active { transform: translateY(1px); }
 
-/* ── Captain ── */
-.mt-captain {
-  border-top: 1px dashed rgba(245,166,35,.2); padding-top: 14px;
-  display: flex; flex-direction: column; gap: 6px;
+/* Sekundäre Buttons (kompakter, nicht primär) */
+#mtCaptainBtn, #mtCrewMeasureCustomBtn {
+  background: var(--panel-3); color: var(--bone); border-color: var(--hair); padding: 10px 14px;
 }
-.mt-captain-row { display: flex; gap: 6px; }
-#mtCaptainInput {
-  flex: 1; background: rgba(245,166,35,.05); border: 1px solid rgba(245,166,35,.25);
-  color: rgba(245,166,35,.95); font-family: 'Share Tech Mono', monospace;
-  font-size: 10px; letter-spacing: .1em; padding: 6px 9px; outline: none;
+#mtCaptainBtn:hover, #mtCrewMeasureCustomBtn:hover {
+  background: var(--panel-3); color: var(--amber-hi); border-color: var(--accent-line); box-shadow: none;
 }
-#mtCaptainInput::placeholder { color: rgba(245,166,35,.3); }
-#mtCaptainInput:focus { border-color: rgba(245,166,35,.6); }
-#mtCaptainBtn {
-  padding: 6px 10px; border: 1px solid rgba(245,166,35,.35);
-  background: rgba(245,166,35,.06); color: rgba(245,166,35,.95);
-  font-family: 'Share Tech Mono', monospace; font-size: 10px;
-  letter-spacing: .16em; cursor: pointer; white-space: nowrap;
-}
-#mtCaptainBtn:hover { background: rgba(245,166,35,.14); color: #f5a623; }
 
-/* ── GM Directive ── */
-.mt-directive {
-  border-top: 1px dashed rgba(57,255,20,.18); padding-top: 14px; display: flex;
-  flex-direction: column; gap: 6px;
-}
-#mtDirective {
-  background: rgba(57,255,20,.05); border: 1px solid rgba(57,255,20,.25);
-  color: rgba(57,255,20,.9); font-family: 'Share Tech Mono', monospace;
-  font-size: 10px; letter-spacing: .06em; line-height: 1.6;
-  padding: 8px 10px; resize: none; outline: none; height: 72px;
-}
-#mtDirective::placeholder { color: rgba(57,255,20,.3); }
-#mtDirective:focus { border-color: rgba(57,255,20,.6); }
-#mtDirectiveBtn {
-  padding: 7px 12px; border: 1px solid rgba(57,255,20,.35);
-  background: rgba(57,255,20,.06); color: rgba(57,255,20,.95);
-  font-family: 'Share Tech Mono', monospace; font-size: 10px;
-  letter-spacing: .22em; cursor: pointer; align-self: flex-end;
-}
-#mtDirectiveBtn:hover { background: rgba(57,255,20,.14); color: #39ff14; }
+/* ── Captain row ── */
+.mt-captain-row { display: flex; gap: 8px; }
+
+/* ── GM Directive aktiv-Hinweis ── */
 .mt-directive-active {
-  display: none; font-size: 9px; letter-spacing: .22em;
-  color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.5);
-  animation: mt-blink .9s step-end infinite;
+  display: none; font-family: var(--ui);
+  font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--green);
 }
 
 /* ── Crew measures panel ── */
-.mt-crew-measures {
-  border-top: 1px dashed rgba(245,166,35,.18); padding-top: 14px;
-  flex-direction: column; gap: 8px;
-}
-#mtCrewMeasuresList { display: flex; flex-direction: column; gap: 5px; }
+#mtCrewMeasuresList { display: flex; flex-direction: column; gap: 7px; }
 .mt-crew-measure-btn {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 10px 12px; border: 1px solid rgba(245,166,35,.3);
-  background: rgba(245,166,35,.05); color: rgba(245,166,35,.92);
-  font-family: 'Share Tech Mono', monospace; font-size: 10px;
-  letter-spacing: .06em; line-height: 1.55; text-align: left;
-  cursor: pointer; transition: all .12s ease; width: 100%;
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 12px 14px; border: 1px solid var(--hair); border-radius: var(--r-s);
+  background: var(--ink); color: var(--bone);
+  font-family: var(--ui); font-size: 13px;
+  letter-spacing: .01em; line-height: 1.5; text-align: left;
+  cursor: pointer; transition: background .12s var(--ease), border-color .12s var(--ease); width: 100%;
 }
-.mt-crew-measure-btn:hover { background: rgba(245,166,35,.14); border-color: rgba(245,166,35,.7); color: #f5a623; }
-.mt-crew-measure-btn.mt-measure-active { border-color: #f5a623; background: rgba(245,166,35,.18); color: #f5a623; box-shadow: inset 0 0 12px rgba(245,166,35,.12); }
+.mt-crew-measure-btn:hover { background: var(--panel-3); border-color: var(--accent-line); }
+.mt-crew-measure-btn.mt-measure-active {
+  border-color: var(--amber); background: var(--amber-soft); color: var(--amber-hi);
+}
 .mt-crew-measure-btn.mt-measure-active .mt-measure-num::after { content: ' ✓'; }
-.mt-measure-num { min-width: 14px; color: #f5a623; font-size: 12px; letter-spacing: .2em; flex-shrink: 0; }
-.mt-crew-measure-custom { display: flex; gap: 6px; margin-top: 2px; }
-#mtCrewMeasureCustom {
-  flex: 1; background: rgba(245,166,35,.05); border: 1px solid rgba(245,166,35,.22);
-  color: rgba(245,166,35,.9); font-family: 'Share Tech Mono', monospace;
-  font-size: 10px; letter-spacing: .06em; padding: 7px 10px; outline: none;
+.mt-measure-num {
+  min-width: 16px; color: var(--amber); font-family: var(--mono);
+  font-size: 13px; font-weight: 700; letter-spacing: .04em; flex-shrink: 0;
 }
-#mtCrewMeasureCustom::placeholder { color: rgba(245,166,35,.3); }
-#mtCrewMeasureCustom:focus { border-color: rgba(245,166,35,.6); }
-#mtCrewMeasureCustomBtn {
-  padding: 7px 10px; border: 1px solid rgba(245,166,35,.4);
-  background: rgba(245,166,35,.07); color: rgba(245,166,35,.95);
-  font-family: 'Share Tech Mono', monospace; font-size: 10px;
-  letter-spacing: .18em; cursor: pointer; white-space: nowrap;
-}
-#mtCrewMeasureCustomBtn:hover { background: rgba(245,166,35,.15); color: #f5a623; }
+.mt-crew-measure-custom { display: flex; gap: 8px; margin-top: 2px; }
 
 /* ── Player confirm overlay ── */
 #mtConfirmOverlay {
@@ -469,80 +474,62 @@
 
 /* ── AI suggestion block in GM verdict panel ── */
 .mt-ai-suggestion {
-  flex-direction: column; gap: 6px;
-  padding: 10px 11px;
-  border: 1px solid rgba(57,255,20,.22);
-  background: rgba(57,255,20,.04);
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 13px 14px; border-radius: var(--r-s);
+  border: 1px solid var(--hair);
+  background: var(--ink);
   margin-bottom: 4px;
 }
 .mt-ai-sug-label {
-  font-size: 8px; letter-spacing: .35em; color: rgba(57,255,20,.5); margin-bottom: 4px;
+  font-family: var(--ui);
+  font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--bone-2); margin-bottom: 4px;
 }
-.mt-ai-sug-row { display: flex; align-items: baseline; gap: 10px; }
+.mt-ai-sug-row { display: flex; align-items: baseline; gap: 12px; }
 .mt-ai-sug-rating {
-  font-size: 28px; letter-spacing: .04em; line-height: 1;
-  color: #f5a623; text-shadow: 0 0 10px rgba(245,166,35,.4);
+  font-family: var(--mono);
+  font-size: 30px; font-weight: 700; letter-spacing: .02em; line-height: 1;
+  color: var(--amber);
 }
-.mt-ai-sug-rating.mt-rating-pos { color: #39ff14; text-shadow: 0 0 10px rgba(57,255,20,.5); }
-.mt-ai-sug-rating.mt-rating-neg { color: #ff3b3b; text-shadow: 0 0 10px rgba(255,59,59,.5); }
-.mt-ai-sug-rating.mt-rating-neu { color: #f5a623; text-shadow: 0 0 10px rgba(245,166,35,.4); }
+.mt-ai-sug-rating.mt-rating-pos { color: var(--green); }
+.mt-ai-sug-rating.mt-rating-neg { color: var(--rust); }
+.mt-ai-sug-rating.mt-rating-neu { color: var(--amber); }
 .mt-ai-sug-tag {
-  font-size: 9px; letter-spacing: .3em; color: rgba(57,255,20,.65);
+  font-family: var(--ui);
+  font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--amber-hi);
 }
-.mt-ai-sug-tag.mt-rating-pos { color: rgba(57,255,20,.75); }
-.mt-ai-sug-tag.mt-rating-neg { color: rgba(255,59,59,.75); }
+.mt-ai-sug-tag.mt-rating-pos { color: var(--green); }
+.mt-ai-sug-tag.mt-rating-neg { color: var(--rust); }
 .mt-ai-sug-summary {
-  font-size: 9px; letter-spacing: .06em; line-height: 1.7;
-  color: rgba(255,255,255,.4); margin-top: 2px;
+  font-family: var(--ui);
+  font-size: 12px; letter-spacing: .01em; line-height: 1.6;
+  color: var(--bone-2); margin-top: 2px;
 }
 
-/* ── GM Verdict panel ── */
-.mt-gm-verdict {
-  border-top: 1px dashed rgba(245,166,35,.3); padding-top: 14px;
-  flex-direction: column; gap: 8px;
-}
+/* ── GM Verdict panel — rating selector ── */
 .mt-rating-sel {
-  display: flex; gap: 3px;
+  display: flex; gap: 5px;
 }
 .mt-rating-btn {
-  flex: 1; padding: 7px 2px;
-  border: 1px solid rgba(255,255,255,.14); background: transparent;
-  color: rgba(255,255,255,.38); font-family: 'Share Tech Mono', monospace;
-  font-size: 9px; letter-spacing: .08em; cursor: pointer;
-  transition: background .15s, color .15s, border-color .15s;
+  flex: 1; padding: 10px 2px; border-radius: var(--r-s);
+  border: 1px solid var(--hair); background: var(--ink);
+  color: var(--bone-2); font-family: var(--mono);
+  font-size: 12px; font-weight: 600; letter-spacing: .02em; cursor: pointer;
+  transition: background .15s var(--ease), color .15s var(--ease), border-color .15s var(--ease);
 }
-.mt-rating-btn:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.7); }
+.mt-rating-btn:hover { background: var(--panel-3); color: var(--bone); }
 
 .mt-rating-btn.mt-rating-active[data-r="-3"],
 .mt-rating-btn.mt-rating-active[data-r="-2"],
 .mt-rating-btn.mt-rating-active[data-r="-1"] {
-  background: rgba(255,59,59,.14); border-color: rgba(255,59,59,.5); color: #ff3b3b;
+  background: rgba(198,66,37,.16); border-color: var(--rust); color: var(--rust);
 }
 .mt-rating-btn.mt-rating-active[data-r="0"] {
-  background: rgba(245,166,35,.12); border-color: rgba(245,166,35,.5); color: #f5a623;
+  background: var(--amber-soft); border-color: var(--amber); color: var(--amber);
 }
 .mt-rating-btn.mt-rating-active[data-r="1"],
 .mt-rating-btn.mt-rating-active[data-r="2"],
 .mt-rating-btn.mt-rating-active[data-r="3"] {
-  background: rgba(57,255,20,.1); border-color: rgba(57,255,20,.5); color: #39ff14;
-}
-
-#mtVerdictSummaryInput {
-  background: rgba(245,166,35,.05); border: 1px solid rgba(245,166,35,.2);
-  color: rgba(245,166,35,.9); font-family: 'Share Tech Mono', monospace;
-  font-size: 10px; letter-spacing: .06em; line-height: 1.6;
-  padding: 8px 10px; resize: none; outline: none; height: 60px;
-}
-#mtVerdictSummaryInput::placeholder { color: rgba(245,166,35,.3); }
-#mtVerdictSummaryInput:focus { border-color: rgba(245,166,35,.55); }
-
-#mtVerdictApproveBtn {
-  padding: 8px 14px; border: 1px solid rgba(57,255,20,.5);
-  background: rgba(57,255,20,.08); color: #39ff14;
-  font-family: 'Share Tech Mono', monospace; font-size: 9px;
-  letter-spacing: .28em; cursor: pointer; align-self: flex-end;
-  text-shadow: 0 0 6px rgba(57,255,20,.4);
-}
-#mtVerdictApproveBtn:hover {
-  background: rgba(57,255,20,.16); box-shadow: 0 0 12px rgba(57,255,20,.2);
+  background: rgba(127,176,105,.14); border-color: var(--green); color: var(--green);
 }

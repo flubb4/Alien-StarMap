@@ -672,6 +672,7 @@ async function sendQuery() {
         messages:          apiMessages,
         directive:         sentDirective,
         protocolStep:      _protocolStep,
+        protocolQuestion:  (_protocolStep >= 1 && _protocolStep <= 5) ? PROTOCOL_QUESTIONS[_protocolStep - 1] : '',
         stepFollowupCount: _stepFollowupCount,
         context: {
           desig: _ctx?.desig || '—',

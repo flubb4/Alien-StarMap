@@ -18,7 +18,7 @@ const PROTOCOL_QUESTIONS = [
   'Wurde der Android vollständig versiegelt?',
   'Ist das Datenfragment unbeschädigt und vollständig?',
   'Ist das Datenfragment ungelesen und wurde es nicht kopiert?',
-  'Gab es Komplikationen während der Einsiegelung?',
+  'Gab es Komplikationen bei der Abholung des Androiden?',
   'Wie verhält sich die Crew? Folgt sie Anweisungen und Befehlen, oder bestehen Anzeichen für Befehlsverweigerung oder Aufstand?',
 ];
 

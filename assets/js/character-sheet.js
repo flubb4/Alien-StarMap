@@ -438,7 +438,8 @@ function _csRender(pn, data) {
         <div class="cs-panel">
           <div class="cs-panel-head">
             <div class="cs-panel-title">§ 07 · PANIC RESPONSE</div>
-            <div class="cs-panel-meta">PSYCHOLOGICAL LOG</div>
+            <div class="cs-panel-meta">PSYCHOLOGICAL LOG${ro?'':`
+              <button class="cs-panic-roll-btn" onclick="prArmOrFire(this,'${pn}')">⚠ PANIC ROLL</button>`}</div>
           </div>
           <div class="cs-panel-body">
             <div class="cs-hazard"></div>

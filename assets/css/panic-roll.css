@@ -1,0 +1,192 @@
+/* ════════════════════════════════════════════════════════════════
+   PANIC ROLL — W-Y NEURO-SYNC bio-monitor reveal
+   Flat Opus-4.8 shell style; tokens from core.css.
+   Wrapper phases: pr-arriving → pr-ekg-phase → pr-calc-phase
+                   → pr-glitch → pr-revealed → pr-closing
+   ════════════════════════════════════════════════════════════════ */
+
+#prWrap { display: none; }
+#prWrap[class] { display: block; }
+
+.pr-stage {
+  position: fixed; inset: 0; z-index: 8500;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(4, 9, 7, 0.78);
+  backdrop-filter: blur(3px);
+  opacity: 1;
+  transition: opacity .4s var(--ease);
+}
+#prWrap.pr-arriving .pr-stage { animation: prFadeIn .4s var(--ease) backwards; }
+#prWrap.pr-closing  .pr-stage { opacity: 0; }
+@keyframes prFadeIn { from { opacity: 0; } }
+
+/* severity accent per stage */
+.pr-stage            { --pr-sev: var(--amber); }
+.pr-stage.sev-calm   { --pr-sev: var(--green); }
+.pr-stage.sev-low    { --pr-sev: var(--chart); }
+.pr-stage.sev-mid    { --pr-sev: var(--amber); }
+.pr-stage.sev-high   { --pr-sev: var(--rust);  }
+
+/* ── Card ─────────────────────────────────────────────────────── */
+.pr-card {
+  width: min(560px, 92vw);
+  background: linear-gradient(180deg, var(--panel) 0%, var(--ink) 100%);
+  border: 1px solid var(--hair);
+  border-radius: var(--r);
+  padding: 18px 22px 14px;
+  font-family: var(--mono);
+  color: var(--bone);
+  box-shadow: 0 18px 60px rgba(0,0,0,.6);
+  transition: transform .4s var(--ease);
+}
+#prWrap.pr-arriving .pr-card { animation: prArrive .5s var(--ease) backwards; }
+#prWrap.pr-closing  .pr-card { transform: translateY(10px) scale(.97); }
+@keyframes prArrive {
+  from { transform: translateY(16px) scale(.95); opacity: .3; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+.pr-head {
+  display: flex; align-items: baseline; gap: 10px;
+  font-size: 12px; letter-spacing: .16em;
+  color: var(--bone-2);
+  border-bottom: 1px solid var(--hair-soft);
+  padding-bottom: 8px;
+}
+.pr-head-title { color: var(--amber); font-weight: 700; }
+.pr-head-dots  { color: var(--dim); }
+.pr-head-crew  { margin-left: auto; color: var(--bone); }
+
+.pr-sub {
+  margin-top: 8px;
+  font-size: 10px; letter-spacing: .22em; color: var(--dim);
+  animation: prBlink 1.2s steps(2) infinite;
+}
+#prWrap.pr-revealed .pr-sub { animation: none; color: var(--pr-sev); }
+@keyframes prBlink { 50% { opacity: .35; } }
+
+/* ── EKG ──────────────────────────────────────────────────────── */
+.pr-ekg-box {
+  position: relative;
+  margin-top: 12px;
+  height: 120px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 23px, var(--hair-soft) 23px 24px),
+    repeating-linear-gradient(0deg,  transparent 0 23px, var(--hair-soft) 23px 24px),
+    #0a1310;
+  border: 1px solid var(--hair-soft);
+  border-radius: var(--r-s);
+  overflow: hidden;
+}
+.pr-ekg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pr-bpm {
+  position: absolute; top: 6px; right: 10px;
+  font-size: 15px; font-weight: 700; letter-spacing: .08em;
+  color: var(--pr-sev);
+  text-shadow: 0 0 12px var(--pr-sev);
+}
+.pr-bpm-heart {
+  display: inline-block; margin-right: 6px;
+  animation: prHeart .8s var(--ease) infinite;
+}
+#prWrap.pr-revealed .sev-high .pr-bpm-heart { animation-duration: .5s; }
+@keyframes prHeart { 0%,100% { transform: scale(1); } 30% { transform: scale(1.35); } }
+
+/* ── Calc line ────────────────────────────────────────────────── */
+.pr-calc {
+  margin-top: 14px;
+  font-size: 15px; letter-spacing: .06em;
+  text-align: center; color: var(--bone-2);
+  opacity: 0; transform: translateY(6px);
+  transition: opacity .35s var(--ease), transform .35s var(--ease);
+}
+#prWrap.pr-calc-phase .pr-calc,
+#prWrap.pr-glitch .pr-calc,
+#prWrap.pr-revealed .pr-calc { opacity: 1; transform: none; }
+
+.pr-d6 {
+  display: inline-block; min-width: 1.2em;
+  color: var(--amber-hi); font-weight: 700;
+}
+.pr-d6.locked { color: var(--bone); text-shadow: 0 0 10px var(--amber-glow); }
+.pr-eq {
+  margin-left: 8px; font-weight: 700; color: var(--pr-sev);
+  opacity: 0; transition: opacity .3s var(--ease);
+}
+.pr-eq.show { opacity: 1; }
+
+/* ── Glitch flash ─────────────────────────────────────────────── */
+.pr-flash {
+  position: absolute; inset: 0; pointer-events: none;
+  background: var(--pr-sev); opacity: 0;
+}
+#prWrap.pr-glitch .pr-flash { animation: prFlash .3s steps(3) 1; }
+@keyframes prFlash { 0% { opacity: .35; } 60% { opacity: .12; } 100% { opacity: 0; } }
+#prWrap.pr-glitch .pr-card { animation: prJitter .3s steps(6) 1; }
+@keyframes prJitter {
+  0%   { transform: translate(0,0); }
+  20%  { transform: translate(-7px,2px) skewX(2deg); }
+  40%  { transform: translate(6px,-3px) skewX(-3deg); }
+  60%  { transform: translate(-4px,1px); }
+  80%  { transform: translate(3px,-1px) skewX(1deg); }
+  100% { transform: translate(0,0); }
+}
+
+/* ── Result stamp ─────────────────────────────────────────────── */
+.pr-result {
+  margin-top: 14px; text-align: center;
+  opacity: 0; transform: scale(1.5);
+  padding: 12px 10px;
+  border: 2px solid var(--pr-sev);
+  border-radius: var(--r-s);
+  background: color-mix(in srgb, var(--pr-sev) 8%, transparent);
+}
+#prWrap.pr-revealed .pr-result {
+  animation: prStamp .35s var(--ease) forwards;
+}
+@keyframes prStamp {
+  0%   { opacity: 0; transform: scale(1.5); }
+  70%  { opacity: 1; transform: scale(.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.pr-res-label {
+  font-family: var(--mono);
+  font-size: 34px; font-weight: 700; letter-spacing: .18em;
+  color: var(--pr-sev);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--pr-sev) 55%, transparent);
+}
+.pr-res-tip {
+  margin-top: 6px;
+  font-size: 12.5px; line-height: 1.5; color: var(--bone-2);
+}
+
+/* ── Dismiss hint ─────────────────────────────────────────────── */
+.pr-hint {
+  margin-top: 12px; text-align: center;
+  font-size: 10px; letter-spacing: .2em; color: var(--dim);
+  opacity: 0; transition: opacity .4s var(--ease) .9s;
+}
+#prWrap.pr-revealed .pr-hint { opacity: 1; animation: prBlink 1.6s steps(2) infinite 1s; }
+#prWrap.pr-revealed .pr-stage { cursor: pointer; }
+
+/* ── Panic button in character sheet §07 head ─────────────────── */
+.cs-panic-roll-btn {
+  font-family: var(--mono);
+  font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  color: var(--amber);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-s);
+  padding: 4px 10px;
+  margin-left: 10px;
+  cursor: pointer;
+  transition: background .15s var(--ease), color .15s var(--ease), border-color .15s var(--ease);
+}
+.cs-panic-roll-btn:hover { background: var(--amber-soft); color: var(--amber-hi); }
+.cs-panic-roll-btn.armed {
+  color: var(--bone);
+  background: color-mix(in srgb, var(--rust) 22%, transparent);
+  border-color: var(--rust);
+  animation: prBlink .5s steps(2) infinite;
+}
